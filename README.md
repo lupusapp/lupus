@@ -15,3 +15,7 @@ $ cmake ..
 $ make
 $ ./Lupus
 ```
+
+## Todo
+- [ ] Support encrypted profile
+- [ ] Main
