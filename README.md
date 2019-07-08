@@ -17,5 +17,5 @@ $ ./Lupus
 ```
 
 ## Todo
-- [ ] Support encrypted profile
+- [x] Support encrypted profile
 - [ ] Main
