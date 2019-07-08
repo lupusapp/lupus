@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 
 project(Lupus C)
 
-set(CMAKE_C_STANDARD 90)
+set(CMAKE_C_STANDARD 11)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 set(SRCS src/lupus_application.c src/lupus_headerbar.c src/lupus_profile.c src/lupus_profile_chooser.c src/resources.c src/utils.c src/lupus_profile_chooser_password_dialog.c)
