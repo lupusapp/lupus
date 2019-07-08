@@ -108,3 +108,4 @@ modules.xml
 # End of https://www.gitignore.io/api/cmake,jetbrains+all
 
 c-toxcore/
+res/ui/*.ui~
