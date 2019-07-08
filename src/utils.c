@@ -2,13 +2,10 @@
 #include <glib.h>
 
 uint8_t *hex2bin(char const *hex) {
-    size_t len, i;
-    uint8_t *bin;
+    size_t len = strlen(hex) / 2;
+    uint8_t *bin = g_malloc(len);
 
-    len = strlen(hex) / 2;
-    bin = g_malloc(len);
-
-    for (i = 0; i < len; ++i) {
+    for (size_t i = 0; i < len; ++i) {
         sscanf(hex, "%2hhx", &bin[i]);
     }
 
@@ -16,14 +13,10 @@ uint8_t *hex2bin(char const *hex) {
 }
 
 char *bin2hex(uint8_t const *bin, size_t length) {
-    char *hex;
-    char *hex_start;
-    int i;
+    char *hex = g_malloc(2 * length + 1);
+    char *hex_start = hex;
 
-    hex = g_malloc(2 * length + 1);
-    hex_start = hex;
-
-    for (i = 0; i < length; ++i, hex += 2) {
+    for (int i = 0; i < length; ++i, hex += 2) {
         sprintf(hex, "%02X", bin[i]);
     }
 

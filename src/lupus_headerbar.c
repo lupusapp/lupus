@@ -1,7 +1,3 @@
-//
-// Created by ogromny on 13/06/19.
-//
-
 #include "../include/lupus_headerbar.h"
 #include "../include/lupus.h"
 
@@ -17,11 +13,8 @@ static void lupus_headerbar_init(LupusHeaderbar *instance) {
 }
 
 static void lupus_headerbar_class_init(LupusHeaderbarClass *class) {
-    gchar *resource;
-
-    resource = g_strconcat(LUPUS_RESOURCES, "/headerbar.ui", NULL);
+    gchar *resource = g_strconcat(LUPUS_RESOURCES, "/headerbar.ui", NULL);
     gtk_widget_class_set_template_from_resource(GTK_WIDGET_CLASS(class), resource);
-
     g_free(resource);
 }
 

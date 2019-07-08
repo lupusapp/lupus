@@ -22,19 +22,16 @@ static guint signals[LAST_SIGNAL];
 G_DEFINE_TYPE_WITH_PRIVATE(LupusProfileChooserPasswordDialog, lupus_profile_chooser_password_dialog, GTK_TYPE_DIALOG)
 
 static void lupus_profile_chooser_password_dialog_init(LupusProfileChooserPasswordDialog *instance) {
-    LupusProfileChooserPasswordDialogPrivate *priv;
-
     gtk_widget_init_template(GTK_WIDGET(instance));
 
-    priv = lupus_profile_chooser_password_dialog_get_instance_private(instance);
-
+    LupusProfileChooserPasswordDialogPrivate *priv = lupus_profile_chooser_password_dialog_get_instance_private(
+            instance
+    );
     g_signal_connect(priv->decrypt, "clicked", G_CALLBACK(decrypt_callback), instance);
 }
 
 static void lupus_profile_chooser_password_dialog_class_init(LupusProfileChooserPasswordDialogClass *class) {
-    gchar *resource;
-
-    resource = g_strconcat(LUPUS_RESOURCES, "/profile_chooser_password_dialog.ui", NULL);
+    gchar *resource = g_strconcat(LUPUS_RESOURCES, "/profile_chooser_password_dialog.ui", NULL);
     gtk_widget_class_set_template_from_resource(GTK_WIDGET_CLASS(class), resource);
     g_free(resource);
 
@@ -52,11 +49,11 @@ static void lupus_profile_chooser_password_dialog_class_init(LupusProfileChooser
 }
 
 static void decrypt_callback(GtkButton *button, gpointer user_data) {
-    LupusProfileChooserPasswordDialogPrivate *priv;
-    gchar const *password;
+    LupusProfileChooserPasswordDialogPrivate *priv = lupus_profile_chooser_password_dialog_get_instance_private(
+            LUPUS_PROFILE_CHOOSER_PASSWORD_DIALOG(user_data)
+    );
 
-    priv = lupus_profile_chooser_password_dialog_get_instance_private(LUPUS_PROFILE_CHOOSER_PASSWORD_DIALOG(user_data));
-    password = gtk_entry_get_text(GTK_ENTRY(priv->password));
+    gchar const *password = gtk_entry_get_text(GTK_ENTRY(priv->password));
 
     g_signal_emit(user_data, signals[DECRYPT], 0, password);
     g_signal_emit_by_name(user_data, "response", GTK_RESPONSE_ACCEPT);

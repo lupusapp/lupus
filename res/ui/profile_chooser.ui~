@@ -6,7 +6,6 @@
     <property name="can_focus">False</property>
     <property name="resizable">False</property>
     <property name="default_width">250</property>
-    <property name="default_height">0</property>
     <property name="show_menubar">False</property>
     <child type="titlebar">
       <object class="GtkHeaderBar" id="header_bar">
@@ -27,6 +26,7 @@
       <object class="GtkStack" id="stack">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="transition_type">slide-left-right</property>
         <property name="interpolate_size">True</property>
         <child>
           <object class="GtkBox" id="login_box">

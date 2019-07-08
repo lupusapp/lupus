@@ -17,9 +17,7 @@ static void lupus_application_class_init(LupusApplicationClass *class) {
 }
 
 static void lupus_application_activate(GApplication *application) {
-    LupusProfileChooser *profile_chooser;
-
-    profile_chooser = lupus_profile_chooser_new(LUPUS_APPLICATION(application));
+    LupusProfileChooser *profile_chooser = lupus_profile_chooser_new(LUPUS_APPLICATION(application));
     gtk_window_present(GTK_WINDOW(profile_chooser));
 }
 

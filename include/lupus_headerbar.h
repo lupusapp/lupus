@@ -1,7 +1,3 @@
-//
-// Created by ogromny on 13/06/19.
-//
-
 #ifndef LUPUS_LUPUS_HEADERBAR_H
 #define LUPUS_LUPUS_HEADERBAR_H
 

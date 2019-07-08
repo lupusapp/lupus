@@ -12,11 +12,8 @@ static void lupus_profile_init(LupusProfile *instance) {
 }
 
 static void lupus_profile_class_init(LupusProfileClass *class) {
-    gchar *resource;
-
-    resource = g_strconcat(LUPUS_RESOURCES, "/profile.ui", NULL);
+    gchar *resource = g_strconcat(LUPUS_RESOURCES, "/profile.ui", NULL);
     gtk_widget_class_set_template_from_resource(GTK_WIDGET_CLASS(class), resource);
-
     g_free(resource);
 }
 
