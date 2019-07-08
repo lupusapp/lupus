@@ -1,8 +1,9 @@
-#include <tox/tox.h>
-#include <tox/toxencryptsave.h>
+#include "toxcore/tox.h"
+#include "toxencryptsave/toxencryptsave.h"
 #include "../include/lupus_profile_chooser.h"
 #include "../include/lupus.h"
 #include "../include/utils.h"
+#include "../include/lupus_profile_chooser_password_dialog.h"
 
 struct _LupusProfileChooser {
     GtkApplicationWindow parent_instance;
@@ -73,11 +74,12 @@ static void register_callback(GtkButton *button, gpointer user_data) {
     Tox *tox;
     TOX_ERR_SET_INFO tox_err_set_info;
     char *user, *status_message;
-    size_t tox_data_size;
-    uint8_t *tox_data;
+    size_t tox_data_size, tox_data_encrypted_size;
+    uint8_t *tox_data, *tox_data_encrypted;
     LupusProfileChooserPrivate *priv;
     gchar const *profile_name, *profile_password, *profile_filename;
     GError *error;
+    TOX_ERR_ENCRYPTION tox_err_encryption;
 
     tox = tox_new(NULL, &tox_err_new);
     g_assert(tox_err_new == TOX_ERR_NEW_OK);
@@ -102,23 +104,49 @@ static void register_callback(GtkButton *button, gpointer user_data) {
     g_assert(g_file_test(profile_filename, G_FILE_TEST_EXISTS) == false);
 
     error = NULL;
-    g_file_set_contents(profile_filename, (gchar *) tox_data, tox_data_size, &error);
+    if (strlen(profile_password) != 0) {
+        tox_data_encrypted_size = tox_data_size + TOX_PASS_ENCRYPTION_EXTRA_LENGTH;
+        tox_data_encrypted = g_malloc(tox_data_encrypted_size);
+
+        tox_pass_encrypt(
+                tox_data, tox_data_size,
+                (uint8_t *) profile_password, strlen(profile_password),
+                tox_data_encrypted,
+                &tox_err_encryption
+        );
+
+        g_assert(tox_err_encryption == TOX_ERR_ENCRYPTION_OK);
+        g_assert(tox_is_data_encrypted(tox_data_encrypted));
+
+        printf("tox encrypted: %lu\n", tox_data_encrypted_size);
+
+        g_file_set_contents(profile_filename, (gchar *) tox_data_encrypted, tox_data_encrypted_size, &error);
+        g_free(tox_data_encrypted);
+    } else {
+        g_file_set_contents(profile_filename, (gchar *) tox_data, tox_data_size, &error);
+        g_free(tox_data);
+    }
     g_assert(error == NULL);
+
     g_free((gpointer) profile_filename);
-    g_free(tox_data);
     if (error != NULL) {
         g_error_free(error);
     }
 }
 
 static void login_callback(GtkButton *button, gpointer user_data) {
-    gchar *filename, *content;
+    gchar *filename, *content, *password;
     GError *error;
-    gsize content_length;
+    gsize content_length, tox_decrypted_length;
     TOX_ERR_OPTIONS_NEW tox_err_options_new;
     struct Tox_Options *options;
     TOX_ERR_NEW tox_err_new;
     Tox *tox;
+    LupusProfileChooserPasswordDialog *password_dialog;
+    uint8_t *tox_decrypted;
+    TOX_ERR_DECRYPTION tox_err_decryption;
+
+    /* TODO: check if directory exists */
 
     filename = g_strconcat(LUPUS_TOX_DIR, (gchar *) user_data, NULL);
     g_assert(g_file_test(filename, G_FILE_TEST_EXISTS));
@@ -134,13 +162,49 @@ static void login_callback(GtkButton *button, gpointer user_data) {
 
     options = tox_options_new(&tox_err_options_new);
     g_assert(tox_err_options_new == TOX_ERR_OPTIONS_NEW_OK);
-    tox_options_set_savedata_data(options, (uint8_t *) content, content_length);
+    tox_decrypted = NULL;
+
     tox_options_set_savedata_type(options, TOX_SAVEDATA_TYPE_TOX_SAVE);
+
+    if (tox_is_data_encrypted((uint8_t *) content)) {
+        password = NULL;
+        password_dialog = lupus_profile_chooser_password_dialog_new();
+        g_signal_connect(password_dialog, "decrypt", G_CALLBACK(set_password_callback), &password);
+
+        if (gtk_dialog_run(GTK_DIALOG(password_dialog)) != GTK_RESPONSE_ACCEPT) {
+            gtk_widget_destroy(GTK_WIDGET(password_dialog));
+            goto free;
+        }
+
+        gtk_widget_destroy(GTK_WIDGET(password_dialog));
+
+        tox_decrypted_length = content_length - TOX_PASS_ENCRYPTION_EXTRA_LENGTH;
+        tox_decrypted = g_malloc(tox_decrypted_length);
+
+        tox_pass_decrypt(
+                (uint8_t *) content, content_length,
+                (uint8_t *) password, strlen(password),
+                tox_decrypted,
+                &tox_err_decryption
+        );
+        g_assert(tox_err_decryption == TOX_ERR_DECRYPTION_OK);
+
+        tox_options_set_savedata_data(options, (uint8_t *) tox_decrypted, tox_decrypted_length);
+
+        g_free(password);
+    } else {
+        tox_options_set_savedata_data(options, (uint8_t *) content, content_length);
+    }
 
     tox = tox_new(options, &tox_err_new);
     g_assert(tox_err_new == TOX_ERR_NEW_OK);
+
+free:
     tox_options_free(options);
     g_free(content);
+    if (tox_decrypted != NULL) {
+        g_free(tox_decrypted);
+    }
 }
 
 void list_tox_profile(GtkBox *login_box) {
@@ -191,4 +255,9 @@ LupusProfileChooser *lupus_profile_chooser_new(LupusApplication *application) {
     return g_object_new(LUPUS_TYPE_PROFILE_CHOOSER,
                         "application", application,
                         NULL);
+}
+
+static void set_password_callback(LupusProfileChooserPasswordDialog *password_dialog, gchar *data, gchar **password) {
+    *password = g_malloc(strlen(data) + 1);
+    strcpy(*password, data);
 }
