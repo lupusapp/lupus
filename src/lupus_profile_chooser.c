@@ -126,7 +126,7 @@ static void login_callback(GtkButton *button, gpointer user_data) {
     gchar *tox_directory = LUPUS_TOX_DIR;
     g_file_test(tox_directory, G_FILE_TEST_IS_DIR);
 
-    gchar *filename = g_strconcat(tox_directory, (gchar *) user_data, NULL);
+    gchar *filename = g_strconcat(tox_directory, gtk_button_get_label(button), NULL);
     g_assert(g_file_test(filename, G_FILE_TEST_EXISTS));
 
     GError *error = NULL;
@@ -221,7 +221,7 @@ void list_tox_profile(GtkBox *login_box) {
         gtk_box_pack_start(login_box, button, 0, 1, 0);
         gtk_widget_show(button);
 
-        g_signal_connect(button, "clicked", G_CALLBACK(login_callback), profile_name);
+        g_signal_connect(button, "clicked", G_CALLBACK(login_callback), NULL);
     }
 
     g_ptr_array_free(profiles, TRUE);
