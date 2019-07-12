@@ -5,8 +5,16 @@ project(Lupus C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-set(SRCS src/lupus_application.c src/lupus_headerbar.c src/lupus_profile.c src/lupus_profile_chooser.c src/resources.c src/utils.c src/lupus_profile_chooser_password_dialog.c)
-set(INCLUDES include/lupus.h include/lupus_application.h include/lupus_headerbar.h include/lupus_profile.h include/lupus_profile_chooser.h include/utils.h include/lupus_profile_chooser_password_dialog.h)
+set(SRCS
+        src/lupus_application.c src/lupus_headerbar.c src/lupus_profile.c
+        src/lupus_profile_chooser.c src/resources.c src/utils.c
+        src/lupus_profile_chooser_password_dialog.c src/lupus_main.c
+        )
+set(INCLUDES
+        include/lupus.h include/lupus_application.h include/lupus_headerbar.h
+        include/lupus_profile.h include/lupus_profile_chooser.h include/utils.h
+        include/lupus_profile_chooser_password_dialog.h include/lupus_main.h
+        )
 
 add_executable(Lupus main.c ${SRCS} ${INCLUDES})
 

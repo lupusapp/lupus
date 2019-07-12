@@ -29,7 +29,7 @@ static void lupus_profile_chooser_init(LupusProfileChooser *instance) {
     g_signal_connect(private->stack, "notify::visible-child", G_CALLBACK(stack_change_callback), instance);
     g_signal_connect(private->register_button, "clicked", G_CALLBACK(register_callback), instance);
 
-    list_tox_profile(private->login_box);
+    list_tox_profile(private->login_box, instance);
 }
 
 static void lupus_profile_chooser_class_init(LupusProfileChooserClass *class) {
@@ -51,7 +51,7 @@ static void stack_change_callback(GObject *gobject, GParamSpec *pspec, gpointer 
     LupusProfileChooserPrivate *priv = lupus_profile_chooser_get_instance_private(LUPUS_PROFILE_CHOOSER(user_data));
 
     if (is_register == false) {
-        list_tox_profile(priv->login_box);
+        list_tox_profile(priv->login_box, LUPUS_PROFILE_CHOOSER(user_data));
     }
 
     gtk_widget_show_all(GTK_WIDGET(user_data));
@@ -179,12 +179,16 @@ static void login_callback(GtkButton *button, gpointer user_data) {
     TOX_ERR_NEW tox_err_new;
     Tox *tox = tox_new(options, &tox_err_new);
     g_assert(tox_err_new == TOX_ERR_NEW_OK);
+
+    LupusMain *lupus_main = lupus_main_new(gtk_window_get_application(GTK_WINDOW(user_data)), tox);
+    gtk_window_present(GTK_WINDOW(lupus_main));
+    gtk_window_close(GTK_WINDOW(user_data));
 free:
     tox_options_free(options);
     g_free(content);
 }
 
-void list_tox_profile(GtkBox *login_box) {
+void list_tox_profile(GtkBox *login_box, LupusProfileChooser *instance) {
     gtk_container_foreach(GTK_CONTAINER(login_box), (gpointer) gtk_widget_destroy, NULL);
 
     gchar *tox_directory = LUPUS_TOX_DIR;
@@ -221,7 +225,7 @@ void list_tox_profile(GtkBox *login_box) {
         gtk_box_pack_start(login_box, button, 0, 1, 0);
         gtk_widget_show(button);
 
-        g_signal_connect(button, "clicked", G_CALLBACK(login_callback), NULL);
+        g_signal_connect(button, "clicked", G_CALLBACK(login_callback), instance);
     }
 
     g_ptr_array_free(profiles, TRUE);

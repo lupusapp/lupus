@@ -4,6 +4,7 @@
 #include <gtk/gtk.h>
 #include "lupus_application.h"
 #include "lupus_profile_chooser_password_dialog.h"
+#include "lupus_main.h"
 
 #define LUPUS_TYPE_PROFILE_CHOOSER lupus_profile_chooser_get_type()
 
@@ -19,6 +20,6 @@ static void login_callback(GtkButton *button, gpointer user_data);
 
 static void set_password_callback(LupusProfileChooserPasswordDialog *password_dialog, gchar *data, gchar **password);
 
-void list_tox_profile(GtkBox *login_box);
+void list_tox_profile(GtkBox *login_box, LupusProfileChooser *instance);
 
 #endif
