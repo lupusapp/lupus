@@ -13,7 +13,6 @@ struct _LupusProfileChooserPasswordDialogPrivate {
 
 enum {
     DECRYPT,
-
     LAST_SIGNAL
 };
 
@@ -25,8 +24,7 @@ static void lupus_profile_chooser_password_dialog_init(LupusProfileChooserPasswo
     gtk_widget_init_template(GTK_WIDGET(instance));
 
     LupusProfileChooserPasswordDialogPrivate *priv = lupus_profile_chooser_password_dialog_get_instance_private(
-            instance
-    );
+            instance);
     g_signal_connect(priv->decrypt, "clicked", G_CALLBACK(decrypt_callback), instance);
 }
 
@@ -53,10 +51,8 @@ static void decrypt_callback(GtkButton *button, gpointer user_data) {
             LUPUS_PROFILE_CHOOSER_PASSWORD_DIALOG(user_data)
     );
 
-    gchar const *password = gtk_entry_get_text(GTK_ENTRY(priv->password));
-
-    g_signal_emit(user_data, signals[DECRYPT], 0, password);
     g_signal_emit_by_name(user_data, "response", GTK_RESPONSE_ACCEPT);
+    g_signal_emit(user_data, signals[DECRYPT], 0, gtk_entry_get_text(GTK_ENTRY(priv->password)));
 }
 
 LupusProfileChooserPasswordDialog *lupus_profile_chooser_password_dialog_new(void) {

@@ -20,6 +20,8 @@ static void login_callback(GtkButton *button, gpointer user_data);
 
 static void set_password_callback(LupusProfileChooserPasswordDialog *password_dialog, gchar *data, gchar **password);
 
-void list_tox_profile(GtkBox *login_box, LupusProfileChooser *instance);
+void list_tox_profile(GtkBox *login_box, gpointer user_data);
+
+void propagate_profiles(gchar *profile, gpointer user_data);
 
 #endif
