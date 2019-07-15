@@ -121,7 +121,7 @@ static void login_callback(GtkButton *button, gpointer user_data) {
         return;
     }
 
-    gchar *filename = g_strconcat(tox_directory, gtk_button_get_label(button), NULL);
+    gchar *filename = g_strconcat(tox_directory, gtk_button_get_label(button), ".tox", NULL);
     if (!g_file_test(filename, G_FILE_TEST_EXISTS)) {
         error_message(user_data, "<b>Error</b>: file %s does not exists.", filename);
         g_free(tox_directory);
@@ -257,10 +257,11 @@ void list_tox_profile(GtkBox *login_box, gpointer user_data) {
 }
 
 void propagate_profiles(gchar *data, gpointer user_data) {
-    GtkWidget *button = gtk_button_new_with_label(data);
+    GtkWidget *button = gtk_button_new_with_label(g_strndup(data, strlen(data) - 4));
     gtk_widget_set_focus_on_click(button, false);
     gtk_widget_set_size_request(button, 0, 50);
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    g_free(data);
 
     GtkWidget *label = gtk_bin_get_child(GTK_BIN(button));
     gtk_label_set_max_width_chars(GTK_LABEL(label), 0);

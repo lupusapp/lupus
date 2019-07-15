@@ -42,8 +42,7 @@ static void lupus_profile_chooser_password_dialog_class_init(LupusProfileChooser
             G_SIGNAL_RUN_LAST,
             0, NULL, NULL, NULL,
             G_TYPE_NONE, 1,
-            G_TYPE_STRING
-    );
+            G_TYPE_STRING);
 }
 
 static void decrypt_callback(GtkButton *button, gpointer user_data) {
