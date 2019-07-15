@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
     <gresource prefix="/ru/ogromny/lupus">
-        <file preprocess="xml-stripblanks">headerbar.ui</file>
-        <file preprocess="xml-stripblanks">profile.ui</file>
-        <file preprocess="xml-stripblanks">profile_chooser.ui</file>
-        <file preprocess="xml-stripblanks">profile_chooser_password_dialog.ui</file>
+        <file preprocess="xml-stripblanks" alias="headerbar.ui">ui/headerbar.ui</file>
+        <file preprocess="xml-stripblanks" alias="profile.ui">ui/profile.ui</file>
+        <file preprocess="xml-stripblanks" alias="profile_chooser.ui">ui/profile_chooser.ui</file>
+        <file preprocess="xml-stripblanks" alias="profile_chooser_password_dialog.ui">ui/profile_chooser_password_dialog.ui</file>
     </gresource>
 </gresources>

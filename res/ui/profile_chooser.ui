@@ -75,7 +75,7 @@
               <object class="GtkEntry" id="register_password">
                 <property name="can_focus">True</property>
                 <property name="margin_bottom">20</property>
-                <property name="text" translatable="yes">Profile password</property>
+                <property name="text" translatable="yes">Profile password ( leave empty for not )</property>
                 <property name="input_purpose">password</property>
               </object>
               <packing>
