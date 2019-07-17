@@ -11,6 +11,10 @@ typedef struct _LupusProfilePrivate LupusProfilePrivate;
 struct _LupusProfilePrivate {
     Tox *tox;
     GtkBox *box;
+    GtkMenuButton *status_button;
+    GtkImage *status_image; // TODO: handle avatar
+    GtkButton *none, *busy, *away, *offline;
+    gchar *status_name;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE(LupusProfile, lupus_profile, GTK_TYPE_BOX)
@@ -81,6 +85,30 @@ static void change_status_message_callback(LupusEditableLabel *editable, gchar *
     g_signal_emit_by_name(profile, "save");
 }
 
+static void change_status_callback(GtkButton *button, gpointer user_data) {
+    LupusProfilePrivate *priv = lupus_profile_get_instance_private(LUPUS_PROFILE(user_data));
+
+    gchar *status_name = g_object_get_data(G_OBJECT(button), "status");
+    if (g_strcmp0(status_name, priv->status_name) == 0) {
+        return;
+    }
+
+    if (g_strcmp0(status_name, "none")) {
+        tox_self_set_status(priv->tox, TOX_USER_STATUS_NONE);
+    } else if (g_strcmp0(status_name, "busy")) {
+        tox_self_set_status(priv->tox, TOX_USER_STATUS_BUSY);
+    } else if (g_strcmp0(status_name, "away")) {
+        tox_self_set_status(priv->tox, TOX_USER_STATUS_AWAY);
+    } else {
+        // TODO: handle disconnect
+    }
+
+    GtkImage *status_image = g_list_nth_data(gtk_container_get_children(GTK_CONTAINER(button)), 0);
+    gtk_image_set_from_pixbuf(priv->status_image, gtk_image_get_pixbuf(GTK_IMAGE(status_image)));
+
+    priv->status_name = status_name;
+}
+
 static void lupus_profile_constructed(GObject *object) {
     G_OBJECT_CLASS(lupus_profile_parent_class)->constructed(object);
 
@@ -109,6 +137,55 @@ static void lupus_profile_constructed(GObject *object) {
 
 static void lupus_profile_init(LupusProfile *instance) {
     gtk_widget_init_template(GTK_WIDGET(instance));
+
+    LupusProfilePrivate *priv = lupus_profile_get_instance_private(instance);
+
+    gtk_image_set_from_resource(priv->status_image, g_strconcat(LUPUS_RESOURCES, "/status_offline.png", NULL));
+    priv->status_name = "offline";
+
+    GtkWidget *status_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    gtk_widget_set_margin_top(status_box, 5);
+    gtk_widget_set_margin_end(status_box, 5);
+    gtk_widget_set_margin_bottom(status_box, 5);
+    gtk_widget_set_margin_start(status_box, 5);
+
+    GtkWidget *popover = gtk_popover_new(GTK_WIDGET(priv->status_button));
+    gtk_container_add(GTK_CONTAINER(popover), status_box);
+
+    GtkWidget *none_image = gtk_image_new_from_resource(g_strconcat(LUPUS_RESOURCES, "/status_none.png", NULL));
+    priv->none = GTK_BUTTON(gtk_button_new());
+    g_object_set_data(G_OBJECT(priv->none), "status", "none");
+    gtk_container_add(GTK_CONTAINER(priv->none), none_image);
+
+    GtkWidget *busy_image = gtk_image_new_from_resource(g_strconcat(LUPUS_RESOURCES, "/status_busy.png", NULL));
+    priv->busy = GTK_BUTTON(gtk_button_new());
+    g_object_set_data(G_OBJECT(priv->busy), "status", "busy");
+    gtk_container_add(GTK_CONTAINER(priv->busy), busy_image);
+
+    GtkWidget *away_image = gtk_image_new_from_resource(g_strconcat(LUPUS_RESOURCES, "/status_away.png", NULL));
+    priv->away = GTK_BUTTON(gtk_button_new());
+    g_object_set_data(G_OBJECT(priv->away), "status", "away");
+    gtk_container_add(GTK_CONTAINER(priv->away), away_image);
+
+    GtkWidget *offline_image = gtk_image_new_from_resource(g_strconcat(LUPUS_RESOURCES, "/status_offline.png", NULL));
+    priv->offline = GTK_BUTTON(gtk_button_new());
+    g_object_set_data(G_OBJECT(priv->offline), "status", "offline");
+    gtk_container_add(GTK_CONTAINER(priv->offline), offline_image);
+
+    g_signal_connect(priv->none, "clicked", G_CALLBACK(change_status_callback), instance);
+    g_signal_connect(priv->busy, "clicked", G_CALLBACK(change_status_callback), instance);
+    g_signal_connect(priv->away, "clicked", G_CALLBACK(change_status_callback), instance);
+    g_signal_connect(priv->offline, "clicked", G_CALLBACK(change_status_callback), instance);
+
+    gtk_box_pack_start(GTK_BOX(status_box), GTK_WIDGET(priv->none), 1, 1, 0);
+    gtk_box_pack_start(GTK_BOX(status_box), GTK_WIDGET(priv->busy), 1, 1, 0);
+    gtk_box_pack_start(GTK_BOX(status_box), GTK_WIDGET(priv->away), 1, 1, 0);
+    gtk_box_pack_start(GTK_BOX(status_box), GTK_WIDGET(priv->offline), 1, 1, 0);
+
+    gtk_menu_button_set_popover(priv->status_button, popover);
+    gtk_button_set_relief(GTK_BUTTON(priv->status_button), GTK_RELIEF_NONE);
+
+    gtk_widget_show_all(status_box);
 }
 
 static void lupus_profile_class_init(LupusProfileClass *class) {
@@ -117,6 +194,8 @@ static void lupus_profile_class_init(LupusProfileClass *class) {
     g_free(resource);
 
     gtk_widget_class_bind_template_child_private(GTK_WIDGET_CLASS(class), LupusProfile, box);
+    gtk_widget_class_bind_template_child_private(GTK_WIDGET_CLASS(class), LupusProfile, status_button);
+    gtk_widget_class_bind_template_child_private(GTK_WIDGET_CLASS(class), LupusProfile, status_image);
 
     GObjectClass *object_class = G_OBJECT_CLASS(class);
 
