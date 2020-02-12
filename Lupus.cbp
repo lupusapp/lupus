@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="Lupus"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="clang"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/ogromny/Code/C/lupus"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/ogromny/Code/C/lupus"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Lupus">
+				<Option output="/home/ogromny/Code/C/lupus/Lupus" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/ogromny/Code/C/lupus"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="clang"/>
+				<Compiler>
+					<Add directory="/usr/include/gtk-3.0"/>
+					<Add directory="/usr/include/pango-1.0"/>
+					<Add directory="/usr/include/glib-2.0"/>
+					<Add directory="/usr/lib64/glib-2.0/include"/>
+					<Add directory="/usr/lib64/libffi-3.3_rc0/include"/>
+					<Add directory="/usr/include/fribidi"/>
+					<Add directory="/usr/include/cairo"/>
+					<Add directory="/usr/include/pixman-1"/>
+					<Add directory="/usr/include/freetype2"/>
+					<Add directory="/usr/include/uuid"/>
+					<Add directory="/usr/include/libpng16"/>
+					<Add directory="/usr/include/harfbuzz"/>
+					<Add directory="/usr/include/gdk-pixbuf-2.0"/>
+					<Add directory="/usr/include/libmount"/>
+					<Add directory="/usr/include/blkid"/>
+					<Add directory="/usr/include/gio-unix-2.0"/>
+					<Add directory="/usr/include/libdrm"/>
+					<Add directory="/usr/include/atk-1.0"/>
+					<Add directory="/usr/include/at-spi2-atk/2.0"/>
+					<Add directory="/usr/include/at-spi-2.0"/>
+					<Add directory="/usr/include/dbus-1.0"/>
+					<Add directory="/usr/lib64/dbus-1.0/include"/>
+					<Add directory="/home/ogromny/Code/C/lupus/c-toxcore"/>
+					<Add directory="/usr/lib/llvm/9/bin/../../../../lib/clang/9.0.1/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 Lupus"/>
+					<CompileFile command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Lupus/fast">
+				<Option output="/home/ogromny/Code/C/lupus/Lupus" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/ogromny/Code/C/lupus"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="clang"/>
+				<Compiler>
+					<Add directory="/usr/include/gtk-3.0"/>
+					<Add directory="/usr/include/pango-1.0"/>
+					<Add directory="/usr/include/glib-2.0"/>
+					<Add directory="/usr/lib64/glib-2.0/include"/>
+					<Add directory="/usr/lib64/libffi-3.3_rc0/include"/>
+					<Add directory="/usr/include/fribidi"/>
+					<Add directory="/usr/include/cairo"/>
+					<Add directory="/usr/include/pixman-1"/>
+					<Add directory="/usr/include/freetype2"/>
+					<Add directory="/usr/include/uuid"/>
+					<Add directory="/usr/include/libpng16"/>
+					<Add directory="/usr/include/harfbuzz"/>
+					<Add directory="/usr/include/gdk-pixbuf-2.0"/>
+					<Add directory="/usr/include/libmount"/>
+					<Add directory="/usr/include/blkid"/>
+					<Add directory="/usr/include/gio-unix-2.0"/>
+					<Add directory="/usr/include/libdrm"/>
+					<Add directory="/usr/include/atk-1.0"/>
+					<Add directory="/usr/include/at-spi2-atk/2.0"/>
+					<Add directory="/usr/include/at-spi-2.0"/>
+					<Add directory="/usr/include/dbus-1.0"/>
+					<Add directory="/usr/lib64/dbus-1.0/include"/>
+					<Add directory="/home/ogromny/Code/C/lupus/c-toxcore"/>
+					<Add directory="/usr/lib/llvm/9/bin/../../../../lib/clang/9.0.1/include"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 Lupus/fast"/>
+					<CompileFile command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/ogromny/Code/C/lupus"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus.h">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_application.h">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_profilechooser.h">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_profilechooserpassworddialog.h">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/include/utils.h">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/main.c">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_application.c">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_profilechooser.c">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_profilechooserpassworddialog.c">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/src/resources.c">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/src/utils.c">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

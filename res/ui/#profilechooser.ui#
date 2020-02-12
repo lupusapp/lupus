@@ -2,6 +2,11 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
+  <object class="GtkImage" id="image1">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-missing-image</property>
+  </object>
   <template class="LupusProfileChooser" parent="GtkApplicationWindow">
     <property name="can_focus">False</property>
     <property name="resizable">False</property>
@@ -26,6 +31,7 @@
       <object class="GtkStack" id="stack">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="vhomogeneous">False</property>
         <property name="transition_type">slide-left-right</property>
         <property name="interpolate_size">True</property>
         <child>
@@ -72,7 +78,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="register_password">
+              <object class="GtkEntry" id="register_pass">
                 <property name="can_focus">True</property>
                 <property name="margin_bottom">20</property>
                 <property name="text" translatable="yes">Profile password ( leave empty for not )</property>
@@ -89,6 +95,7 @@
                 <property name="label" translatable="yes">Create the profile</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="image">image1</property>
               </object>
               <packing>
                 <property name="expand">True</property>

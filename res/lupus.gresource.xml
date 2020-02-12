@@ -3,8 +3,8 @@
     <gresource prefix="/ru/ogromny/lupus">
         <file preprocess="xml-stripblanks" alias="headerbar.ui">ui/headerbar.ui</file>
         <file preprocess="xml-stripblanks" alias="profile.ui">ui/profile.ui</file>
-        <file preprocess="xml-stripblanks" alias="profile_chooser.ui">ui/profile_chooser.ui</file>
-        <file preprocess="xml-stripblanks" alias="profile_chooser_password_dialog.ui">ui/profile_chooser_password_dialog.ui</file>
+        <file preprocess="xml-stripblanks" alias="profilechooser.ui">ui/profilechooser.ui</file>
+        <file preprocess="xml-stripblanks" alias="profilechooserpassworddialog.ui">ui/profilechooserpassworddialog.ui</file>
         <file alias="status_away.png">images/status_away.png</file>
         <file alias="status_busy.png">images/status_busy.png</file>
         <file alias="status_none.png">images/status_none.png</file>
