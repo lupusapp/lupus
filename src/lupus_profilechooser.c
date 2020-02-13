@@ -139,18 +139,14 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance) {
                                  TOX_ADDRESS_SIZE));
 
 free_a:
-    if (tox) {
-        free(tox);
-    }
+    g_free(tox);
     tox_options_free(options);
 free:
     g_free((gpointer)filename);
     if (error) {
         g_error_free(error);
     }
-    if (savedata) {
-        g_free(savedata);
-    }
+    g_free(savedata);
 }
 
 static void register_cb(LupusProfileChooser *instance) {
@@ -178,7 +174,7 @@ static void register_cb(LupusProfileChooser *instance) {
     tox_kill(tox);
 
 free:
-    g_free((void *)*data);
+    g_free((gpointer)*data);
 }
 
 static void propagate(char *profile, LupusProfileChooser *instance) {

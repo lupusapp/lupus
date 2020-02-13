@@ -2,11 +2,10 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
-  <template class="LupusHeaderbar" parent="GtkHeaderBar">
+  <template class="LupusMainHeaderBar" parent="GtkHeaderBar">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Lupus</property>
-    <property name="spacing">0</property>
     <property name="show_close_button">True</property>
     <child>
       <placeholder/>
