@@ -4,8 +4,6 @@
 #include "toxcore/tox.h"
 #include <gtk/gtk.h>
 
-void lupus_strcpy(char const *, char const **);
-
-void tox_save(Tox *, char const *, char const *, GtkWindow *, bool);
+void tox_save(Tox *, gchar const *, gchar const *, GtkWindow *, gboolean);
 
 #endif
