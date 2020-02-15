@@ -10,6 +10,4 @@ G_DECLARE_FINAL_TYPE(LupusApplication, lupus_application, LUPUS, APPLICATION,
 
 LupusApplication *lupus_application_new(void);
 
-static void lupus_application_activate(GApplication *);
-
 #endif

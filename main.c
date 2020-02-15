@@ -1,27 +1,21 @@
-#include "include/lupus_application.h"
 #include "include/lupus.h"
+#include "include/lupus_application.h"
 
 char *LUPUS_TOX_DIR;
 
-int main(int argc, char **argv) {
-    char const* config_dir;
+gint main(gint argc, gchar **argv) {
+    gchar const *config_dir;
 
-    if (!(config_dir = g_get_user_config_dir())) {
-        g_error("Cannot obtain config directory.");
-    }
+    g_return_val_if_fail((config_dir = g_get_user_config_dir()), 1);
 
-    if (!(LUPUS_TOX_DIR = g_strconcat(config_dir, "/tox/", NULL))) {
-        g_error("Cannot obtain tox directory.");
-    }
+    LUPUS_TOX_DIR = g_strconcat(config_dir, "/tox/", NULL);
+    g_return_val_if_fail(
+        g_file_test(LUPUS_TOX_DIR, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR), // NOLINT
+        1);
 
-    // NOLINTNEXTLINE
-    if (!(g_file_test(LUPUS_TOX_DIR, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR)))) {
-        g_error("Tox directory %s doesn't exist.", LUPUS_TOX_DIR);
-    }
-
-    int code = g_application_run(G_APPLICATION(lupus_application_new()), argc, argv);
-
+    gint res =
+        g_application_run(G_APPLICATION(lupus_application_new()), argc, argv);
     g_free(LUPUS_TOX_DIR);
 
-    return code;
+    return res;
 }

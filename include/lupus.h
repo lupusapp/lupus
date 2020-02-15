@@ -16,12 +16,13 @@
         gtk_widget_destroy(GTK_WIDGET(d));                                     \
     })
 
-#define lupus_success(i, ...)                                                    \
+#define lupus_success(i, ...)                                                  \
     ({                                                                         \
         GtkWidget *d = gtk_message_dialog_new(                                 \
             GTK_WINDOW(i), GTK_DIALOG_USE_HEADER_BAR, GTK_MESSAGE_ERROR,       \
             GTK_BUTTONS_CLOSE, NULL);                                          \
-        gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(d), "<b>Success</b>");  \
+        gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(d),                   \
+                                      "<b>Success</b>");                       \
         gtk_message_dialog_format_secondary_markup(GTK_MESSAGE_DIALOG(d),      \
                                                    __VA_ARGS__);               \
         gtk_dialog_run(GTK_DIALOG(d));                                         \
