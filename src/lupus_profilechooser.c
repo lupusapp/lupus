@@ -48,8 +48,8 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance) {
     if (tox_is_data_encrypted((guint8 *)savedata)) {
         LupusProfileChooserPasswordDialog *dialog =
             lupus_profilechooserpassworddialog_new();
-        g_signal_emit_by_name(dialog, "submit", G_CALLBACK(set_password_cb),
-                              &password);
+        g_signal_connect(dialog, "submit", G_CALLBACK(set_password_cb),
+                         &password);
 
         if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
             gtk_widget_destroy(GTK_WIDGET(dialog));
