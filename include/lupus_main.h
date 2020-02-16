@@ -8,7 +8,7 @@
 
 G_DECLARE_FINAL_TYPE(LupusMain, lupus_main, LUPUS, MAIN, GtkApplicationWindow)
 
-LupusMain *lupus_main_new(GtkApplication *, Tox const *, char const *,
-                          char const *);
+LupusMain *lupus_main_new(GtkApplication *, Tox const *, gchar const *,
+                          gchar const *);
 
 #endif

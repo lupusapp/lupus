@@ -27,26 +27,23 @@ static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
 enum { SAVE, LAST_SIGNAL };
 
-static unsigned signals[LAST_SIGNAL];
+static guint signals[LAST_SIGNAL];
 
 static void save_cb(LupusMain *instance) {
     tox_save((Tox *)instance->tox, instance->profile_filename,
-             instance->profile_password, GTK_WINDOW(instance), false);
+             instance->profile_password, GTK_WINDOW(instance), FALSE);
 }
 
-static void lupus_main_set_property(LupusMain *instance, unsigned property_id,
+static void lupus_main_set_property(LupusMain *instance, guint property_id,
                                     GValue const *value, GParamSpec *pspec) {
     switch (property_id) {
     case PROP_TOX:
-        g_free((gpointer)instance->tox); // TODO(ogromny): save tox before free
         instance->tox = g_value_get_pointer(value);
         break;
     case PROP_PROFILE_FILENAME:
-        g_free((gpointer)instance->profile_filename);
         instance->profile_filename = g_value_dup_string(value);
         break;
     case PROP_PROFILE_PASSWORD:
-        g_free((gpointer)instance->profile_password);
         instance->profile_password = g_value_dup_string(value);
         break;
     default:
@@ -54,7 +51,7 @@ static void lupus_main_set_property(LupusMain *instance, unsigned property_id,
     }
 }
 
-static void lupus_main_get_property(LupusMain *instance, unsigned property_id,
+static void lupus_main_get_property(LupusMain *instance, guint property_id,
                                     GValue *value, GParamSpec *pspec) {
     switch (property_id) {
     case PROP_TOX:
@@ -76,6 +73,9 @@ static void lupus_main_constructed(LupusMain *instance) {
         GTK_WINDOW(instance),
         GTK_WIDGET(instance->main_header_bar =
                        lupus_mainheaderbar_new(instance->tox, instance)));
+
+    G_OBJECT_CLASS(lupus_main_parent_class) // NOLINT
+        ->constructed(G_OBJECT(instance));  // NOLINT
 }
 
 static void lupus_main_class_init(LupusMainClass *class) {
@@ -93,9 +93,8 @@ static void lupus_main_class_init(LupusMainClass *class) {
         "profile-password", "Profile password", "Password of the tox profile.",
         NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY); // NOLINT
 
-    // NOLINTNEXTLINE
-    g_object_class_install_properties(G_OBJECT_CLASS(class), N_PROPERTIES,
-                                      obj_properties);
+    g_object_class_install_properties(G_OBJECT_CLASS(class), // NOLINT
+                                      N_PROPERTIES, obj_properties);
 
     signals[SAVE] = g_signal_new("save", LUPUS_TYPE_MAIN, G_SIGNAL_RUN_LAST, 0,
                                  NULL, NULL, NULL, G_TYPE_NONE, 0); // NOLINT
@@ -106,8 +105,8 @@ static void lupus_main_init(LupusMain *instance) {
 }
 
 LupusMain *lupus_main_new(GtkApplication *application, Tox const *tox,
-                          char const *profile_filename,
-                          char const *profile_password) {
+                          gchar const *profile_filename,
+                          gchar const *profile_password) {
     return g_object_new(LUPUS_TYPE_MAIN, "application", application, "tox", tox,
                         "profile-filename", profile_filename,
                         "profile-password", profile_password, NULL);
