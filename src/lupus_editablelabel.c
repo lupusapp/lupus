@@ -17,6 +17,7 @@ G_DEFINE_TYPE(LupusEditableLabel, lupus_editablelabel, GTK_TYPE_EVENT_BOX)
 #define MIN_LENGTH 1U << 0U
 #define MAX_LENGTH 1U << 12U
 #define DEFAULT_LENGTH MIN_LENGTH
+#define MAX_WIDTH_CHARS 1U << 7U
 
 enum { PROP_VALUE = 1, PROP_MAX_LENGTH, N_PROPERTIES };
 
@@ -73,13 +74,6 @@ static void lupus_editablelabel_get_property(LupusEditableLabel *instance,
     }
 }
 
-static void lupus_editablelabel_dispose(LupusEditableLabel *instance) {
-    g_free((gchar *)instance->value);
-
-    G_OBJECT_CLASS(lupus_editablelabel_parent_class) // NOLINT
-        ->dispose(G_OBJECT(instance));               // NOLINT
-}
-
 static void lupus_editablelabel_class_init(LupusEditableLabelClass *class) {
     gtk_widget_class_set_template_from_resource(
         GTK_WIDGET_CLASS(class), LUPUS_RESOURCES "/editablelabel.ui");
@@ -96,8 +90,6 @@ static void lupus_editablelabel_class_init(LupusEditableLabelClass *class) {
         lupus_editablelabel_set_property;
     G_OBJECT_CLASS(class)->get_property = // NOLINT
         lupus_editablelabel_get_property;
-    G_OBJECT_CLASS(class)->dispose = // NOLINT
-        lupus_editablelabel_dispose;
 
     obj_properties[PROP_VALUE] =
         g_param_spec_string("value", "Value", "Value of the editable label.",

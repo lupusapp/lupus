@@ -11,11 +11,15 @@
         <property name="height_request">30</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">label</property>
+        <property name="justify">center</property>
+        <property name="wrap">True</property>
+        <property name="wrap_mode">word-char</property>
+        <property name="max_width_chars">0</property>
       </object>
     </child>
   </template>
   <object class="GtkPopover" id="popover">
+    <property name="width_request">200</property>
     <property name="can_focus">False</property>
     <property name="relative_to">label</property>
     <property name="position">bottom</property>

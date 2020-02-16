@@ -13,9 +13,9 @@ struct _LupusMainHeaderBar {
     GtkButton *profile;
     GtkImage *profile_image;
     GtkPopover *popover;
-    GtkGrid *grid;
-    GtkFrame *frame;
-    GtkImage *profile_image_big;
+    GtkButton *profile_bigger;
+    GtkImage *profile_bigger_image;
+    GtkBox *vbox;
     LupusEditableLabel *name, *status_message;
 };
 
@@ -120,9 +120,18 @@ static void lupus_mainheaderbar_constructed(LupusMainHeaderBar *instance) {
     g_signal_connect(instance->status_message, "submit",
                      G_CALLBACK(submit_status_message_cb), instance);
 
-    gtk_grid_attach(instance->grid, GTK_WIDGET(instance->name), 1, 0, 2, 1);
-    gtk_grid_attach(instance->grid, GTK_WIDGET(instance->status_message), 1, 2,
-                    2, 3);
+    gtk_box_pack_end(instance->vbox, GTK_WIDGET(instance->name), FALSE, FALSE,
+                     0);
+    gtk_box_pack_end(instance->vbox,
+                     gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), TRUE, TRUE,
+                     0);
+    gtk_box_pack_end(instance->vbox, GTK_WIDGET(instance->status_message),
+                     FALSE, FALSE, 0);
+
+    gtk_widget_show_all(GTK_WIDGET(instance->vbox));
+
+    gtk_widget_set_can_focus(GTK_WIDGET(instance->profile), FALSE);
+    gtk_widget_set_can_focus(GTK_WIDGET(instance->profile_bigger), FALSE);
 
     G_OBJECT_CLASS(lupus_mainheaderbar_parent_class) // NOLINT
         ->constructed(G_OBJECT(instance));           // NOLINT
@@ -138,11 +147,11 @@ static void lupus_mainheaderbar_class_init(LupusMainHeaderBarClass *class) {
     gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
                                          LupusMainHeaderBar, popover);
     gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
-                                         LupusMainHeaderBar, grid);
+                                         LupusMainHeaderBar, profile_bigger);
+    gtk_widget_class_bind_template_child(
+        GTK_WIDGET_CLASS(class), LupusMainHeaderBar, profile_bigger_image);
     gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
-                                         LupusMainHeaderBar, frame);
-    gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
-                                         LupusMainHeaderBar, profile_image_big);
+                                         LupusMainHeaderBar, vbox);
 
     G_OBJECT_CLASS(class)->set_property = // NOLINT
         lupus_mainheaderbar_set_property;
@@ -169,8 +178,12 @@ static void lupus_mainheaderbar_init(LupusMainHeaderBar *instance) {
     g_signal_connect_swapped(instance->profile, "clicked",
                              G_CALLBACK(profile_clicked_cb), instance);
 
-    /* TODO: frame */
-    gtk_frame_set_label(instance->frame, NULL);
+    gtk_style_context_add_class(
+        gtk_widget_get_style_context(GTK_WIDGET(instance->profile)),
+        "profile--none");
+    gtk_style_context_add_class(
+        gtk_widget_get_style_context(GTK_WIDGET(instance->profile_bigger)),
+        "profile--none");
 }
 
 LupusMainHeaderBar *lupus_mainheaderbar_new(Tox const *tox,
