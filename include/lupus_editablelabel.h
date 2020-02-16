@@ -8,6 +8,6 @@
 G_DECLARE_FINAL_TYPE(LupusEditableLabel, lupus_editablelabel, LUPUS,
                      EDITABLELABEL, GtkEventBox)
 
-LupusEditableLabel *lupus_editablelabel_new(char const *);
+LupusEditableLabel *lupus_editablelabel_new(gchar const *);
 
 #endif
