@@ -110,8 +110,10 @@ static void lupus_mainheaderbar_constructed(LupusMainHeaderBar *instance) {
     name[name_size] = 0;
     status_message[status_message_size] = 0;
 
-    instance->name = lupus_editablelabel_new((gchar *)name);
-    instance->status_message = lupus_editablelabel_new((gchar *)status_message);
+    instance->name =
+        lupus_editablelabel_new((gchar *)name, TOX_MAX_NAME_LENGTH);
+    instance->status_message = lupus_editablelabel_new(
+        (gchar *)status_message, TOX_MAX_STATUS_MESSAGE_LENGTH);
 
     g_signal_connect(instance->name, "submit", G_CALLBACK(submit_name_cb),
                      instance);

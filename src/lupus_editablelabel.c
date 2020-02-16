@@ -14,7 +14,11 @@ struct _LupusEditableLabel {
 
 G_DEFINE_TYPE(LupusEditableLabel, lupus_editablelabel, GTK_TYPE_EVENT_BOX)
 
-enum { PROP_VALUE = 1, N_PROPERTIES };
+#define MIN_LENGTH 1U << 0U
+#define MAX_LENGTH 1U << 12U
+#define DEFAULT_LENGTH MIN_LENGTH
+
+enum { PROP_VALUE = 1, PROP_MAX_LENGTH, N_PROPERTIES };
 
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
@@ -40,25 +44,33 @@ static void lupus_editablelabel_set_property(LupusEditableLabel *instance,
                                              guint property_id,
                                              GValue const *value,
                                              GParamSpec *pspec) {
-    if (property_id != PROP_VALUE) {
+    switch (property_id) {
+    case PROP_VALUE:
+        instance->value = g_value_dup_string(value);
+        gtk_label_set_text(instance->label, instance->value);
+        gtk_entry_set_text(instance->entry, instance->value);
+        break;
+    case PROP_MAX_LENGTH:
+        gtk_entry_set_max_length(instance->entry, g_value_get_uint(value));
+        break;
+    default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(instance, property_id, pspec);
-        return;
     }
-
-    instance->value = g_value_dup_string(value);
-    gtk_label_set_text(instance->label, instance->value);
-    gtk_entry_set_text(instance->entry, instance->value);
 }
 
 static void lupus_editablelabel_get_property(LupusEditableLabel *instance,
                                              guint property_id, GValue *value,
                                              GParamSpec *pspec) {
-    if (property_id != PROP_VALUE) {
+    switch (property_id) {
+    case PROP_VALUE:
+        g_value_set_string(value, instance->value);
+        break;
+    case PROP_MAX_LENGTH:
+        g_value_set_uint(value, gtk_entry_get_max_length(instance->entry));
+        break;
+    default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(instance, property_id, pspec);
-        return;
     }
-
-    g_value_set_string(value, instance->value);
 }
 
 static void lupus_editablelabel_dispose(LupusEditableLabel *instance) {
@@ -90,6 +102,9 @@ static void lupus_editablelabel_class_init(LupusEditableLabelClass *class) {
     obj_properties[PROP_VALUE] =
         g_param_spec_string("value", "Value", "Value of the editable label.",
                             "", G_PARAM_READWRITE);
+    obj_properties[PROP_MAX_LENGTH] = g_param_spec_uint(
+        "max-length", "Max Length", "Maximum length for the entry.", MIN_LENGTH,
+        MAX_LENGTH, DEFAULT_LENGTH, G_PARAM_READWRITE);
 
     g_object_class_install_properties(G_OBJECT_CLASS(class), // NOLINT
                                       N_PROPERTIES, obj_properties);
@@ -112,6 +127,8 @@ static void lupus_editablelabel_init(LupusEditableLabel *instance) {
                              instance);
 }
 
-LupusEditableLabel *lupus_editablelabel_new(gchar const *value) {
-    return g_object_new(LUPUS_TYPE_EDITABLELABEL, "value", value, NULL);
+LupusEditableLabel *lupus_editablelabel_new(gchar const *value,
+                                            guint max_length) {
+    return g_object_new(LUPUS_TYPE_EDITABLELABEL, "value", value, "max-length",
+                        max_length, NULL);
 }
