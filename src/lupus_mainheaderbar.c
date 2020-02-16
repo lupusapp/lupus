@@ -110,7 +110,6 @@ static void lupus_mainheaderbar_constructed(LupusMainHeaderBar *instance) {
     name[name_size] = 0;
     status_message[status_message_size] = 0;
 
-    /* FIXME: dispose */
     instance->name = lupus_editablelabel_new((gchar *)name);
     instance->status_message = lupus_editablelabel_new((gchar *)status_message);
 

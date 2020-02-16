@@ -48,8 +48,6 @@ static void lupus_editablelabel_set_property(LupusEditableLabel *instance,
     instance->value = g_value_dup_string(value);
     gtk_label_set_text(instance->label, instance->value);
     gtk_entry_set_text(instance->entry, instance->value);
-
-    g_free((gchar *)g_value_get_string(value));
 }
 
 static void lupus_editablelabel_get_property(LupusEditableLabel *instance,

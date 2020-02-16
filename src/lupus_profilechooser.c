@@ -25,7 +25,7 @@ struct _LupusProfileChooser {
 G_DEFINE_TYPE(LupusProfileChooser, lupus_profilechooser,
               GTK_TYPE_APPLICATION_WINDOW)
 
-static void set_password_cb(LupusProfileChooserPasswordDialog *dialog,
+static void set_password_cb(LupusProfileChooserPasswordDialog *dialog, // NOLINT
                             gchar *password, gchar **destination) {
     *destination = g_strdup(password);
 }
@@ -69,7 +69,7 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance) {
 
         g_free(savedata);
         savedata = (gchar *)tmp;
-        savedata_size -= TOX_PASS_ENCRYPTION_EXTRA_LENGTH; // FIXME
+        savedata_size -= TOX_PASS_ENCRYPTION_EXTRA_LENGTH;
     }
 
     struct Tox_Options *options = tox_options_new(NULL);
@@ -92,7 +92,7 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance) {
     gtk_widget_destroy(GTK_WIDGET(instance));
 
 free:
-    g_free((gpointer)password);
+    g_free((gpointer)password); // NOLINT
     g_free((gpointer)filename);
 }
 
