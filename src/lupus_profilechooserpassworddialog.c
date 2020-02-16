@@ -8,12 +8,12 @@ struct _LupusProfileChooserPasswordDialog {
     GtkEntry *entry;
 };
 
+G_DEFINE_TYPE(LupusProfileChooserPasswordDialog,
+              lupus_profilechooserpassworddialog, GTK_TYPE_DIALOG)
+
 enum { SUBMIT, LAST_SIGNAL };
 
 static unsigned signals[LAST_SIGNAL];
-
-G_DEFINE_TYPE(LupusProfileChooserPasswordDialog,
-              lupus_profilechooserpassworddialog, GTK_TYPE_DIALOG)
 
 static void submit_cb(LupusProfileChooserPasswordDialog *instance) {
     g_signal_emit_by_name(instance, "response", GTK_RESPONSE_ACCEPT);
@@ -48,5 +48,5 @@ static void lupus_profilechooserpassworddialog_init(
 LupusProfileChooserPasswordDialog *
 lupus_profilechooserpassworddialog_new(void) {
     return g_object_new(LUPUS_TYPE_PROFILECHOOSERPASSWORDDIALOG,
-                        "use-header-bar", 1, NULL);
+                        "use-header-bar", TRUE, NULL);
 }
