@@ -33,8 +33,9 @@ void tox_save(Tox *tox, gchar const *filename, gchar const *password,
         goto free;
     }
 
-    lupus_success(window, "Profile \"%s\" %s.", filename,
-                  new ? "created" : "saved");
+    if (new) {
+        lupus_success(window, "Profile \"%s\" created.", filename);
+    }
 
 free:
     g_free(savedata);

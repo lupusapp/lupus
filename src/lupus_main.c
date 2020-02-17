@@ -16,6 +16,8 @@ struct _LupusMain {
 
 G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
 
+#define ITERATION_INTERVAL 100
+
 enum {
     PROP_TOX = 1,
     PROP_PROFILE_FILENAME,
@@ -68,11 +70,22 @@ static void lupus_main_get_property(LupusMain *instance, guint property_id,
     }
 }
 
+static gboolean iterate(LupusMain *instance) {
+    tox_iterate((Tox *)instance->tox, NULL);
+    return TRUE;
+}
+
 static void lupus_main_constructed(LupusMain *instance) {
     gtk_window_set_titlebar(
         GTK_WINDOW(instance),
         GTK_WIDGET(instance->main_header_bar =
                        lupus_mainheaderbar_new(instance->tox, instance)));
+
+    /* Iterate manually, because g_timeout_add will execute source_func at the
+     * end of the first interval. */
+    tox_iterate((Tox *)instance->tox, NULL);
+    g_timeout_add(tox_iteration_interval(instance->tox) * ITERATION_INTERVAL,
+                  G_SOURCE_FUNC(iterate), instance);
 
     G_OBJECT_CLASS(lupus_main_parent_class) // NOLINT
         ->constructed(G_OBJECT(instance));  // NOLINT

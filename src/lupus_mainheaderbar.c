@@ -4,6 +4,10 @@
 #include "../include/lupus_main.h"
 #include "../include/utils.h"
 
+/*
+ * TODO(ogromny): avatar, status
+ */
+
 struct _LupusMainHeaderBar {
     GtkHeaderBar parent_instance;
 
