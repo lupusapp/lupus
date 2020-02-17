@@ -10,6 +10,7 @@
 G_DECLARE_FINAL_TYPE(LupusMainHeaderBar, lupus_mainheaderbar, LUPUS,
                      MAINHEADERBAR, GtkHeaderBar)
 
-LupusMainHeaderBar *lupus_mainheaderbar_new(Tox const *, LupusMain const *);
+LupusMainHeaderBar *lupus_mainheaderbar_new(Tox const *, LupusMain const *,
+                                            gint);
 
 #endif

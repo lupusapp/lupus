@@ -2,7 +2,7 @@
 #include "../include/lupus.h"
 #include "../include/lupus_mainheaderbar.h"
 #include "../include/utils.h"
-#include <drm_mode.h>
+#include <sodium.h>
 
 struct _LupusMain {
     GtkApplicationWindow parent_instance;
@@ -16,7 +16,25 @@ struct _LupusMain {
 
 G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
 
-#define ITERATION_INTERVAL 100
+#define TOX_PORT 33445
+
+typedef struct DHT_node {
+    gchar const *ip;
+    guint16 port;
+    gchar const key_hex[TOX_PUBLIC_KEY_SIZE * 2 + 1];
+    guchar const key_bin[TOX_PUBLIC_KEY_SIZE];
+} DHT_node;
+
+static DHT_node nodes[] = {
+    {"85.172.30.117", TOX_PORT,
+     "8E7D0B859922EF569298B4D261A8CCB5FEA14FB91ED412A7603A585A25698832", 0},
+    {"95.31.18.227", TOX_PORT,
+     "257744DBF57BE3E117FE05D145B5F806089428D4DCE4E3D0D50616AA16D9417E", 0},
+    {"94.45.70.19", TOX_PORT,
+     "CE049A748EB31F0377F94427E8E3D219FC96509D4F9D16E181E956BC5B1C4564", 0},
+    {"46.229.52.198", TOX_PORT,
+     "813C8F4187833EF0655B10F7752141A352248462A567529A38B6BBF73E979307", 0},
+};
 
 enum {
     PROP_TOX = 1,
@@ -70,8 +88,38 @@ static void lupus_main_get_property(LupusMain *instance, guint property_id,
     }
 }
 
+static void connection_status_cb(Tox *tox,                         // NOLINT
+                                 TOX_CONNECTION connection_status, // NOLINT
+                                 LupusMain *instance) {            // NOLINT
+    gint status;
+    g_object_get(instance->main_header_bar, "status", &status, NULL);
+
+    /* TODO: handle disconnection */
+    g_warn_if_fail(connection_status != TOX_CONNECTION_NONE);
+
+    switch (connection_status) {
+    case TOX_CONNECTION_UDP:
+    case TOX_CONNECTION_TCP:
+        /* Return if status is already online,busy or away */
+        if (status != -1) {
+            return;
+        }
+
+        g_object_set(instance->main_header_bar, "status", TOX_USER_STATUS_NONE,
+                     NULL);
+        break;
+    default:
+        /* Return if status is already offline */
+        if (status == -1) {
+            return;
+        }
+
+        g_object_set(instance->main_header_bar, "status", -1, NULL);
+    }
+}
+
 static gboolean iterate(LupusMain *instance) {
-    tox_iterate((Tox *)instance->tox, NULL);
+    tox_iterate((Tox *)instance->tox, instance);
     return TRUE;
 }
 
@@ -79,13 +127,26 @@ static void lupus_main_constructed(LupusMain *instance) {
     gtk_window_set_titlebar(
         GTK_WINDOW(instance),
         GTK_WIDGET(instance->main_header_bar =
-                       lupus_mainheaderbar_new(instance->tox, instance)));
+                       lupus_mainheaderbar_new(instance->tox, instance, -1)));
 
-    /* Iterate manually, because g_timeout_add will execute source_func at the
-     * end of the first interval. */
-    tox_iterate((Tox *)instance->tox, NULL);
-    g_timeout_add(tox_iteration_interval(instance->tox) * ITERATION_INTERVAL,
-                  G_SOURCE_FUNC(iterate), instance);
+    /* Bootstrap */
+    for (gsize i = 0, j = G_N_ELEMENTS(nodes); i < j; ++i) {
+        sodium_hex2bin((guchar *)nodes[i].key_bin, sizeof(nodes[i].key_bin),
+                       nodes[i].key_hex, sizeof(nodes[i].key_hex) - 1, NULL,
+                       NULL, NULL);
+        if (!tox_bootstrap((Tox *)instance->tox, nodes[i].ip, nodes[i].port,
+                           nodes[i].key_bin, NULL)) {
+            g_warning("Cannot bootstrap %s.", nodes[i].ip);
+        }
+    }
+    /* Tox Callbacks */
+    tox_callback_self_connection_status(
+        (Tox *)instance->tox,
+        (tox_self_connection_status_cb *)connection_status_cb);
+
+    /* FIXME: maybe 50 is too fast */
+    g_timeout_add(tox_iteration_interval(instance->tox), G_SOURCE_FUNC(iterate),
+                  instance);
 
     G_OBJECT_CLASS(lupus_main_parent_class) // NOLINT
         ->constructed(G_OBJECT(instance));  // NOLINT

@@ -13,6 +13,7 @@ struct _LupusMainHeaderBar {
 
     Tox const *tox;
     LupusMain *main;
+    gint status;
 
     GtkButton *profile;
     GtkImage *profile_image;
@@ -25,7 +26,7 @@ struct _LupusMainHeaderBar {
 
 G_DEFINE_TYPE(LupusMainHeaderBar, lupus_mainheaderbar, GTK_TYPE_HEADER_BAR)
 
-enum { PROP_TOX = 1, PROP_MAIN, N_PROPERTIES };
+enum { PROP_TOX = 1, PROP_MAIN, PROP_STATUS, N_PROPERTIES };
 
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
@@ -81,6 +82,55 @@ static void lupus_mainheaderbar_set_property(LupusMainHeaderBar *instance,
     case PROP_MAIN:
         instance->main = g_value_get_pointer(value);
         break;
+    case PROP_STATUS: {
+        GtkStyleContext *profile_context =
+            gtk_widget_get_style_context(GTK_WIDGET(instance->profile));
+        GtkStyleContext *profile_bigger_context =
+            gtk_widget_get_style_context(GTK_WIDGET(instance->profile_bigger));
+
+        GList *profile_class = gtk_style_context_list_classes(profile_context);
+        GList *profile_bigger_class =
+            gtk_style_context_list_classes(profile_context);
+
+        for (GList *a = profile_class; a != NULL; a = a->next) {
+            if (g_str_has_prefix(a->data, "profile--")) {
+                gtk_style_context_remove_class(profile_context, a->data);
+            }
+        }
+        for (GList *a = profile_bigger_class; a != NULL; a = a->next) {
+            if (g_str_has_prefix(a->data, "profile--")) {
+                gtk_style_context_remove_class(profile_bigger_context, a->data);
+            }
+        }
+
+        g_list_free(profile_class);
+        g_list_free(profile_bigger_class);
+
+        instance->status = g_value_get_int(value);
+
+        switch (instance->status) {
+        case TOX_USER_STATUS_NONE:
+            gtk_style_context_add_class(profile_context, "profile--none");
+            gtk_style_context_add_class(profile_bigger_context,
+                                        "profile--none");
+            break;
+        case TOX_USER_STATUS_AWAY:
+            gtk_style_context_add_class(profile_context, "profile--away");
+            gtk_style_context_add_class(profile_bigger_context,
+                                        "profile--away");
+            break;
+        case TOX_USER_STATUS_BUSY:
+            gtk_style_context_add_class(profile_context, "profile--busy");
+            gtk_style_context_add_class(profile_bigger_context,
+                                        "profile--busy");
+            break;
+        default:
+            gtk_style_context_add_class(profile_context, "profile--offline");
+            gtk_style_context_add_class(profile_bigger_context,
+                                        "profile--offline");
+        }
+        break;
+    }
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(instance, property_id, pspec);
     }
@@ -95,6 +145,9 @@ static void lupus_mainheaderbar_get_property(LupusMainHeaderBar *instance,
         break;
     case PROP_MAIN:
         g_value_set_pointer(value, (gpointer)instance->main);
+        break;
+    case PROP_STATUS:
+        g_value_set_int(value, instance->status);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(instance, property_id, pspec);
@@ -172,6 +225,10 @@ static void lupus_mainheaderbar_class_init(LupusMainHeaderBarClass *class) {
         "main", "Main", "LupusMain parent.",
         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY); // NOLINT
 
+    obj_properties[PROP_STATUS] =
+        g_param_spec_int("status", "Status", "Tox status.", -1,
+                         TOX_USER_STATUS_BUSY, -1, G_PARAM_READWRITE);
+
     g_object_class_install_properties(G_OBJECT_CLASS(class), // NOLINT
                                       N_PROPERTIES, obj_properties);
 }
@@ -181,17 +238,10 @@ static void lupus_mainheaderbar_init(LupusMainHeaderBar *instance) {
 
     g_signal_connect_swapped(instance->profile, "clicked",
                              G_CALLBACK(profile_clicked_cb), instance);
-
-    gtk_style_context_add_class(
-        gtk_widget_get_style_context(GTK_WIDGET(instance->profile)),
-        "profile--none");
-    gtk_style_context_add_class(
-        gtk_widget_get_style_context(GTK_WIDGET(instance->profile_bigger)),
-        "profile--none");
 }
 
-LupusMainHeaderBar *lupus_mainheaderbar_new(Tox const *tox,
-                                            LupusMain const *main) {
+LupusMainHeaderBar *
+lupus_mainheaderbar_new(Tox const *tox, LupusMain const *main, gint status) {
     return g_object_new(LUPUS_TYPE_MAINHEADERBAR, "tox", tox, "main", main,
-                        NULL);
+                        "status", status, NULL);
 }
