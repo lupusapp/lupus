@@ -6,12 +6,18 @@
 struct _LupusMainFriendList {
     GtkEventBox parent_instance;
 
+    Tox const *tox;
+
     GtkBox *box;
     GtkMenu *list_menu;
     GtkMenuItem *list_menu_addfriend;
 };
 
 G_DEFINE_TYPE(LupusMainFriendList, lupus_mainfriendlist, GTK_TYPE_EVENT_BOX)
+
+enum { PROP_TOX = 1, N_PROPERTIES };
+
+static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
 #define ADDFRIEND_DIALOG_WIDTH 350
 #define ADDFRIEND_DIALOG_HEIGHT 200
@@ -73,6 +79,29 @@ static gboolean click_cb(LupusMainFriendList *instance, GdkEvent *event) {
     return FALSE;
 }
 
+static void lupus_mainfriendlist_set_property(LupusMainFriendList *instance,
+                                              guint property_id,
+                                              GValue const *value,
+                                              GParamSpec *pspec) {
+    if (property_id != PROP_TOX) {
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(instance, property_id, pspec);
+        return;
+    }
+
+    instance->tox = g_value_get_pointer(value);
+}
+
+static void lupus_mainfriendlist_get_property(LupusMainFriendList *instance,
+                                              guint property_id, GValue *value,
+                                              GParamSpec *pspec) {
+    if (property_id != PROP_TOX) {
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(instance, property_id, pspec);
+        return;
+    }
+
+    g_value_set_pointer(value, (gpointer)instance->tox);
+}
+
 static void lupus_mainfriendlist_class_init(LupusMainFriendListClass *class) {
     gtk_widget_class_set_template_from_resource(
         GTK_WIDGET_CLASS(class), LUPUS_RESOURCES "/mainfriendlist.ui");
@@ -82,6 +111,18 @@ static void lupus_mainfriendlist_class_init(LupusMainFriendListClass *class) {
                                          LupusMainFriendList, list_menu);
     gtk_widget_class_bind_template_child(
         GTK_WIDGET_CLASS(class), LupusMainFriendList, list_menu_addfriend);
+
+    G_OBJECT_CLASS(class)->set_property = // NOLINT
+        lupus_mainfriendlist_set_property;
+    G_OBJECT_CLASS(class)->get_property = // NOLINT
+        lupus_mainfriendlist_get_property;
+
+    obj_properties[PROP_TOX] = g_param_spec_pointer(
+        "tox", "Tox", "Tox profile.",
+        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY); // NOLINT
+
+    g_object_class_install_properties(G_OBJECT_CLASS(class), // NOLINT
+                                      N_PROPERTIES, obj_properties);
 }
 
 static void lupus_mainfriendlist_init(LupusMainFriendList *instance) {
