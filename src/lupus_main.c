@@ -1,5 +1,6 @@
 #include "../include/lupus_main.h"
 #include "../include/lupus.h"
+#include "../include/lupus_mainfriendlist.h"
 #include "../include/lupus_mainheaderbar.h"
 #include "../include/utils.h"
 #include <sodium.h>
@@ -12,6 +13,8 @@ struct _LupusMain {
     char const *profile_password;
 
     LupusMainHeaderBar *main_header_bar;
+    GtkBox *box;
+    LupusMainFriendList *main_friend_list;
 };
 
 G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
@@ -88,9 +91,9 @@ static void lupus_main_get_property(LupusMain *instance, guint property_id,
     }
 }
 
-static void connection_status_cb(Tox *tox,                         // NOLINT
-                                 TOX_CONNECTION connection_status, // NOLINT
-                                 LupusMain *instance) {            // NOLINT
+static void connection_status_cb(Tox *tox, // NOLINT
+                                 TOX_CONNECTION connection_status,
+                                 LupusMain *instance) {
     gint status;
     g_object_get(instance->main_header_bar, "status", &status, NULL);
 
@@ -128,6 +131,14 @@ static void lupus_main_constructed(LupusMain *instance) {
         GTK_WINDOW(instance),
         GTK_WIDGET(instance->main_header_bar =
                        lupus_mainheaderbar_new(instance->tox, instance, -1)));
+
+    gtk_box_pack_start(
+        instance->box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0)),
+        GTK_WIDGET(instance->main_friend_list = lupus_mainfriendlist_new()),
+        FALSE, TRUE, 0);
+
+    gtk_container_add(GTK_CONTAINER(instance), GTK_WIDGET(instance->box));
+    gtk_widget_show_all(GTK_WIDGET(instance));
 
     /* Bootstrap */
     for (gsize i = 0, j = G_N_ELEMENTS(nodes); i < j; ++i) {

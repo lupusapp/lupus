@@ -16,8 +16,7 @@ gint main(gint argc, gchar **argv) {
         1);
 
     GtkCssProvider *provider = gtk_css_provider_new();
-    gtk_css_provider_load_from_resource(provider,
-                                        LUPUS_RESOURCES "/mainheaderbar.css");
+    gtk_css_provider_load_from_resource(provider, LUPUS_RESOURCES "/lupus.css");
     gtk_style_context_add_provider_for_screen(
         gdk_screen_get_default(), GTK_STYLE_PROVIDER(provider),
         GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
