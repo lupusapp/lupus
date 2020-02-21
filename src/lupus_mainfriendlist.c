@@ -1,12 +1,13 @@
 #include "../include/lupus_mainfriendlist.h"
 #include "../include/lupus.h"
 #include "toxcore/tox.h"
-#include <gdk/gdkwindow.h>
+#include <sodium.h>
 
 struct _LupusMainFriendList {
     GtkEventBox parent_instance;
 
     Tox const *tox;
+    LupusMain *main;
 
     GtkBox *box;
     GtkMenu *list_menu;
@@ -15,7 +16,7 @@ struct _LupusMainFriendList {
 
 G_DEFINE_TYPE(LupusMainFriendList, lupus_mainfriendlist, GTK_TYPE_EVENT_BOX)
 
-enum { PROP_TOX = 1, N_PROPERTIES };
+enum { PROP_TOX = 1, PROP_MAIN, N_PROPERTIES };
 
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
@@ -64,11 +65,50 @@ static void addfriend_cb(LupusMainFriendList *instance) {
         GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE); // NOLINT
 
     if (gtk_dialog_run(dialog) == 1) {
-        /* Add friend */
-        /* Save */
+        gchar const *address_hex = gtk_entry_get_text(friend_hex);
+        if (!(*address_hex)) {
+            lupus_error(NULL, "Please enter an address.");
+            goto end;
+        }
+
+        guchar address_bin[TOX_ADDRESS_SIZE];
+        gchar const *message = gtk_entry_get_text(friend_message);
+
+        sodium_hex2bin(address_bin, sizeof(address_bin), address_hex,
+                       strlen(address_hex), NULL, NULL, NULL);
+
+        enum TOX_ERR_FRIEND_ADD tox_err_friend_add;
+        tox_friend_add((Tox *)instance->tox, address_bin, (guint8 *)message,
+                       strlen(message), &tox_err_friend_add);
+
+        switch (tox_err_friend_add) {
+        case TOX_ERR_FRIEND_ADD_OK:
+            lupus_success(instance->main, "Friend successfully added.");
+            break;
+        case TOX_ERR_FRIEND_ADD_NO_MESSAGE:
+            lupus_error(instance->main, "Please enter a message.");
+            goto end;
+        case TOX_ERR_FRIEND_ADD_OWN_KEY:
+            lupus_error(instance->main, "It's your personal address.");
+            goto end;
+        case TOX_ERR_FRIEND_ADD_ALREADY_SENT:
+            lupus_error(instance->main, "Friend request already sent.");
+            goto end;
+        case TOX_ERR_FRIEND_ADD_BAD_CHECKSUM:
+            lupus_error(instance->main, "Wrong friend address.");
+            goto end;
+        default:
+            lupus_error(instance->main, "Cannot add friend.");
+            goto end;
+        }
+
+        /* FIXME: return value from save */
+        g_signal_emit_by_name(instance->main, "save", NULL);
+        
         /* Refresh list */
     }
 
+end:
     gtk_widget_destroy(GTK_WIDGET(dialog));
 }
 
@@ -83,23 +123,31 @@ static void lupus_mainfriendlist_set_property(LupusMainFriendList *instance,
                                               guint property_id,
                                               GValue const *value,
                                               GParamSpec *pspec) {
-    if (property_id != PROP_TOX) {
+    switch (property_id) {
+    case PROP_TOX:
+        instance->tox = g_value_get_pointer(value);
+        break;
+    case PROP_MAIN:
+        instance->main = g_value_get_pointer(value);
+        break;
+    default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(instance, property_id, pspec);
-        return;
     }
-
-    instance->tox = g_value_get_pointer(value);
 }
 
 static void lupus_mainfriendlist_get_property(LupusMainFriendList *instance,
                                               guint property_id, GValue *value,
                                               GParamSpec *pspec) {
-    if (property_id != PROP_TOX) {
+    switch (property_id) {
+    case PROP_TOX:
+        g_value_set_pointer(value, (gpointer)instance->tox);
+        break;
+    case PROP_MAIN:
+        g_value_set_pointer(value, (gpointer)instance->main);
+        break;
+    default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(instance, property_id, pspec);
-        return;
     }
-
-    g_value_set_pointer(value, (gpointer)instance->tox);
 }
 
 static void lupus_mainfriendlist_class_init(LupusMainFriendListClass *class) {
@@ -121,6 +169,10 @@ static void lupus_mainfriendlist_class_init(LupusMainFriendListClass *class) {
         "tox", "Tox", "Tox profile.",
         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY); // NOLINT
 
+    obj_properties[PROP_MAIN] = g_param_spec_pointer(
+        "main", "Main", "LupusMain parent.",
+        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY); // NOLINT
+
     g_object_class_install_properties(G_OBJECT_CLASS(class), // NOLINT
                                       N_PROPERTIES, obj_properties);
 }
@@ -134,6 +186,7 @@ static void lupus_mainfriendlist_init(LupusMainFriendList *instance) {
                              G_CALLBACK(addfriend_cb), instance);
 }
 
-LupusMainFriendList *lupus_mainfriendlist_new(void) {
-    return g_object_new(LUPUS_TYPE_MAINFRIENDLIST, NULL);
+LupusMainFriendList *lupus_mainfriendlist_new(Tox const *tox, LupusMain *main) {
+    return g_object_new(LUPUS_TYPE_MAINFRIENDLIST, "tox", tox, "main", main,
+                        NULL);
 }

@@ -134,7 +134,8 @@ static void lupus_main_constructed(LupusMain *instance) {
 
     gtk_box_pack_start(
         instance->box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0)),
-        GTK_WIDGET(instance->main_friend_list = lupus_mainfriendlist_new()),
+        GTK_WIDGET(instance->main_friend_list =
+                       lupus_mainfriendlist_new(instance->tox, instance)),
         FALSE, TRUE, 0);
 
     gtk_container_add(GTK_CONTAINER(instance), GTK_WIDGET(instance->box));
