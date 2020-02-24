@@ -20,6 +20,7 @@ struct _LupusMain {
 G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
 
 #define TOX_PORT 33445
+#define SEPARATOR_MARGIN 5
 
 typedef struct DHT_node {
     gchar const *ip;
@@ -137,6 +138,11 @@ static void lupus_main_constructed(LupusMain *instance) {
         GTK_WIDGET(instance->main_friend_list =
                        lupus_mainfriendlist_new(instance->tox, instance)),
         FALSE, TRUE, 0);
+
+    GtkWidget *separator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
+    gtk_widget_set_margin_top(separator, SEPARATOR_MARGIN);
+    gtk_widget_set_margin_bottom(separator, SEPARATOR_MARGIN);
+    gtk_box_pack_start(instance->box, separator, FALSE, TRUE, 0);
 
     gtk_container_add(GTK_CONTAINER(instance), GTK_WIDGET(instance->box));
     gtk_widget_show_all(GTK_WIDGET(instance));
