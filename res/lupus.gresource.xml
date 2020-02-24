@@ -6,8 +6,7 @@
         <file preprocess="xml-stripblanks" alias="profilechooserpassworddialog.ui">ui/profilechooserpassworddialog.ui</file>
         <file preprocess="xml-stripblanks" alias="editablelabel.ui">ui/editablelabel.ui</file>
         <file preprocess="xml-stripblanks" alias="mainfriendlist.ui">ui/mainfriendlist.ui</file>
+        <file preprocess="xml-stripblanks" alias="mainfriend.ui">ui/mainfriend.ui</file>
         <file alias="lupus.css">styles/lupus.css</file>
-        <file alias="mainheaderbar.css">styles/mainheaderbar.css</file>
-        <file alias="mainfriendlist.css">styles/mainfriendlist.css</file>
     </gresource>
 </gresources>
