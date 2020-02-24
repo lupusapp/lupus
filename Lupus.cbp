@@ -134,6 +134,9 @@
 		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_main.h">
 			<Option target="Lupus"/>
 		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_mainfriend.h">
+			<Option target="Lupus"/>
+		</Unit>
 		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_mainfriendlist.h">
 			<Option target="Lupus"/>
 		</Unit>
@@ -159,6 +162,9 @@
 			<Option target="Lupus"/>
 		</Unit>
 		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_main.c">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_mainfriend.c">
 			<Option target="Lupus"/>
 		</Unit>
 		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_mainfriendlist.c">

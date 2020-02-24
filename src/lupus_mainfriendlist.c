@@ -1,5 +1,6 @@
 #include "../include/lupus_mainfriendlist.h"
 #include "../include/lupus.h"
+#include "../include/lupus_mainfriend.h"
 #include "toxcore/tox.h"
 #include <sodium.h>
 
@@ -19,10 +20,41 @@ G_DEFINE_TYPE(LupusMainFriendList, lupus_mainfriendlist, GTK_TYPE_EVENT_BOX)
 enum { PROP_TOX = 1, PROP_MAIN, N_PROPERTIES };
 
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
+static GHashTable *mainfriends;
 
 #define ADDFRIEND_DIALOG_WIDTH 350
 #define ADDFRIEND_DIALOG_HEIGHT 200
 #define ADDFRIEND_DIALOG_MARGIN 5
+#define SEPARATOR_MARGIN 5
+
+static void refresh(LupusMainFriendList *instance) {
+    guint32 friends[tox_self_get_friend_list_size(instance->tox)];
+    tox_self_get_friend_list(instance->tox, friends);
+
+    GList *children = gtk_container_get_children(GTK_CONTAINER(instance->box));
+    for (GList *child = children; child != NULL; child = g_list_next(child)) {
+        gtk_widget_destroy(GTK_WIDGET(child->data));
+    }
+    g_list_free(children);
+
+    g_hash_table_remove_all(mainfriends);
+
+    for (gsize i = 0, j = G_N_ELEMENTS(friends); i < j; ++i) {
+        LupusMainFriend *mainfriend =
+            lupus_mainfriend_new(instance->tox, instance->main, friends[i]);
+        g_hash_table_insert(mainfriends, GUINT_TO_POINTER(friends[i]),
+                            mainfriend);
+        gtk_box_pack_start(instance->box, GTK_WIDGET(mainfriend), FALSE, TRUE,
+                           0);
+
+        GtkWidget *separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+        gtk_widget_set_margin_start(GTK_WIDGET(separator), SEPARATOR_MARGIN);
+        gtk_widget_set_margin_end(GTK_WIDGET(separator), SEPARATOR_MARGIN);
+        gtk_box_pack_start(instance->box, separator, FALSE, TRUE, 0);
+    }
+
+    gtk_widget_show_all(GTK_WIDGET(instance->box));
+}
 
 // NOLINTNEXTLINE
 static void addfriend_cb(LupusMainFriendList *instance) {
@@ -104,8 +136,8 @@ static void addfriend_cb(LupusMainFriendList *instance) {
 
         /* FIXME: return value from save */
         g_signal_emit_by_name(instance->main, "save", NULL);
-        
-        /* Refresh list */
+
+        refresh(instance);
     }
 
 end:
@@ -150,6 +182,41 @@ static void lupus_mainfriendlist_get_property(LupusMainFriendList *instance,
     }
 }
 
+static void friend_name_cb(Tox *tox, guint32 friend_number) { // NOLINT
+    g_signal_emit_by_name(
+        g_hash_table_lookup(mainfriends, GUINT_TO_POINTER(friend_number)),
+        "update", UPDATE_NAME);
+}
+
+static void friend_status_message_cb(Tox *tox, // NOLINT
+                                     guint32 friend_number) {
+    g_signal_emit_by_name(
+        g_hash_table_lookup(mainfriends, GUINT_TO_POINTER(friend_number)),
+        "update", UPDATE_STATUS_MESSAGE);
+}
+
+static void friend_connection_status_cb(Tox *tox, // NOLINT
+                                        guint32 friend_number) {
+    g_signal_emit_by_name(
+        g_hash_table_lookup(mainfriends, GUINT_TO_POINTER(friend_number)),
+        "update", UPDATE_STATUS);
+}
+
+static void lupus_mainfriendlist_constructed(LupusMainFriendList *instance) {
+    mainfriends = g_hash_table_new(NULL, NULL);
+
+    tox_callback_friend_name((Tox *)instance->tox,
+                             (tox_friend_name_cb *)friend_name_cb);
+    tox_callback_friend_status_message(
+        (Tox *)instance->tox,
+        (tox_friend_status_message_cb *)friend_status_message_cb);
+    tox_callback_friend_connection_status(
+        (Tox *)instance->tox,
+        (tox_friend_connection_status_cb *)friend_connection_status_cb);
+
+    refresh(instance);
+}
+
 static void lupus_mainfriendlist_class_init(LupusMainFriendListClass *class) {
     gtk_widget_class_set_template_from_resource(
         GTK_WIDGET_CLASS(class), LUPUS_RESOURCES "/mainfriendlist.ui");
@@ -164,6 +231,8 @@ static void lupus_mainfriendlist_class_init(LupusMainFriendListClass *class) {
         lupus_mainfriendlist_set_property;
     G_OBJECT_CLASS(class)->get_property = // NOLINT
         lupus_mainfriendlist_get_property;
+    G_OBJECT_CLASS(class)->constructed = // NOLINT
+        lupus_mainfriendlist_constructed;
 
     obj_properties[PROP_TOX] = g_param_spec_pointer(
         "tox", "Tox", "Tox profile.",

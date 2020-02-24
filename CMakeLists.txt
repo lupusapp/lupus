@@ -9,8 +9,8 @@ set(CMAKE_C_CLANG_TIDY /usr/lib/llvm/9/bin/clang-tidy; # not portable
         -checks=*;
         -warnings-as-errors=*;)
 
-set(SRCS main.c src/lupus_application.c src/lupus_profilechooser.c src/resources.c src/lupus_profilechooserpassworddialog.c src/utils.c src/lupus_main.c src/lupus_mainheaderbar.c src/lupus_editablelabel.c src/lupus_mainfriendlist.c)
-set(INCLUDES include/lupus_application.h include/lupus.h include/lupus_profilechooser.h include/lupus_profilechooserpassworddialog.h include/utils.h include/lupus_main.h include/lupus_mainheaderbar.h include/lupus_editablelabel.h include/lupus_mainfriendlist.h)
+set(SRCS main.c src/lupus_application.c src/lupus_profilechooser.c src/resources.c src/lupus_profilechooserpassworddialog.c src/utils.c src/lupus_main.c src/lupus_mainheaderbar.c src/lupus_editablelabel.c src/lupus_mainfriendlist.c src/lupus_mainfriend.c)
+set(INCLUDES include/lupus_application.h include/lupus.h include/lupus_profilechooser.h include/lupus_profilechooserpassworddialog.h include/utils.h include/lupus_main.h include/lupus_mainheaderbar.h include/lupus_editablelabel.h include/lupus_mainfriendlist.h include/lupus_mainfriend.h)
 
 add_executable(Lupus main.c ${SRCS} ${INCLUDES})
 
