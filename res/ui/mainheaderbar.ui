@@ -17,7 +17,6 @@
     <property name="icon_size">0</property>
   </object>
   <template class="LupusMainHeaderBar" parent="GtkHeaderBar">
-    <property name="name">LupusMainHeaderBar</property>
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Lupus</property>
@@ -37,12 +36,8 @@
         </style>
       </object>
     </child>
-    <style>
-      <class name="LupusMainHeaderBar"/>
-    </style>
   </template>
   <object class="GtkPopover" id="popover">
-    <property name="name">LupusMainHeaderBarPopup</property>
     <property name="can_focus">False</property>
     <property name="relative_to">profile</property>
     <child>
