@@ -21,15 +21,5 @@
   <object class="GtkMenu" id="list_menu">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <child>
-      <object class="GtkImageMenuItem" id="list_menu_addfriend">
-        <property name="label">gtk-add</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="use_underline">True</property>
-        <property name="use_stock">True</property>
-        <property name="always_show_image">True</property>
-      </object>
-    </child>
   </object>
 </interface>

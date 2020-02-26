@@ -56,7 +56,6 @@ static void refresh(LupusMainFriendList *instance) {
     gtk_widget_show_all(GTK_WIDGET(instance->box));
 }
 
-// NOLINTNEXTLINE
 static void addfriend_cb(LupusMainFriendList *instance) {
     GtkDialog *dialog =
         GTK_DIALOG(g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, NULL));
@@ -224,8 +223,6 @@ static void lupus_mainfriendlist_class_init(LupusMainFriendListClass *class) {
                                          LupusMainFriendList, box);
     gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
                                          LupusMainFriendList, list_menu);
-    gtk_widget_class_bind_template_child(
-        GTK_WIDGET_CLASS(class), LupusMainFriendList, list_menu_addfriend);
 
     G_OBJECT_CLASS(class)->set_property = // NOLINT
         lupus_mainfriendlist_set_property;
@@ -248,6 +245,21 @@ static void lupus_mainfriendlist_class_init(LupusMainFriendListClass *class) {
 
 static void lupus_mainfriendlist_init(LupusMainFriendList *instance) {
     gtk_widget_init_template(GTK_WIDGET(instance));
+
+    GtkBox *box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
+    gtk_box_pack_start(
+        box, gtk_image_new_from_icon_name("list-add", GTK_ICON_SIZE_MENU),
+        FALSE, TRUE, 0);
+    gtk_box_pack_start(box, gtk_label_new("Add friend"), TRUE, TRUE, 0);
+
+    gtk_container_add(GTK_CONTAINER(instance->list_menu_addfriend =
+                                        GTK_MENU_ITEM(gtk_menu_item_new())),
+                      GTK_WIDGET(box));
+
+    gtk_menu_shell_append(GTK_MENU_SHELL(instance->list_menu),
+                          GTK_WIDGET(instance->list_menu_addfriend));
+
+    gtk_widget_show_all(GTK_WIDGET(instance->list_menu));
 
     g_signal_connect(instance, "button-press-event", G_CALLBACK(click_cb),
                      NULL);
