@@ -58,9 +58,9 @@ static void update_cb(LupusMainFriend *instance, guint flags) {
         tox_friend_get_name(instance->tox, instance->friend, name, NULL);
 
         if (g_strcmp0(gtk_label_get_text(instance->name), (gchar *)name)) {
-            gtk_label_set_text(instance->name, (gchar *)name);
+            gtk_label_set_text(instance->name, g_strdup((gchar *)name));
             gtk_widget_set_tooltip_text(GTK_WIDGET(instance->name),
-                                        (gchar *)name);
+                                        g_strdup((gchar *)name));
         }
     }
 
@@ -73,9 +73,9 @@ static void update_cb(LupusMainFriend *instance, guint flags) {
         if (g_strcmp0(gtk_label_get_text(instance->status_message),
                       (gchar *)status_message)) {
             gtk_label_set_text(instance->status_message,
-                               (gchar *)status_message);
+                               g_strdup((gchar *)status_message));
             gtk_widget_set_tooltip_text(GTK_WIDGET(instance->status_message),
-                                        (gchar *)status_message);
+                                        g_strdup((gchar *)status_message));
         }
     }
 }
