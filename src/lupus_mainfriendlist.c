@@ -181,29 +181,58 @@ static void lupus_mainfriendlist_get_property(LupusMainFriendList *instance,
     }
 }
 
-static void friend_name_cb(Tox *tox, guint32 friend_number) { // NOLINT
+static void friend_status_cb(Tox *tox, // NOLINT
+                             guint32 friend_number,
+                             TOX_USER_STATUS user_status) {
+    GPtrArray *data = g_ptr_array_new();
+    g_ptr_array_add(data, GINT_TO_POINTER(user_status));
+
     g_signal_emit_by_name(
         g_hash_table_lookup(mainfriends, GUINT_TO_POINTER(friend_number)),
-        "update", UPDATE_NAME);
+        "update", UPDATE_STATUS, data);
+}
+
+static void friend_name_cb(Tox *tox, // NOLINT
+                           guint32 friend_number, guint8 *name,
+                           gsize name_size) {
+    GPtrArray *data = g_ptr_array_new();
+    g_ptr_array_add(data, name);
+    g_ptr_array_add(data, GUINT_TO_POINTER(name_size));
+
+    g_signal_emit_by_name(
+        g_hash_table_lookup(mainfriends, GUINT_TO_POINTER(friend_number)),
+        "update", UPDATE_NAME, data);
 }
 
 static void friend_status_message_cb(Tox *tox, // NOLINT
-                                     guint32 friend_number) {
+                                     guint32 friend_number,
+                                     guint8 *status_message,
+                                     gsize status_message_size) {
+    GPtrArray *data = g_ptr_array_new();
+    g_ptr_array_add(data, status_message);
+    g_ptr_array_add(data, GUINT_TO_POINTER(status_message_size));
+
     g_signal_emit_by_name(
         g_hash_table_lookup(mainfriends, GUINT_TO_POINTER(friend_number)),
-        "update", UPDATE_STATUS_MESSAGE);
+        "update", UPDATE_STATUS_MESSAGE, data);
 }
 
 static void friend_connection_status_cb(Tox *tox, // NOLINT
-                                        guint32 friend_number) {
+                                        guint32 friend_number,
+                                        TOX_CONNECTION connection_status) {
+    GPtrArray *data = g_ptr_array_new();
+    g_ptr_array_add(data, GINT_TO_POINTER(connection_status));
+
     g_signal_emit_by_name(
         g_hash_table_lookup(mainfriends, GUINT_TO_POINTER(friend_number)),
-        "update", UPDATE_STATUS);
+        "update", UPDATE_CONNECTION, data);
 }
 
 static void lupus_mainfriendlist_constructed(LupusMainFriendList *instance) {
     mainfriends = g_hash_table_new(NULL, NULL);
 
+    tox_callback_friend_status((Tox *)instance->tox,
+                               (tox_friend_status_cb *)friend_status_cb);
     tox_callback_friend_name((Tox *)instance->tox,
                              (tox_friend_name_cb *)friend_name_cb);
     tox_callback_friend_status_message(

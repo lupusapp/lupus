@@ -22,7 +22,7 @@ enum { UPDATE, LAST_SIGNAL };
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 static guint signals[LAST_SIGNAL];
 
-static void update_cb(LupusMainFriend *instance, guint flags) {
+static void update_cb(LupusMainFriend *instance, guint flags, GPtrArray *data) {
     if (flags & UPDATE_STATUS) { // NOLINT
         GtkStyleContext *profile_context =
             gtk_widget_get_style_context(GTK_WIDGET(instance->profile));
@@ -37,7 +37,7 @@ static void update_cb(LupusMainFriend *instance, guint flags) {
         }
         g_list_free(profile_classes);
 
-        switch (tox_friend_get_status(instance->tox, instance->friend, NULL)) {
+        switch (GPOINTER_TO_INT(g_ptr_array_index(data, 0))) {
         case TOX_USER_STATUS_NONE:
             gtk_style_context_add_class(profile_context, "profile--none");
             break;
@@ -47,37 +47,53 @@ static void update_cb(LupusMainFriend *instance, guint flags) {
         case TOX_USER_STATUS_BUSY:
             gtk_style_context_add_class(profile_context, "profile--busy");
             break;
-        default:
-            gtk_style_context_add_class(profile_context, "profile--offline");
         }
     }
 
     if (flags & UPDATE_NAME) { // NOLINT
-        guint8 name[tox_friend_get_name_size(instance->tox, instance->friend,
-                                             NULL)];
-        tox_friend_get_name(instance->tox, instance->friend, name, NULL);
+        gchar const *const name = g_ptr_array_index(data, 0);
 
-        if (g_strcmp0(gtk_label_get_text(instance->name), (gchar *)name)) {
-            gtk_label_set_text(instance->name, g_strdup((gchar *)name));
-            gtk_widget_set_tooltip_text(GTK_WIDGET(instance->name),
-                                        g_strdup((gchar *)name));
+        if (g_strcmp0(gtk_label_get_text(instance->name), name)) {
+            gtk_label_set_text(instance->name, name);
+            gtk_widget_set_tooltip_text(GTK_WIDGET(instance->name), name);
         }
     }
 
     if (flags & UPDATE_STATUS_MESSAGE) { // NOLINT
-        guint8 status_message[tox_friend_get_status_message_size(
-            instance->tox, instance->friend, NULL)];
-        tox_friend_get_status_message(instance->tox, instance->friend,
-                                      status_message, NULL);
+        gchar const *const status_message = g_ptr_array_index(data, 0);
 
         if (g_strcmp0(gtk_label_get_text(instance->status_message),
-                      (gchar *)status_message)) {
-            gtk_label_set_text(instance->status_message,
-                               g_strdup((gchar *)status_message));
+                      status_message)) {
+            gtk_label_set_text(instance->status_message, status_message);
             gtk_widget_set_tooltip_text(GTK_WIDGET(instance->status_message),
-                                        g_strdup((gchar *)status_message));
+                                        status_message);
         }
     }
+
+    if (flags & UPDATE_CONNECTION) { // NOLINT
+        if (GPOINTER_TO_INT(g_ptr_array_index(data, 0)) !=
+            TOX_CONNECTION_NONE) {
+            goto end;
+        }
+
+        GtkStyleContext *profile_context =
+            gtk_widget_get_style_context(GTK_WIDGET(instance->profile));
+
+        GList *profile_classes =
+            gtk_style_context_list_classes(profile_context);
+        for (GList *class = profile_classes; class != NULL;
+             class = class->next) {
+            if (g_str_has_prefix(class->data, "profile--")) {
+                gtk_style_context_remove_class(profile_context, class->data);
+            }
+        }
+        g_list_free(profile_classes);
+
+        gtk_style_context_add_class(profile_context, "profile--offline");
+    }
+
+end:
+    g_ptr_array_free(data, TRUE);
 }
 
 static void lupus_mainfriend_set_property(LupusMainFriend *instance,
@@ -196,9 +212,9 @@ static void lupus_mainfriend_class_init(LupusMainFriendClass *class) {
     g_object_class_install_properties(G_OBJECT_CLASS(class), // NOLINT
                                       N_PROPERTIES, obj_properties);
 
-    signals[UPDATE] =
-        g_signal_new("update", LUPUS_TYPE_MAINFRIEND, G_SIGNAL_RUN_LAST, 0,
-                     NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_UINT); // NOLINT
+    signals[UPDATE] = g_signal_new(
+        "update", LUPUS_TYPE_MAINFRIEND, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
+        G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_POINTER); // NOLINT
 }
 
 static void lupus_mainfriend_init(LupusMainFriend *instance) {
