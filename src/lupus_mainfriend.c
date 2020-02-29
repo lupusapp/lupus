@@ -134,14 +134,20 @@ static void lupus_mainfriend_get_property(LupusMainFriend *instance,
 }
 
 static void lupus_mainfriend_constructed(LupusMainFriend *instance) {
-    guint8
-        name[tox_friend_get_name_size(instance->tox, instance->friend, NULL)];
-    tox_friend_get_name(instance->tox, instance->friend, name, NULL);
+    gsize name_size =
+        tox_friend_get_name_size(instance->tox, instance->friend, NULL);
+    gsize status_message_size = tox_friend_get_status_message_size(
+        instance->tox, instance->friend, NULL);
 
-    guint8 status_message[tox_friend_get_status_message_size(
-        instance->tox, instance->friend, NULL)];
+    guint8 name[name_size];
+    guint8 status_message[status_message_size];
+
+    tox_friend_get_name(instance->tox, instance->friend, name, NULL);
     tox_friend_get_status_message(instance->tox, instance->friend,
                                   status_message, NULL);
+
+    name[name_size] = 0;
+    status_message[status_message_size] = 0;
 
     if (*name) {
         gtk_label_set_text(instance->name, (gchar *)name);
