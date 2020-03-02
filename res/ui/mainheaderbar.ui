@@ -33,6 +33,7 @@
         <property name="always_show_image">True</property>
         <style>
           <class name="profile"/>
+          <class name="profile--offline"/>
         </style>
       </object>
     </child>
@@ -63,6 +64,7 @@
             <property name="always_show_image">True</property>
             <style>
               <class name="profile"/>
+              <class name="profile--offline"/>
             </style>
           </object>
           <packing>

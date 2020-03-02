@@ -16,12 +16,13 @@ struct _LupusMainHeaderBar {
     Tox const *tox;
     LupusMain *main;
     gint status;
+    gint connection;
 
     GtkButton *profile;
     GtkImage *profile_image;
     GtkMenu *profile_popover;
     GtkMenuItem *profile_popover_none, *profile_popover_away,
-        *profile_popover_busy, *profile_popover_offline, *profile_popover_toxid;
+        *profile_popover_busy, *profile_popover_toxid;
     GtkPopover *popover;
     GtkButton *profile_bigger;
     GtkImage *profile_bigger_image;
@@ -31,14 +32,11 @@ struct _LupusMainHeaderBar {
 
 G_DEFINE_TYPE(LupusMainHeaderBar, lupus_mainheaderbar, GTK_TYPE_HEADER_BAR)
 
-enum { PROP_TOX = 1, PROP_MAIN, PROP_STATUS, N_PROPERTIES };
+enum { PROP_TOX = 1, PROP_MAIN, PROP_STATUS, PROP_CONNECTION, N_PROPERTIES };
 
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
-#define TOXID_DIALOG_WIDTH 350
-#define TOXID_DIALOG_HEIGHT 200
 #define TOXID_DIALOG_MARGIN 5
-#define TOXID_DIALOG_IMAGE_SIZE 64
 
 static void profile_clicked_cb(LupusMainHeaderBar *instance) {
     gtk_popover_popup(instance->popover);
@@ -98,15 +96,13 @@ static void change_status_cb(GtkMenuItem *menuitem,
         g_object_set(instance, "status", TOX_USER_STATUS_AWAY, NULL);
     } else if (menuitem == instance->profile_popover_busy) {
         g_object_set(instance, "status", TOX_USER_STATUS_BUSY, NULL);
-    } else {
-        g_object_set(instance, "status", TOX_USER_STATUS_BUSY + 1, NULL);
     }
 }
 
 static void toxid_cb(GtkMenuItem *menuitem, // NOLINT
                      LupusMainHeaderBar *instance) {
-    GtkDialog *dialog =
-        GTK_DIALOG(g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, "title", "ToxID", NULL));
+    GtkDialog *dialog = GTK_DIALOG(g_object_new(
+        GTK_TYPE_DIALOG, "use-header-bar", TRUE, "title", "ToxID", NULL));
 
     gtk_container_remove(
         GTK_CONTAINER(dialog),
@@ -141,6 +137,13 @@ static void lupus_mainheaderbar_set_property(LupusMainHeaderBar *instance,
                                              guint property_id,
                                              GValue const *value,
                                              GParamSpec *pspec) {
+    gchar static const *class_name[] = {
+        "profile--none",
+        "profile--away",
+        "profile--busy",
+        "profile--offline",
+    };
+
     switch (property_id) {
     case PROP_TOX:
         instance->tox = g_value_get_pointer(value);
@@ -149,49 +152,67 @@ static void lupus_mainheaderbar_set_property(LupusMainHeaderBar *instance,
         instance->main = g_value_get_pointer(value);
         break;
     case PROP_STATUS: {
-        remove_class_with_prefix(instance->profile, "profile--");
-        remove_class_with_prefix(instance->profile_bigger, "profile--");
-
         instance->status = g_value_get_int(value);
 
         /*
          * Enable all status menuitem except the selected status
          */
+        //        gtk_widget_set_sensitive(GTK_WIDGET(instance->profile_popover_none),
+        //                                 TRUE);
+        //        gtk_widget_set_sensitive(GTK_WIDGET(instance->profile_popover_away),
+        //                                 TRUE);
+        //        gtk_widget_set_sensitive(GTK_WIDGET(instance->profile_popover_busy),
+        //                                 TRUE);
         int static const offset[] = {
             offsetof(LupusMainHeaderBar, profile_popover_none),
             offsetof(LupusMainHeaderBar, profile_popover_away),
             offsetof(LupusMainHeaderBar, profile_popover_busy),
-            offsetof(LupusMainHeaderBar, profile_popover_offline),
         };
         gpointer actual =
-            *(gpointer *)((gchar *)instance + offset[instance->status]);
+            (instance->status == TOX_USER_STATUS_BUSY + 1)
+                ? NULL
+                : *(gpointer *)((gchar *)instance + offset[instance->status]);
         for (gsize i = 0, j = G_N_ELEMENTS(offset); i < j; ++i) {
             gpointer item = *(gpointer *)((gchar *)instance + offset[i]);
             gtk_widget_set_sensitive(GTK_WIDGET(item),
                                      (item == actual) ? FALSE : TRUE);
         }
 
-        g_signal_emit_by_name(instance->main,
-                              (instance->status == TOX_USER_STATUS_BUSY + 1)
-                                  ? "disconnect"
-                                  : "connect",
-                              NULL);
         if (instance->status != TOX_USER_STATUS_BUSY + 1) {
             tox_self_set_status((Tox *)instance->tox, instance->status);
         }
 
-        gchar static const *class_name[] = {
-            "profile--none",
-            "profile--away",
-            "profile--busy",
-            "profile--offline",
-        };
+        if (instance->connection == TOX_CONNECTION_NONE) {
+            return;
+        }
+
+        remove_class_with_prefix(instance->profile, "profile--");
+        remove_class_with_prefix(instance->profile_bigger, "profile--");
+
         gtk_style_context_add_class(
             gtk_widget_get_style_context(GTK_WIDGET(instance->profile)),
             class_name[instance->status]);
         gtk_style_context_add_class(
             gtk_widget_get_style_context(GTK_WIDGET(instance->profile_bigger)),
             class_name[instance->status]);
+        break;
+    }
+    case PROP_CONNECTION: {
+        /* if connection is already none, or if it will become none */
+        if (instance->connection == TOX_CONNECTION_NONE ||
+            g_value_get_int(value)) {
+            remove_class_with_prefix(instance->profile, "profile--");
+            remove_class_with_prefix(instance->profile_bigger, "profile--");
+
+            gtk_style_context_add_class(
+                gtk_widget_get_style_context(GTK_WIDGET(instance->profile)),
+                class_name[instance->status]);
+            gtk_style_context_add_class(gtk_widget_get_style_context(GTK_WIDGET(
+                                            instance->profile_bigger)),
+                                        class_name[instance->status]);
+        }
+
+        instance->connection = g_value_get_int(value);
         break;
     }
     default:
@@ -211,6 +232,9 @@ static void lupus_mainheaderbar_get_property(LupusMainHeaderBar *instance,
         break;
     case PROP_STATUS:
         g_value_set_int(value, instance->status);
+        break;
+    case PROP_CONNECTION:
+        g_value_set_int(value, instance->connection);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(instance, property_id, pspec);
@@ -292,7 +316,12 @@ static void lupus_mainheaderbar_class_init(LupusMainHeaderBarClass *class) {
 
     obj_properties[PROP_STATUS] = g_param_spec_int(
         "status", "Status", "Tox status.", TOX_USER_STATUS_NONE,
-        TOX_USER_STATUS_BUSY + 1, TOX_USER_STATUS_NONE, G_PARAM_READWRITE);
+        TOX_USER_STATUS_BUSY + 1, TOX_USER_STATUS_BUSY + 1, G_PARAM_READWRITE);
+
+    obj_properties[PROP_CONNECTION] =
+        g_param_spec_int("connection", "Connection", "Tox connection status.",
+                         TOX_CONNECTION_NONE, TOX_CONNECTION_UDP,
+                         TOX_CONNECTION_NONE, G_PARAM_READWRITE);
 
     g_object_class_install_properties(G_OBJECT_CLASS(class), // NOLINT
                                       N_PROPERTIES, obj_properties);
@@ -302,18 +331,18 @@ static void lupus_mainheaderbar_init(LupusMainHeaderBar *instance) {
     gtk_widget_init_template(GTK_WIDGET(instance));
 
     GtkMenuItem **item[] = {
-        &instance->profile_popover_none,  &instance->profile_popover_away,
-        &instance->profile_popover_busy,  &instance->profile_popover_offline,
+        &instance->profile_popover_none,
+        &instance->profile_popover_away,
+        &instance->profile_popover_busy,
         &instance->profile_popover_toxid,
     };
     gchar *svg[] = {
         LUPUS_RESOURCES "/status_none.svg",
         LUPUS_RESOURCES "/status_away.svg",
         LUPUS_RESOURCES "/status_busy.svg",
-        LUPUS_RESOURCES "/status_offline.svg",
         LUPUS_RESOURCES "/biometric.svg",
     };
-    gchar *label[] = {"Online", "Away", "Busy", "Offline", "ToxID"};
+    gchar *label[] = {"Online", "Away", "Busy", "ToxID"};
 
     for (gsize i = 0, j = G_N_ELEMENTS(label); i < j; ++i) {
         GtkBox *box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
@@ -345,8 +374,9 @@ static void lupus_mainheaderbar_init(LupusMainHeaderBar *instance) {
                              G_CALLBACK(profile_clicked_cb), instance);
 }
 
-LupusMainHeaderBar *
-lupus_mainheaderbar_new(Tox const *tox, LupusMain const *main, gint status) {
+LupusMainHeaderBar *lupus_mainheaderbar_new(Tox const *tox,
+                                            LupusMain const *main, gint status,
+                                            gint connection) {
     return g_object_new(LUPUS_TYPE_MAINHEADERBAR, "tox", tox, "main", main,
-                        "status", status, NULL);
+                        "status", status, "connection", connection, NULL);
 }
