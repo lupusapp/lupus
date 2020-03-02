@@ -1,5 +1,6 @@
 #include "../include/lupus_mainfriend.h"
 #include "../include/lupus.h"
+#include "../include/utils.h"
 #include <sodium.h>
 
 struct _LupusMainFriend {
@@ -24,30 +25,13 @@ static guint signals[LAST_SIGNAL];
 
 static void update_cb(LupusMainFriend *instance, guint flags, GPtrArray *data) {
     if (flags & UPDATE_STATUS) { // NOLINT
-        GtkStyleContext *profile_context =
-            gtk_widget_get_style_context(GTK_WIDGET(instance->profile));
+        remove_class_with_prefix(instance->profile, "profile--");
 
-        GList *profile_classes =
-            gtk_style_context_list_classes(profile_context);
-        for (GList *class = profile_classes; class != NULL;
-             class = class->next) {
-            if (g_str_has_prefix(class->data, "profile--")) {
-                gtk_style_context_remove_class(profile_context, class->data);
-            }
-        }
-        g_list_free(profile_classes);
-
-        switch (GPOINTER_TO_INT(g_ptr_array_index(data, 0))) {
-        case TOX_USER_STATUS_NONE:
-            gtk_style_context_add_class(profile_context, "profile--none");
-            break;
-        case TOX_USER_STATUS_AWAY:
-            gtk_style_context_add_class(profile_context, "profile--away");
-            break;
-        case TOX_USER_STATUS_BUSY:
-            gtk_style_context_add_class(profile_context, "profile--busy");
-            break;
-        }
+        gchar static const *classes[] = {"profile--none", "profile--away",
+                                         "profile--busy"};
+        gtk_style_context_add_class(
+            gtk_widget_get_style_context(GTK_WIDGET(instance->profile)),
+            classes[GPOINTER_TO_INT(g_ptr_array_index(data, 0))]);
     }
 
     if (flags & UPDATE_NAME) { // NOLINT
@@ -71,28 +55,15 @@ static void update_cb(LupusMainFriend *instance, guint flags, GPtrArray *data) {
     }
 
     if (flags & UPDATE_CONNECTION) { // NOLINT
-        if (GPOINTER_TO_INT(g_ptr_array_index(data, 0)) !=
+        if (GPOINTER_TO_INT(g_ptr_array_index(data, 0)) ==
             TOX_CONNECTION_NONE) {
-            goto end;
+            remove_class_with_prefix(instance->profile, "profile--");
+            gtk_style_context_add_class(
+                gtk_widget_get_style_context(GTK_WIDGET(instance->profile)),
+                "profile--offline");
         }
-
-        GtkStyleContext *profile_context =
-            gtk_widget_get_style_context(GTK_WIDGET(instance->profile));
-
-        GList *profile_classes =
-            gtk_style_context_list_classes(profile_context);
-        for (GList *class = profile_classes; class != NULL;
-             class = class->next) {
-            if (g_str_has_prefix(class->data, "profile--")) {
-                gtk_style_context_remove_class(profile_context, class->data);
-            }
-        }
-        g_list_free(profile_classes);
-
-        gtk_style_context_add_class(profile_context, "profile--offline");
     }
 
-end:
     g_ptr_array_free(data, TRUE);
 }
 
