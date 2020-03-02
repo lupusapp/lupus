@@ -57,13 +57,9 @@ static void refresh(LupusMainFriendList *instance) {
 }
 
 static void addfriend_cb(LupusMainFriendList *instance) {
-    GtkDialog *dialog =
-        GTK_DIALOG(g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, NULL));
+    GtkDialog *dialog = GTK_DIALOG(g_object_new(
+        GTK_TYPE_DIALOG, "use-header-bar", TRUE, "title", "Add friend", NULL));
     gtk_dialog_add_button(dialog, "Add", 1);
-
-    gtk_header_bar_set_title(
-        GTK_HEADER_BAR(gtk_dialog_get_header_bar(GTK_DIALOG(dialog))),
-        "Add friend");
 
     GtkBox *box =
         GTK_BOX(gtk_container_get_children(GTK_CONTAINER(dialog))->data);
