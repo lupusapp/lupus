@@ -2,6 +2,7 @@
 #include "../include/lupus.h"
 #include <toxencryptsave/toxencryptsave.h>
 
+// FIXME: write to temp file for safety
 void tox_save(Tox *tox, gchar const *filename, gchar const *password,
               GtkWindow *window, gboolean new) {
     gsize savedata_size = tox_get_savedata_size(tox);
