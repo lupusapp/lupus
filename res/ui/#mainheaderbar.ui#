@@ -2,6 +2,11 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
+  <object class="GtkImage">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="resource">status_none.svg</property>
+  </object>
   <object class="GtkImage" id="profile_bigger_image">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -98,5 +103,53 @@
   <object class="GtkMenu" id="profile_popover">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <child>
+      <object class="GtkImageMenuItem" id="profile_popover_none">
+        <property name="label" translatable="yes">online</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="image">__glade_unnamed_3</property>
+        <property name="use_stock">False</property>
+        <property name="always_show_image">True</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="profile_popover_away">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">away</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="profile_popover_busy">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">busy</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="profile_popover_offline">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">offline</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSeparatorMenuItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="profile_popover_show">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Show my Tox ID</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
   </object>
 </interface>

@@ -8,6 +8,8 @@
 struct _LupusMain {
     GtkApplicationWindow parent_instance;
 
+    guint tox_iteration;
+
     Tox const *tox;
     char const *profile_filename;
     char const *profile_password;
@@ -49,13 +51,33 @@ enum {
 
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
-enum { SAVE, LAST_SIGNAL };
+enum { SAVE, DISCONNECT, CONNECT, LAST_SIGNAL };
 
 static guint signals[LAST_SIGNAL];
+
+static gboolean iterate(LupusMain *instance) {
+    tox_iterate((Tox *)instance->tox, instance);
+    return TRUE;
+}
 
 static void save_cb(LupusMain *instance) {
     tox_save((Tox *)instance->tox, instance->profile_filename,
              instance->profile_password, GTK_WINDOW(instance), FALSE);
+}
+
+static void disconnect_cb(LupusMain *instance) {
+    if (instance->tox_iteration) {
+        g_source_remove(instance->tox_iteration);
+        instance->tox_iteration = 0;
+    }
+}
+
+static void connect_cb(LupusMain *instance) {
+    if (!instance->tox_iteration) {
+        instance->tox_iteration =
+            g_timeout_add(tox_iteration_interval(instance->tox),
+                          G_SOURCE_FUNC(iterate), instance);
+    }
 }
 
 static void lupus_main_set_property(LupusMain *instance, guint property_id,
@@ -98,40 +120,34 @@ static void connection_status_cb(Tox *tox, // NOLINT
     gint status;
     g_object_get(instance->main_header_bar, "status", &status, NULL);
 
-    /* TODO: handle disconnection */
-    g_warn_if_fail(connection_status != TOX_CONNECTION_NONE);
-
     switch (connection_status) {
     case TOX_CONNECTION_UDP:
     case TOX_CONNECTION_TCP:
         /* Return if status is already online,busy or away */
-        if (status != -1) {
+        if (status != TOX_USER_STATUS_BUSY + 1) {
             return;
         }
 
+        /* FIXME: last_status */
         g_object_set(instance->main_header_bar, "status", TOX_USER_STATUS_NONE,
                      NULL);
         break;
     default:
         /* Return if status is already offline */
-        if (status == -1) {
+        if (status == TOX_USER_STATUS_BUSY + 1) {
             return;
         }
 
-        g_object_set(instance->main_header_bar, "status", -1, NULL);
+        g_object_set(instance->main_header_bar, "status",
+                     TOX_USER_STATUS_BUSY + 1, NULL);
     }
-}
-
-static gboolean iterate(LupusMain *instance) {
-    tox_iterate((Tox *)instance->tox, instance);
-    return TRUE;
 }
 
 static void lupus_main_constructed(LupusMain *instance) {
     gtk_window_set_titlebar(
         GTK_WINDOW(instance),
-        GTK_WIDGET(instance->main_header_bar =
-                       lupus_mainheaderbar_new(instance->tox, instance, -1)));
+        GTK_WIDGET(instance->main_header_bar = lupus_mainheaderbar_new(
+                       instance->tox, instance, TOX_USER_STATUS_BUSY + 1)));
 
     gtk_box_pack_start(
         instance->box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0)),
@@ -162,9 +178,7 @@ static void lupus_main_constructed(LupusMain *instance) {
         (Tox *)instance->tox,
         (tox_self_connection_status_cb *)connection_status_cb);
 
-    /* FIXME: maybe 50 is too fast */
-    g_timeout_add(tox_iteration_interval(instance->tox), G_SOURCE_FUNC(iterate),
-                  instance);
+    connect_cb(instance);
 
     G_OBJECT_CLASS(lupus_main_parent_class) // NOLINT
         ->constructed(G_OBJECT(instance));  // NOLINT
@@ -190,10 +204,18 @@ static void lupus_main_class_init(LupusMainClass *class) {
 
     signals[SAVE] = g_signal_new("save", LUPUS_TYPE_MAIN, G_SIGNAL_RUN_LAST, 0,
                                  NULL, NULL, NULL, G_TYPE_NONE, 0); // NOLINT
+    signals[DISCONNECT] =
+        g_signal_new("disconnect", LUPUS_TYPE_MAIN, G_SIGNAL_RUN_LAST, 0, NULL,
+                     NULL, NULL, G_TYPE_NONE, 0); // NOLINT
+    signals[CONNECT] =
+        g_signal_new("connect", LUPUS_TYPE_MAIN, G_SIGNAL_RUN_LAST, 0, NULL,
+                     NULL, NULL, G_TYPE_NONE, 0); // NOLINT
 }
 
 static void lupus_main_init(LupusMain *instance) {
     g_signal_connect(instance, "save", G_CALLBACK(save_cb), NULL);
+    g_signal_connect(instance, "disconnect", G_CALLBACK(disconnect_cb), NULL);
+    g_signal_connect(instance, "connect", G_CALLBACK(connect_cb), NULL);
 }
 
 LupusMain *lupus_main_new(GtkApplication *application, Tox const *tox,

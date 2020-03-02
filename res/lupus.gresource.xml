@@ -8,5 +8,10 @@
         <file preprocess="xml-stripblanks" alias="mainfriendlist.ui">ui/mainfriendlist.ui</file>
         <file preprocess="xml-stripblanks" alias="mainfriend.ui">ui/mainfriend.ui</file>
         <file alias="lupus.css">styles/lupus.css</file>
+        <file alias="status_none.svg">images/status_none.svg</file>
+        <file alias="status_busy.svg">images/status_busy.svg</file>
+        <file alias="status_away.svg">images/status_away.svg</file>
+        <file alias="status_offline.svg">images/status_offline.svg</file>
+        <file alias="biometric.svg">images/biometric.svg</file>
     </gresource>
 </gresources>

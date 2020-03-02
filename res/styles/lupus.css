@@ -2,6 +2,12 @@
     border-radius: 90%;
     border-width: 5px;
     border-style: solid;
+    transition: all .4s ease;
+}
+
+.profile:hover {
+    border-radius: 4px;
+    transition: all .4s ease;
 }
 
 .profile.profile--none {
