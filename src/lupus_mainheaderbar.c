@@ -6,8 +6,7 @@
 #include <sodium/utils.h>
 
 /*
- * TODO(ogromny): avatar, status
- * Maybe an indicator if offline
+ * TODO(ogromny): avatar
  */
 
 struct _LupusMainHeaderBar {

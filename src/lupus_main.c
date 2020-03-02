@@ -113,7 +113,6 @@ static void connection_status_cb(Tox *tox, // NOLINT
             break;
         }
 
-        /* FIXME: last_status */
         g_object_set(instance->main_header_bar, "status", TOX_USER_STATUS_NONE,
                      NULL);
         break;

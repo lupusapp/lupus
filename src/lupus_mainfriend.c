@@ -123,7 +123,6 @@ static void lupus_mainfriend_constructed(LupusMainFriend *instance) {
     if (*name) {
         gtk_label_set_text(instance->name, (gchar *)name);
     } else {
-        // FIXME: get address (with nospam and checksum)
         guint8 friend_address_bin[TOX_PUBLIC_KEY_SIZE];
         tox_friend_get_public_key(instance->tox, instance->friend,
                                   friend_address_bin, NULL);
