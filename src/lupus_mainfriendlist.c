@@ -105,7 +105,7 @@ static void addfriend_cb(LupusMainFriendList *instance) {
                        strlen(address_hex), NULL, NULL, NULL);
 
         enum TOX_ERR_FRIEND_ADD tox_err_friend_add;
-        tox_friend_add((Tox *)instance->tox, address_bin, (guint8 *)message,
+        guint32 friend_number = tox_friend_add((Tox *)instance->tox, address_bin, (guint8 *)message,
                        strlen(message), &tox_err_friend_add);
 
         switch (tox_err_friend_add) {
@@ -129,8 +129,12 @@ static void addfriend_cb(LupusMainFriendList *instance) {
             goto end;
         }
 
-        /* FIXME: return value from save */
-        g_signal_emit_by_name(instance->main, "save", NULL);
+        gboolean saved;
+        g_signal_emit_by_name(instance->main, "save", &saved);
+        if (!saved) {
+            tox_friend_delete((Tox *)instance->tox, friend_number, NULL);
+            goto end;
+        }
 
         refresh(instance);
     }

@@ -3,7 +3,7 @@
 #include <toxencryptsave/toxencryptsave.h>
 
 // FIXME: write to temp file for safety
-void tox_save(Tox *tox, gchar const *filename, gchar const *password,
+gboolean tox_save(Tox *tox, gchar const *filename, gchar const *password,
               GtkWindow *window, gboolean new) {
     gsize savedata_size = tox_get_savedata_size(tox);
     guint8 *savedata = g_malloc(savedata_size);
@@ -18,7 +18,8 @@ void tox_save(Tox *tox, gchar const *filename, gchar const *password,
                               strlen(password), tmp, NULL)) {
             lupus_error(window, "Cannot encrypt profile.");
             g_free(tmp);
-            goto free;
+            g_free(savedata);
+            return FALSE;
         }
 
         g_free(savedata);
@@ -31,13 +32,14 @@ void tox_save(Tox *tox, gchar const *filename, gchar const *password,
     if (error) {
         lupus_error(window, "Cannot save profile: %s", error->message);
         g_error_free(error);
-        goto free;
+        g_free(savedata);
+        return FALSE;
     }
 
     if (new) {
         lupus_success(window, "Profile \"%s\" created.", filename);
     }
 
-free:
     g_free(savedata);
+    return TRUE;
 }

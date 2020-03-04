@@ -58,8 +58,11 @@ static void submit_name_cb(LupusEditableLabel *editablelabel,
         return;
     }
 
-    /* FIXME: return value from save */
-    g_signal_emit_by_name(instance->main, "save", NULL);
+    gboolean saved;
+    g_signal_emit_by_name(instance->main, "save", &saved);
+    if (!saved) {
+        return;
+    }
 
     GValue val = G_VALUE_INIT;
     g_value_init(&val, G_TYPE_STRING); // NOLINT
@@ -77,8 +80,11 @@ static void submit_status_message_cb(LupusEditableLabel *editablelabel,
         return;
     }
 
-    /* FIXME: return value from save */
-    g_signal_emit_by_name(instance->main, "save", NULL);
+    gboolean saved;
+    g_signal_emit_by_name(instance->main, "save", &saved);
+    if (!saved) {
+        return;
+    }
 
     GValue val = G_VALUE_INIT;
     g_value_init(&val, G_TYPE_STRING); // NOLINT

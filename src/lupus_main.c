@@ -60,9 +60,9 @@ static gboolean iterate(LupusMain *instance) {
     return TRUE;
 }
 
-static void save_cb(LupusMain *instance) {
-    tox_save((Tox *)instance->tox, instance->profile_filename,
-             instance->profile_password, GTK_WINDOW(instance), FALSE);
+static gboolean save_cb(LupusMain *instance) {
+    return tox_save((Tox *)instance->tox, instance->profile_filename,
+                    instance->profile_password, GTK_WINDOW(instance), FALSE);
 }
 
 static void lupus_main_set_property(LupusMain *instance, guint property_id,
@@ -193,7 +193,7 @@ static void lupus_main_class_init(LupusMainClass *class) {
                                       N_PROPERTIES, obj_properties);
 
     signals[SAVE] = g_signal_new("save", LUPUS_TYPE_MAIN, G_SIGNAL_RUN_LAST, 0,
-                                 NULL, NULL, NULL, G_TYPE_NONE, 0); // NOLINT
+                                 NULL, NULL, NULL, G_TYPE_BOOLEAN, 0); // NOLINT
 }
 
 static void lupus_main_init(LupusMain *instance) {

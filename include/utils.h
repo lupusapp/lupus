@@ -17,6 +17,6 @@
         g_list_free(classes);                                                  \
     })
 
-void tox_save(Tox *, gchar const *, gchar const *, GtkWindow *, gboolean);
+gboolean tox_save(Tox *, gchar const *, gchar const *, GtkWindow *, gboolean);
 
 #endif
