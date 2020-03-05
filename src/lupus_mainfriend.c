@@ -10,6 +10,9 @@ struct _LupusMainFriend {
     LupusMain const *main;
     guint32 friend;
 
+    LupusMainFriend const *head_mode;
+    gulong event_button_press_event_id;
+
     GtkButton *profile;
     GtkImage *profile_image;
     GtkLabel *name, *status_message;
@@ -65,6 +68,27 @@ static void update_cb(LupusMainFriend *instance, guint flags, GPtrArray *data) {
     }
 
     g_ptr_array_free(data, TRUE);
+}
+
+gboolean clicked_cb(LupusMainFriend *instance, GdkEvent *event) {
+    if (event->type == GDK_BUTTON_PRESS && event->button.button == 1) {
+        g_signal_emit_by_name((gpointer)instance->main, "chat",
+                              instance->friend);
+    }
+    return FALSE;
+}
+
+LupusMainFriend const *
+lupus_mainfriend_head_mode(LupusMainFriend *const instance) {
+    if (!instance->head_mode) {
+        instance->head_mode =
+            g_object_new(LUPUS_TYPE_MAINFRIEND, "tox", instance->tox, "main",
+                         instance->main, "friend", instance->friend, NULL);
+        g_signal_handler_disconnect(
+            (gpointer)instance->head_mode,
+            instance->head_mode->event_button_press_event_id);
+    }
+    return instance->head_mode;
 }
 
 static void lupus_mainfriend_set_property(LupusMainFriend *instance,
@@ -197,6 +221,8 @@ static void lupus_mainfriend_init(LupusMainFriend *instance) {
     gtk_widget_init_template(GTK_WIDGET(instance));
 
     g_signal_connect(instance, "update", G_CALLBACK(update_cb), NULL);
+    instance->event_button_press_event_id = g_signal_connect(
+        instance, "button-press-event", G_CALLBACK(clicked_cb), NULL);
 }
 
 LupusMainFriend *lupus_mainfriend_new(Tox const *tox, LupusMain const *main,

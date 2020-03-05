@@ -19,4 +19,6 @@ enum {
 
 LupusMainFriend *lupus_mainfriend_new(Tox const *, LupusMain const *, guint32);
 
+LupusMainFriend const *lupus_mainfriend_head_mode(LupusMainFriend *const);
+
 #endif
