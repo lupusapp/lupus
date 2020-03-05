@@ -1,5 +1,6 @@
 #include "../include/lupus_main.h"
 #include "../include/lupus.h"
+#include "../include/lupus_mainfriend.h"
 #include "../include/lupus_mainfriendlist.h"
 #include "../include/lupus_mainheaderbar.h"
 #include "../include/utils.h"
@@ -14,9 +15,12 @@ struct _LupusMain {
     char const *profile_filename;
     char const *profile_password;
 
+    LupusMainFriend const *active_friend;
+
     LupusMainHeaderBar *main_header_bar;
     GtkBox *box;
     LupusMainFriendList *main_friend_list;
+    GtkBox *chat_box;
 };
 
 G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
@@ -51,7 +55,7 @@ enum {
 
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
-enum { SAVE, LAST_SIGNAL };
+enum { SAVE, CHAT, LAST_SIGNAL };
 
 static guint signals[LAST_SIGNAL];
 
@@ -63,6 +67,37 @@ static gboolean iterate(LupusMain *instance) {
 static gboolean save_cb(LupusMain *instance) {
     return tox_save((Tox *)instance->tox, instance->profile_filename,
                     instance->profile_password, GTK_WINDOW(instance), FALSE);
+}
+
+static void chat_cb(LupusMain *instance, guint32 friend_number) {
+    LupusMainFriend const *friend =
+        lupus_mainfriend_head_mode(get_friend(friend_number));
+
+    if (instance->active_friend == friend) {
+        return;
+    }
+
+    GList *children =
+        gtk_container_get_children(GTK_CONTAINER(instance->chat_box));
+    if (children) {
+        /* FIXME: require GLIB >=2.56 */
+        gtk_container_remove(
+            GTK_CONTAINER(instance->chat_box),
+            GTK_WIDGET(g_object_ref(g_list_nth(children, 0)->data)));
+        gtk_widget_destroy(GTK_WIDGET(g_list_nth(children, 1)->data));
+    }
+    /* FIXME: do somethings before hiding ? */
+
+    gtk_box_pack_start(instance->chat_box, GTK_WIDGET(friend), FALSE, TRUE, 0);
+
+    GtkWidget *separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_widget_set_margin_start(separator, SEPARATOR_MARGIN);
+    gtk_widget_set_margin_end(separator, SEPARATOR_MARGIN);
+    gtk_box_pack_start(instance->chat_box, separator, FALSE, TRUE, 0);
+
+    gtk_widget_show_all(GTK_WIDGET(instance->chat_box));
+
+    instance->active_friend = friend;
 }
 
 static void lupus_main_set_property(LupusMain *instance, guint property_id,
@@ -148,6 +183,11 @@ static void lupus_main_constructed(LupusMain *instance) {
     gtk_widget_set_margin_bottom(separator, SEPARATOR_MARGIN);
     gtk_box_pack_start(instance->box, separator, FALSE, TRUE, 0);
 
+    gtk_box_pack_start(instance->box,
+                       GTK_WIDGET(instance->chat_box = GTK_BOX(gtk_box_new(
+                                      GTK_ORIENTATION_VERTICAL, 0))),
+                       TRUE, TRUE, 0);
+
     gtk_container_add(GTK_CONTAINER(instance), GTK_WIDGET(instance->box));
     gtk_widget_show_all(GTK_WIDGET(instance));
 
@@ -194,10 +234,16 @@ static void lupus_main_class_init(LupusMainClass *class) {
 
     signals[SAVE] = g_signal_new("save", LUPUS_TYPE_MAIN, G_SIGNAL_RUN_LAST, 0,
                                  NULL, NULL, NULL, G_TYPE_BOOLEAN, 0); // NOLINT
+    signals[CHAT] =
+        g_signal_new("chat", LUPUS_TYPE_MAIN, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
+                     NULL, G_TYPE_NONE, 1, G_TYPE_UINT); // NOLINT
 }
 
 static void lupus_main_init(LupusMain *instance) {
+    instance->active_friend = NULL;
+
     g_signal_connect(instance, "save", G_CALLBACK(save_cb), NULL);
+    g_signal_connect(instance, "chat", G_CALLBACK(chat_cb), NULL);
 }
 
 LupusMain *lupus_main_new(GtkApplication *application, Tox const *tox,
