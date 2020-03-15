@@ -4,7 +4,7 @@
 	<Project>
 		<Option title="Lupus"/>
 		<Option makefile_is_custom="1"/>
-		<Option compiler="clang"/>
+		<Option compiler="gcc"/>
 		<Option virtualFolders="CMake Files\;"/>
 		<Build>
 			<Target title="all">
@@ -27,12 +27,22 @@
 					<DistClean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/ogromny/Code/C/lupus"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
 			<Target title="Lupus">
 				<Option output="/home/ogromny/Code/C/lupus/Lupus" prefix_auto="0" extension_auto="0"/>
 				<Option working_dir="/home/ogromny/Code/C/lupus"/>
 				<Option object_output="./"/>
 				<Option type="1"/>
-				<Option compiler="clang"/>
+				<Option compiler="gcc"/>
 				<Compiler>
 					<Add directory="/usr/include/gtk-3.0"/>
 					<Add directory="/usr/include/pango-1.0"/>
@@ -57,8 +67,9 @@
 					<Add directory="/usr/include/dbus-1.0"/>
 					<Add directory="/usr/lib64/dbus-1.0/include"/>
 					<Add directory="/home/ogromny/Code/C/lupus/c-toxcore"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/9.2.0/include"/>
 					<Add directory="/usr/local/include"/>
-					<Add directory="/usr/lib/llvm/9/bin/../../../../lib/clang/9.0.1/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/9.2.0/include-fixed"/>
 					<Add directory="/usr/include"/>
 				</Compiler>
 				<MakeCommands>
@@ -73,7 +84,7 @@
 				<Option working_dir="/home/ogromny/Code/C/lupus"/>
 				<Option object_output="./"/>
 				<Option type="1"/>
-				<Option compiler="clang"/>
+				<Option compiler="gcc"/>
 				<Compiler>
 					<Add directory="/usr/include/gtk-3.0"/>
 					<Add directory="/usr/include/pango-1.0"/>
@@ -98,22 +109,13 @@
 					<Add directory="/usr/include/dbus-1.0"/>
 					<Add directory="/usr/lib64/dbus-1.0/include"/>
 					<Add directory="/home/ogromny/Code/C/lupus/c-toxcore"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/9.2.0/include"/>
 					<Add directory="/usr/local/include"/>
-					<Add directory="/usr/lib/llvm/9/bin/../../../../lib/clang/9.0.1/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/9.2.0/include-fixed"/>
 					<Add directory="/usr/include"/>
 				</Compiler>
 				<MakeCommands>
 					<Build command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 Lupus/fast"/>
-					<CompileFile command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
-				</MakeCommands>
-			</Target>
-			<Target title="edit_cache">
-				<Option working_dir="/home/ogromny/Code/C/lupus"/>
-				<Option type="4"/>
-				<MakeCommands>
-					<Build command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 edit_cache"/>
 					<CompileFile command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
 					<Clean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
 					<DistClean command="/usr/bin/gmake -j8 -f &quot;/home/ogromny/Code/C/lupus/Makefile&quot;  VERBOSE=1 clean"/>
