@@ -1,7 +1,7 @@
 #include "../include/lupus_profilechooser.h"
 #include "../include/lupus.h"
 #include "../include/lupus_main.h"
-#include "../include/utils.h"
+#include "../include/lupus_wrapper.h"
 #include "toxcore/tox.h"
 #include "toxencryptsave/toxencryptsave.h"
 #include <errno.h>
@@ -23,6 +23,8 @@ struct _LupusProfileChooser {
 
 G_DEFINE_TYPE(LupusProfileChooser, lupus_profilechooser,
               GTK_TYPE_APPLICATION_WINDOW)
+
+LupusWrapper *lupus_wrapper;
 
 static gchar *ask_password(void) {
     GtkWidget *dialog =
@@ -62,7 +64,7 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance) {
     gsize savedata_size = 0;
     g_file_get_contents(filename, &savedata, &savedata_size, &error);
     if (error) {
-        lupus_error(instance, "Cannot open profiles: \"%s\".", error->message);
+        lupus_error("Cannot open profiles: \"%s\".", error->message);
         g_error_free(error);
         goto free;
     }
@@ -78,7 +80,7 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance) {
         if (!tox_pass_decrypt((guint8 *)savedata, savedata_size,
                               (guint8 *)password, strlen(password), tmp,
                               NULL)) {
-            lupus_error(instance, "Cannot decrypt profile.");
+            lupus_error("Cannot decrypt profile.");
             g_free(tmp);
             goto free;
         }
@@ -90,7 +92,7 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance) {
 
     struct Tox_Options *options = tox_options_new(NULL);
     if (!options) {
-        lupus_error(instance, "Cannot create <i>Tox_Options</i>.");
+        lupus_error("Cannot create <i>Tox_Options</i>.");
         goto free;
     }
     tox_options_set_savedata_type(options, TOX_SAVEDATA_TYPE_TOX_SAVE);
@@ -98,19 +100,58 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance) {
 
     struct Tox *tox = tox_new(options, NULL);
     if (!tox) {
-        lupus_error(instance, "Cannot create <i>Tox</i>.");
+        lupus_error("Cannot create <i>Tox</i>.");
         tox_options_free(options);
         goto free;
     }
 
+    lupus_wrapper = lupus_wrapper_new(tox, filename, password);
+
     gtk_window_present(GTK_WINDOW(
-        lupus_main_new(gtk_window_get_application(GTK_WINDOW(instance)), tox,
-                       g_strdup(filename), g_strdup(password))));
+        lupus_main_new(gtk_window_get_application(GTK_WINDOW(instance)))));
     gtk_widget_destroy(GTK_WIDGET(instance));
 
 free:
     g_free(password); // NOLINT
     g_free(filename);
+}
+
+gboolean tox_save(Tox *tox, gchar *filename, gchar const *password) {
+    gsize savedata_size = tox_get_savedata_size(tox);
+    guint8 *savedata = g_malloc(savedata_size);
+    tox_get_savedata(tox, savedata);
+
+    /* if password is set and is not empty */
+    if (password && *password) {
+        guint8 *tmp =
+            g_malloc(savedata_size + TOX_PASS_ENCRYPTION_EXTRA_LENGTH);
+
+        if (!tox_pass_encrypt(savedata, savedata_size, (guint8 *)password,
+                              strlen(password), tmp, NULL)) {
+            lupus_error("Cannot encrypt profile.");
+            g_free(tmp);
+            g_free(savedata);
+            return FALSE;
+        }
+
+        g_free(savedata);
+        savedata = tmp;
+        savedata_size += TOX_PASS_ENCRYPTION_EXTRA_LENGTH;
+    }
+
+    GError *error = NULL;
+    g_file_set_contents(filename, (gchar *)savedata, savedata_size, &error);
+    if (error) {
+        lupus_error("Cannot create profile: %s", error->message);
+        g_error_free(error);
+        g_free(savedata);
+        return FALSE;
+    }
+
+    lupus_success("Profile \"%s\" created.", filename);
+
+    g_free(savedata);
+    return TRUE;
 }
 
 static void register_cb(LupusProfileChooser *instance) {
@@ -119,13 +160,13 @@ static void register_cb(LupusProfileChooser *instance) {
                     ".tox", NULL);
 
     if (g_file_test(filename, G_FILE_TEST_EXISTS)) {
-        lupus_error(instance, "Profile \"%s\" already exists.", filename);
+        lupus_error("Profile \"%s\" already exists.", filename);
         goto free;
     }
 
     Tox *tox = tox_new(NULL, NULL);
     if (!tox) {
-        lupus_error(instance, "Cannot create profile.");
+        lupus_error("Cannot create profile.");
         goto free;
     }
 
@@ -134,8 +175,7 @@ static void register_cb(LupusProfileChooser *instance) {
     tox_self_set_status_message(tox, (guint8 *)DEFAULT_STATUS_MESSAGE,
                                 strlen(DEFAULT_STATUS_MESSAGE), NULL);
 
-    tox_save(tox, filename, gtk_entry_get_text(instance->register_pass),
-             GTK_WINDOW(instance), true);
+    tox_save(tox, filename, gtk_entry_get_text(instance->register_pass));
     tox_kill(tox);
 
 free:
@@ -146,7 +186,7 @@ static void list_profiles(LupusProfileChooser *instance) {
     GError *error = NULL;
     GDir *dir = g_dir_open(LUPUS_TOX_DIR, 0, &error);
     if (error) {
-        lupus_error(instance, "Cannot list profiles: %s", error->message);
+        lupus_error("Cannot list profiles: %s", error->message);
         g_error_free(error);
         return;
     }
@@ -161,7 +201,7 @@ static void list_profiles(LupusProfileChooser *instance) {
     g_dir_close(dir);
 
     if (errno) {
-        lupus_error(instance, "Cannot get all files: %s", g_strerror(errno));
+        lupus_error("Cannot get all files: %s", g_strerror(errno));
         errno = 0;
     }
 
@@ -201,18 +241,20 @@ static void stack_change_cb(LupusProfileChooser *instance) {
 }
 
 static void lupus_profilechooser_class_init(LupusProfileChooserClass *class) {
-    gtk_widget_class_set_template_from_resource(
-        GTK_WIDGET_CLASS(class), LUPUS_RESOURCES "/profilechooser.ui");
-    gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
-                                         LupusProfileChooser, stack);
-    gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
-                                         LupusProfileChooser, login_box);
-    gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
-                                         LupusProfileChooser, register_name);
-    gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
-                                         LupusProfileChooser, register_pass);
-    gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
-                                         LupusProfileChooser, register_button);
+    GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
+
+    gtk_widget_class_set_template_from_resource(widget_class, LUPUS_RESOURCES
+                                                "/profilechooser.ui");
+    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser,
+                                         stack);
+    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser,
+                                         login_box);
+    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser,
+                                         register_name);
+    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser,
+                                         register_pass);
+    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser,
+                                         register_button);
 }
 
 static void lupus_profilechooser_init(LupusProfileChooser *instance) {

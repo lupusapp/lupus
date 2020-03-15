@@ -109,3 +109,5 @@ modules.xml
 
 c-toxcore/
 res/ui/*.ui~
+Lupus
+Lupus.cbp
