@@ -10,15 +10,6 @@
 G_DECLARE_FINAL_TYPE(LupusMainFriend, lupus_mainfriend, LUPUS, MAINFRIEND,
                      GtkEventBox)
 
-enum {
-    UPDATE_STATUS = 1 << 0,
-    UPDATE_NAME = 1 << 1,
-    UPDATE_STATUS_MESSAGE = 1 << 2,
-    UPDATE_CONNECTION = 1 << 3
-};
-
-LupusMainFriend *lupus_mainfriend_new(Tox const *, LupusMain const *, guint32);
-
-LupusMainFriend const *lupus_mainfriend_head_mode(LupusMainFriend *const);
+LupusMainFriend *lupus_mainfriend_new(guint32 friend_number);
 
 #endif

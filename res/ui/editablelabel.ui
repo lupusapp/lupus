@@ -18,6 +18,11 @@
       </object>
     </child>
   </template>
+  <object class="GtkImage" id="submit_image">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-apply</property>
+  </object>
   <object class="GtkPopover" id="popover">
     <property name="width_request">200</property>
     <property name="can_focus">False</property>
@@ -47,8 +52,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
+            <property name="image">submit_image</property>
             <property name="relief">none</property>
-            <property name="use_stock">True</property>
             <property name="always_show_image">True</property>
           </object>
           <packing>

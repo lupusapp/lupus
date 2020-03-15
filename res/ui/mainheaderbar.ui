@@ -16,26 +16,54 @@
     <property name="pixel_size">24</property>
     <property name="icon_size">0</property>
   </object>
-  <template class="LupusMainHeaderBar" parent="GtkHeaderBar">
+  <template class="LupusMainHeaderBar" parent="GtkBox">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="title" translatable="yes">Lupus</property>
-    <property name="show_close_button">True</property>
     <child>
-      <object class="GtkButton" id="profile">
+      <object class="GtkHeaderBar" id="left_headerbar">
+        <property name="width_request">350</property>
         <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="receives_default">True</property>
-        <property name="halign">center</property>
-        <property name="valign">center</property>
-        <property name="image">profile_image</property>
-        <property name="relief">none</property>
-        <property name="always_show_image">True</property>
-        <style>
-          <class name="profile"/>
-          <class name="profile--offline"/>
-        </style>
+        <property name="can_focus">False</property>
+        <property name="title" translatable="yes">Lupus</property>
+        <property name="has_subtitle">False</property>
+        <property name="spacing">0</property>
+        <child>
+          <object class="GtkButton" id="profile">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="receives_default">True</property>
+            <property name="halign">center</property>
+            <property name="valign">center</property>
+            <property name="image">profile_image</property>
+            <property name="relief">none</property>
+            <property name="always_show_image">True</property>
+            <style>
+              <class name="profile"/>
+              <class name="profile--offline"/>
+            </style>
+          </object>
+        </child>
       </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkHeaderBar" id="right_headerbar">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="show_close_button">True</property>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+        <property name="position">2</property>
+      </packing>
     </child>
   </template>
   <object class="GtkPopover" id="popover">
@@ -55,7 +83,7 @@
             <property name="width_request">64</property>
             <property name="height_request">64</property>
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
+            <property name="can_focus">False</property>
             <property name="receives_default">True</property>
             <property name="halign">center</property>
             <property name="valign">center</property>
@@ -82,7 +110,15 @@
               <placeholder/>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkSeparator">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
             </child>
             <child>
               <placeholder/>

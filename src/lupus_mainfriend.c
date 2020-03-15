@@ -1,17 +1,13 @@
 #include "../include/lupus_mainfriend.h"
 #include "../include/lupus.h"
+#include "../include/lupus_wrapper.h"
 #include "../include/utils.h"
 #include <sodium.h>
 
 struct _LupusMainFriend {
     GtkEventBox parent_instance;
 
-    Tox const *tox;
-    LupusMain const *main;
-    guint32 friend;
-
-    LupusMainFriend const *head_mode;
-    gulong event_button_press_event_id;
+    guint32 friend_number;
 
     GtkButton *profile;
     GtkImage *profile_image;
@@ -20,213 +16,130 @@ struct _LupusMainFriend {
 
 G_DEFINE_TYPE(LupusMainFriend, lupus_mainfriend, GTK_TYPE_EVENT_BOX)
 
-enum { PROP_TOX = 1, PROP_MAIN, PROP_FRIEND, N_PROPERTIES };
-enum { UPDATE, LAST_SIGNAL };
+#define WRAPPER_FRIEND                                                         \
+    (lupus_wrapper_get_friend(lupus_wrapper, instance->friend_number))
 
+typedef enum {
+    PROP_FRIEND_NUMBER = 1,
+    N_PROPERTIES,
+} LupusMainFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
-static guint signals[LAST_SIGNAL];
 
-static void update_cb(LupusMainFriend *instance, guint flags, GPtrArray *data) {
-    if (flags & UPDATE_STATUS) { // NOLINT
+static void lupus_mainfriend_set_property(GObject *object, guint property_id,
+                                          const GValue *value,
+                                          GParamSpec *pspec) {
+    LupusMainFriend *instance = LUPUS_MAINFRIEND(object);
+
+    if ((LupusMainFriendProperty)property_id == PROP_FRIEND_NUMBER) {
+        instance->friend_number = g_value_get_uint(value);
+        return;
+    }
+
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+}
+
+static void lupus_mainfriend_get_property(GObject *object, guint property_id,
+                                          GValue *value, GParamSpec *pspec) {
+    LupusMainFriend *instance = LUPUS_MAINFRIEND(object);
+
+    if ((LupusMainFriendProperty)property_id == PROP_FRIEND_NUMBER) {
+        g_value_set_uint(value, instance->friend_number);
+        return;
+    }
+
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+}
+
+static void friend_notify_connection_cb(LupusMainFriend *instance) {
+    if (lupus_wrapperfriend_get_connection(WRAPPER_FRIEND) ==
+        TOX_CONNECTION_NONE) {
         remove_class_with_prefix(instance->profile, "profile--");
-
-        gchar static const *classes[] = {"profile--none", "profile--away",
-                                         "profile--busy"};
         gtk_style_context_add_class(
             gtk_widget_get_style_context(GTK_WIDGET(instance->profile)),
-            classes[GPOINTER_TO_INT(g_ptr_array_index(data, 0))]);
-    }
-
-    if (flags & UPDATE_NAME) { // NOLINT
-        gchar const *const name = g_ptr_array_index(data, 0);
-
-        if (g_strcmp0(gtk_label_get_text(instance->name), name)) {
-            gtk_label_set_text(instance->name, name);
-            gtk_widget_set_tooltip_text(GTK_WIDGET(instance->name), name);
-        }
-    }
-
-    if (flags & UPDATE_STATUS_MESSAGE) { // NOLINT
-        gchar const *const status_message = g_ptr_array_index(data, 0);
-
-        if (g_strcmp0(gtk_label_get_text(instance->status_message),
-                      status_message)) {
-            gtk_label_set_text(instance->status_message, status_message);
-            gtk_widget_set_tooltip_text(GTK_WIDGET(instance->status_message),
-                                        status_message);
-        }
-    }
-
-    if (flags & UPDATE_CONNECTION) { // NOLINT
-        if (GPOINTER_TO_INT(g_ptr_array_index(data, 0)) ==
-            TOX_CONNECTION_NONE) {
-            remove_class_with_prefix(instance->profile, "profile--");
-            gtk_style_context_add_class(
-                gtk_widget_get_style_context(GTK_WIDGET(instance->profile)),
-                "profile--offline");
-        }
-    }
-
-    g_ptr_array_free(data, TRUE);
-}
-
-gboolean clicked_cb(LupusMainFriend *instance, GdkEvent *event) {
-    if (event->type == GDK_BUTTON_PRESS && event->button.button == 1) {
-        g_signal_emit_by_name((gpointer)instance->main, "chat",
-                              instance->friend);
-    }
-    return FALSE;
-}
-
-LupusMainFriend const *
-lupus_mainfriend_head_mode(LupusMainFriend *const instance) {
-    if (!instance->head_mode) {
-        instance->head_mode =
-            g_object_new(LUPUS_TYPE_MAINFRIEND, "tox", instance->tox, "main",
-                         instance->main, "friend", instance->friend, NULL);
-        g_signal_handler_disconnect(
-            (gpointer)instance->head_mode,
-            instance->head_mode->event_button_press_event_id);
-    }
-    return instance->head_mode;
-}
-
-static void lupus_mainfriend_set_property(LupusMainFriend *instance,
-                                          guint property_id,
-                                          GValue const *value,
-                                          GParamSpec *pspec) {
-    switch (property_id) {
-    case PROP_TOX:
-        instance->tox = g_value_get_pointer(value);
-        break;
-    case PROP_MAIN:
-        instance->main = g_value_get_pointer(value);
-        break;
-    case PROP_FRIEND:
-        instance->friend = g_value_get_uint(value);
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(instance, property_id, pspec);
+            "profile--offline");
     }
 }
 
-static void lupus_mainfriend_get_property(LupusMainFriend *instance,
-                                          guint property_id, GValue *value,
-                                          GParamSpec *pspec) {
-    switch (property_id) {
-    case PROP_TOX:
-        g_value_set_pointer(value, (gpointer)instance->tox);
-        break;
-    case PROP_MAIN:
-        g_value_set_pointer(value, (gpointer)instance->main);
-        break;
-    case PROP_FRIEND:
-        g_value_set_uint(value, instance->friend);
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(instance, property_id, pspec);
-    }
-}
+static void friend_notify_status_cb(LupusMainFriend *instance) {
+    remove_class_with_prefix(instance->profile, "profile--");
 
-static void lupus_mainfriend_constructed(LupusMainFriend *instance) {
-    gsize name_size =
-        tox_friend_get_name_size(instance->tox, instance->friend, NULL);
-    gsize status_message_size = tox_friend_get_status_message_size(
-        instance->tox, instance->friend, NULL);
-
-    guint8 name[name_size];
-    guint8 status_message[status_message_size];
-
-    tox_friend_get_name(instance->tox, instance->friend, name, NULL);
-    tox_friend_get_status_message(instance->tox, instance->friend,
-                                  status_message, NULL);
-
-    name[name_size] = 0;
-    status_message[status_message_size] = 0;
-
-    if (*name) {
-        gtk_label_set_text(instance->name, (gchar *)name);
-    } else {
-        guint8 friend_address_bin[TOX_PUBLIC_KEY_SIZE];
-        tox_friend_get_public_key(instance->tox, instance->friend,
-                                  friend_address_bin, NULL);
-
-        gchar friend_address_hex[TOX_PUBLIC_KEY_SIZE * 2 + 1];
-        sodium_bin2hex(friend_address_hex, sizeof(friend_address_hex),
-                       friend_address_bin, sizeof(friend_address_bin));
-
-        gtk_label_set_text(instance->name, friend_address_hex);
-    }
-
-    gtk_label_set_text(instance->status_message, (*status_message)
-                                                     ? (gchar *)status_message
-                                                     : "Has not accepted yet.");
-
-    gtk_widget_set_tooltip_text(GTK_WIDGET(instance->name),
-                                gtk_label_get_text(instance->name));
-    gtk_widget_set_tooltip_text(GTK_WIDGET(instance->status_message),
-                                gtk_label_get_text(instance->status_message));
-
+    gchar static const *classes[] = {
+        "profile--none",
+        "profile--away",
+        "profile--busy",
+    };
     gtk_style_context_add_class(
         gtk_widget_get_style_context(GTK_WIDGET(instance->profile)),
-        "profile--offline");
-    gtk_widget_set_can_focus(GTK_WIDGET(instance->profile), FALSE);
+        classes[lupus_wrapperfriend_get_status(WRAPPER_FRIEND)]);
+}
 
-    /* FIXME: avatar */
+static void friend_notify_status_message_cb(LupusMainFriend *instance) {
+    gchar *status_message =
+        lupus_wrapperfriend_get_status_message(WRAPPER_FRIEND);
+    gtk_label_set_text(instance->status_message, status_message);
+    gtk_widget_set_tooltip_text(GTK_WIDGET(instance->status_message),
+                                status_message);
+}
+
+static void friend_notify_name_cb(LupusMainFriend *instance) {
+    gchar *name = lupus_wrapperfriend_get_name(WRAPPER_FRIEND);
+    gtk_label_set_text(instance->name, name);
+    gtk_widget_set_tooltip_text(GTK_WIDGET(instance->name), name);
+}
+
+static void lupus_mainfriend_constructed(GObject *object) {
+    LupusMainFriend *instance = LUPUS_MAINFRIEND(object);
+    LupusWrapperFriend *friend = WRAPPER_FRIEND;
+
+    friend_notify_name_cb(instance);
+    friend_notify_status_message_cb(instance);
+
+    g_signal_connect_swapped(friend, "notify::name",
+                             G_CALLBACK(friend_notify_name_cb), instance);
+    g_signal_connect_swapped(friend, "notify::status-message",
+                             G_CALLBACK(friend_notify_status_message_cb),
+                             instance);
+    g_signal_connect_swapped(friend, "notify::status",
+                             G_CALLBACK(friend_notify_status_cb), instance);
+    g_signal_connect_swapped(friend, "notify::connection",
+                             G_CALLBACK(friend_notify_connection_cb), instance);
 
     G_OBJECT_CLASS(lupus_mainfriend_parent_class) // NOLINT
         ->constructed(G_OBJECT(instance));        // NOLINT
 }
 
 static void lupus_mainfriend_class_init(LupusMainFriendClass *class) {
-    gtk_widget_class_set_template_from_resource(
-        GTK_WIDGET_CLASS(class), LUPUS_RESOURCES "/mainfriend.ui");
-    gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
-                                         LupusMainFriend, profile);
-    gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
-                                         LupusMainFriend, profile_image);
-    gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
-                                         LupusMainFriend, name);
-    gtk_widget_class_bind_template_child(GTK_WIDGET_CLASS(class),
-                                         LupusMainFriend, status_message);
+    GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
+    GObjectClass *object_class = G_OBJECT_CLASS(class); // NOLINT
 
-    G_OBJECT_CLASS(class)->set_property = // NOLINT
-        lupus_mainfriend_set_property;
-    G_OBJECT_CLASS(class)->get_property = // NOLINT
-        lupus_mainfriend_get_property;
-    G_OBJECT_CLASS(class)->constructed = // NOLINT
-        lupus_mainfriend_constructed;
+    gtk_widget_class_set_template_from_resource(widget_class, LUPUS_RESOURCES
+                                                "/mainfriend.ui");
+    gtk_widget_class_bind_template_child(widget_class, LupusMainFriend,
+                                         profile);
+    gtk_widget_class_bind_template_child(widget_class, LupusMainFriend,
+                                         profile_image);
+    gtk_widget_class_bind_template_child(widget_class, LupusMainFriend, name);
+    gtk_widget_class_bind_template_child(widget_class, LupusMainFriend,
+                                         status_message);
 
-    obj_properties[PROP_TOX] = g_param_spec_pointer(
-        "tox", "Tox", "Tox profile.",
-        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY); // NOLINT
+    object_class->constructed = lupus_mainfriend_constructed;
+    object_class->set_property = lupus_mainfriend_set_property;
+    object_class->get_property = lupus_mainfriend_get_property;
 
-    obj_properties[PROP_MAIN] = g_param_spec_pointer(
-        "main", "Main", "LupusMain parent.",
-        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY); // NOLINT
+    gint param = G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY; // NOLINT
+    obj_properties[PROP_FRIEND_NUMBER] =
+        g_param_spec_uint("friend-number", "Friend number", "Friend number", 0,
+                          UINT32_MAX, 0, param);
 
-    obj_properties[PROP_FRIEND] =
-        g_param_spec_uint("friend", "Friend", "Tox friend.", 0, UINT32_MAX, 0,
-                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY); // NOLINT
-
-    g_object_class_install_properties(G_OBJECT_CLASS(class), // NOLINT
-                                      N_PROPERTIES, obj_properties);
-
-    signals[UPDATE] = g_signal_new(
-        "update", LUPUS_TYPE_MAINFRIEND, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
-        G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_POINTER); // NOLINT
+    g_object_class_install_properties(object_class, N_PROPERTIES,
+                                      obj_properties);
 }
 
 static void lupus_mainfriend_init(LupusMainFriend *instance) {
     gtk_widget_init_template(GTK_WIDGET(instance));
-
-    g_signal_connect(instance, "update", G_CALLBACK(update_cb), NULL);
-    instance->event_button_press_event_id = g_signal_connect(
-        instance, "button-press-event", G_CALLBACK(clicked_cb), NULL);
 }
 
-LupusMainFriend *lupus_mainfriend_new(Tox const *tox, LupusMain const *main,
-                                      guint32 friend) {
-    return g_object_new(LUPUS_TYPE_MAINFRIEND, "tox", tox, "main", main,
-                        "friend", friend, NULL);
+LupusMainFriend *lupus_mainfriend_new(guint32 friend_number) {
+    return g_object_new(LUPUS_TYPE_MAINFRIEND, "friend-number", friend_number,
+                        NULL);
 }
