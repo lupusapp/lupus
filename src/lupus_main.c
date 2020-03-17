@@ -1,5 +1,6 @@
 #include "../include/lupus_main.h"
 #include "../include/lupus.h"
+#include "../include/lupus_mainchat.h"
 #include "../include/lupus_mainfriend.h"
 #include "../include/lupus_mainheaderbar.h"
 #include "../include/lupus_wrapper.h"
@@ -11,7 +12,11 @@ struct _LupusMain {
     LupusMainHeaderBar *main_header_bar;
     GtkBox *box;
     //    GtkBox *chat_box;
+
+    LupusMainChat *active_chat;
 };
+
+static GHashTable *mainchats;
 
 G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
 
@@ -160,7 +165,36 @@ static void init_friend_list(LupusMain *instance) {
                              G_CALLBACK(wrapper_notify_friends_cb), box);
 }
 
-static void lupus_main_class_init(LupusMainClass *class) {}
+static void wrapper_notify_active_chat_friend_cb(LupusMain *instance) {
+    gpointer key =
+        GUINT_TO_POINTER(lupus_wrapper_get_active_chat_friend(lupus_wrapper));
+
+    if (instance->active_chat) {
+        gtk_container_remove(GTK_CONTAINER(instance->box),
+                             GTK_WIDGET(g_object_ref(instance->active_chat)));
+    }
+
+    LupusMainChat *chat = g_hash_table_lookup(mainchats, key);
+    if (!chat) {
+        chat = lupus_mainchat_new();
+        g_hash_table_insert(mainchats, key, chat);
+    }
+
+    gtk_box_pack_start(instance->box, GTK_WIDGET(chat), TRUE, TRUE, 0);
+    instance->active_chat = chat;
+}
+
+static void lupus_main_finalize(GObject *object) {
+    g_hash_table_destroy(mainchats);
+
+    G_OBJECT_CLASS(lupus_main_parent_class)->finalize(object); // NOLINT
+}
+
+static void lupus_main_class_init(LupusMainClass *class) {
+    mainchats = g_hash_table_new(NULL, NULL);
+
+    G_OBJECT_CLASS(class)->finalize = lupus_main_finalize; // NOLINT
+}
 
 static void lupus_main_init(LupusMain *instance) {
     instance->main_header_bar = lupus_mainheaderbar_new();
@@ -176,17 +210,16 @@ static void lupus_main_init(LupusMain *instance) {
     gtk_widget_set_margin_bottom(separator, SEPARATOR_MARGIN);
     gtk_box_pack_start(instance->box, separator, FALSE, TRUE, 0);
 
-    //    instance->chat_box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL,
-    //    0)); gtk_box_pack_start(instance->box, GTK_WIDGET(instance->chat_box),
-    //    TRUE,
-    //                       TRUE, 0);
-    //
     gtk_container_add(GTK_CONTAINER(instance), GTK_WIDGET(instance->box));
 
     gtk_widget_show_all(GTK_WIDGET(instance->box));
 
     lupus_wrapper_bootstrap(lupus_wrapper);
     lupus_wrapper_start_listening(lupus_wrapper);
+
+    g_signal_connect_swapped(lupus_wrapper, "notify::active-chat-friend",
+                             G_CALLBACK(wrapper_notify_active_chat_friend_cb),
+                             instance);
 }
 
 LupusMain *lupus_main_new(GtkApplication *application) {

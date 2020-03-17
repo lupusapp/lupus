@@ -6,6 +6,7 @@
         <file preprocess="xml-stripblanks" alias="editablelabel.ui">ui/editablelabel.ui</file>
         <file preprocess="xml-stripblanks" alias="mainfriendlist.ui">ui/mainfriendlist.ui</file>
         <file preprocess="xml-stripblanks" alias="mainfriend.ui">ui/mainfriend.ui</file>
+        <file preprocess="xml-stripblanks" alias="mainchat.ui">ui/mainchat.ui</file>
         <file alias="lupus.css">styles/lupus.css</file>
         <file alias="status_none.svg">images/status_none.svg</file>
         <file alias="status_busy.svg">images/status_busy.svg</file>
