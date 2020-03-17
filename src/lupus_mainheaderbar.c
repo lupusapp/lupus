@@ -12,6 +12,9 @@
 struct _LupusMainHeaderBar {
     GtkBox parent_instance;
 
+    guint active_chat_friend_notify_name_handler_id;
+    guint active_chat_friend_notify_status_message_handler_id;
+
     GtkHeaderBar *left_headerbar, *right_headerbar;
     GtkButton *profile;
     GtkImage *profile_image;
@@ -202,6 +205,50 @@ static void init_profile_popover(LupusMainHeaderBar *instance) {
     gtk_widget_show_all(GTK_WIDGET(instance->profile_popover));
 }
 
+static void active_chat_friend_notify_name_cb(LupusMainHeaderBar *instance) {
+    LupusWrapperFriend *friend = lupus_wrapper_get_friend(
+        lupus_wrapper, lupus_wrapper_get_active_chat_friend(lupus_wrapper));
+
+    gtk_header_bar_set_title(instance->right_headerbar,
+                             lupus_wrapperfriend_get_name(friend));
+}
+
+static void
+active_chat_friend_notify_status_message_cb(LupusMainHeaderBar *instance) {
+    LupusWrapperFriend *friend = lupus_wrapper_get_friend(
+        lupus_wrapper, lupus_wrapper_get_active_chat_friend(lupus_wrapper));
+
+    gtk_header_bar_set_subtitle(instance->right_headerbar,
+                                lupus_wrapperfriend_get_status_message(friend));
+}
+
+static void wrapper_notify_active_chat_friend_cb(LupusMainHeaderBar *instance) {
+    LupusWrapperFriend *friend = lupus_wrapper_get_friend(
+        lupus_wrapper, lupus_wrapper_get_active_chat_friend(lupus_wrapper));
+
+    gtk_header_bar_set_title(instance->right_headerbar,
+                             lupus_wrapperfriend_get_name(friend));
+    gtk_header_bar_set_subtitle(instance->right_headerbar,
+                                lupus_wrapperfriend_get_status_message(friend));
+
+    if (instance->active_chat_friend_notify_name_handler_id) {
+        g_signal_handler_disconnect(
+            instance, instance->active_chat_friend_notify_name_handler_id);
+    }
+    g_signal_connect_swapped(friend, "notify::name",
+                             G_CALLBACK(active_chat_friend_notify_name_cb),
+                             instance);
+
+    if (instance->active_chat_friend_notify_status_message_handler_id) {
+        g_signal_handler_disconnect(
+            instance,
+            instance->active_chat_friend_notify_status_message_handler_id);
+    }
+    g_signal_connect_swapped(
+        friend, "notify::status-message",
+        G_CALLBACK(active_chat_friend_notify_status_message_cb), instance);
+}
+
 static void lupus_mainheaderbar_constructed(GObject *object) {
     LupusMainHeaderBar *instance = LUPUS_MAINHEADERBAR(object);
 
@@ -221,6 +268,9 @@ static void lupus_mainheaderbar_constructed(GObject *object) {
                      NULL);
     g_signal_connect(instance->status_message, "submit",
                      G_CALLBACK(status_message_submit_cb), NULL);
+
+    instance->active_chat_friend_notify_name_handler_id = 0;
+    instance->active_chat_friend_notify_status_message_handler_id = 0;
 
     G_OBJECT_CLASS(lupus_mainheaderbar_parent_class) // NOLINT
         ->constructed(object);
@@ -274,6 +324,9 @@ static void lupus_mainheaderbar_init(LupusMainHeaderBar *instance) {
                              G_CALLBACK(gtk_popover_popup), instance->popover);
     g_signal_connect_swapped(instance->profile, "button-press-event",
                              G_CALLBACK(profile_button_press_event), instance);
+    g_signal_connect_swapped(lupus_wrapper, "notify::active-chat-friend",
+                             G_CALLBACK(wrapper_notify_active_chat_friend_cb),
+                             instance);
 }
 
 LupusMainHeaderBar *lupus_mainheaderbar_new(void) {

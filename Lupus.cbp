@@ -134,10 +134,10 @@
 		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_main.h">
 			<Option target="Lupus"/>
 		</Unit>
-		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_mainfriend.h">
+		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_mainchat.h">
 			<Option target="Lupus"/>
 		</Unit>
-		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_mainfriendlist.h">
+		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_mainfriend.h">
 			<Option target="Lupus"/>
 		</Unit>
 		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_mainheaderbar.h">
@@ -146,7 +146,10 @@
 		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_profilechooser.h">
 			<Option target="Lupus"/>
 		</Unit>
-		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_profilechooserpassworddialog.h">
+		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_wrapper.h">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_wrapperfriend.h">
 			<Option target="Lupus"/>
 		</Unit>
 		<Unit filename="/home/ogromny/Code/C/lupus/include/utils.h">
@@ -164,10 +167,10 @@
 		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_main.c">
 			<Option target="Lupus"/>
 		</Unit>
-		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_mainfriend.c">
+		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_mainchat.c">
 			<Option target="Lupus"/>
 		</Unit>
-		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_mainfriendlist.c">
+		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_mainfriend.c">
 			<Option target="Lupus"/>
 		</Unit>
 		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_mainheaderbar.c">
@@ -176,13 +179,13 @@
 		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_profilechooser.c">
 			<Option target="Lupus"/>
 		</Unit>
-		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_profilechooserpassworddialog.c">
+		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_wrapper.c">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_wrapperfriend.c">
 			<Option target="Lupus"/>
 		</Unit>
 		<Unit filename="/home/ogromny/Code/C/lupus/src/resources.c">
-			<Option target="Lupus"/>
-		</Unit>
-		<Unit filename="/home/ogromny/Code/C/lupus/src/utils.c">
 			<Option target="Lupus"/>
 		</Unit>
 		<Unit filename="/home/ogromny/Code/C/lupus/CMakeLists.txt">

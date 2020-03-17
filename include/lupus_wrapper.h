@@ -31,5 +31,6 @@ header_getter(wrapper, Wrapper, address, gchar *);
 header_getter_setter(wrapper, Wrapper, status, Tox_User_Status);
 header_getter(wrapper, Wrapper, connection, Tox_Connection);
 header_getter(wrapper, Wrapper, friends, GHashTable *);
+header_getter_setter(wrapper, Wrapper, active_chat_friend, guint32);
 
 #endif

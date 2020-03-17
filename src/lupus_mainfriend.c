@@ -25,6 +25,8 @@ typedef enum {
 } LupusMainFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
+getter(mainfriend, MainFriend, friend_number, guint32);
+
 static void lupus_mainfriend_set_property(GObject *object, guint property_id,
                                           const GValue *value,
                                           GParamSpec *pspec) {

@@ -10,6 +10,7 @@ struct _LupusWrapper {
     GObject parent_instance;
 
     guint listenning;
+    guint32 active_chat_friend;
 
     gchar *name;
     gchar *status_message;
@@ -37,6 +38,7 @@ typedef enum {
     PROP_STATUS,
     PROP_CONNECTION,
     PROP_FRIENDS,
+    PROP_ACTIVE_CHAT_FRIEND,
     N_PROPERTIES,
 } LupusWrapperProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
@@ -48,6 +50,7 @@ getter(wrapper, Wrapper, address, gchar *);
 getter_setter(wrapper, Wrapper, status, Tox_User_Status);
 getter(wrapper, Wrapper, connection, Tox_Connection);
 getter(wrapper, Wrapper, friends, GHashTable *);
+getter_setter(wrapper, Wrapper, active_chat_friend, guint32);
 
 void lupus_wrapper_add_friend(LupusWrapper *instance, guchar *address_bin,
                               guint8 *message, gsize message_size) {
@@ -228,6 +231,9 @@ static void lupus_wrapper_get_property(GObject *object, guint property_id,
     case PROP_FRIENDS:
         g_value_set_pointer(value, lupus_wrapper_get_friends(lupus_wrapper));
         break;
+    case PROP_ACTIVE_CHAT_FRIEND:
+        g_value_set_uint(value, instance->active_chat_friend);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     }
@@ -264,6 +270,9 @@ static void lupus_wrapper_set_property(GObject *object, guint property_id,
     case PROP_STATUS:
         instance->status = g_value_get_int(value);
         tox_self_set_status(instance->tox, instance->status);
+        break;
+    case PROP_ACTIVE_CHAT_FRIEND:
+        instance->active_chat_friend = g_value_get_uint(value);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -366,6 +375,9 @@ static void lupus_wrapper_class_init(LupusWrapperClass *class) {
     obj_properties[PROP_STATUS] = g_param_spec_int(
         "status", "Status", "Profile status", TOX_USER_STATUS_NONE,
         TOX_USER_STATUS_BUSY, TOX_USER_STATUS_NONE, param2);
+    obj_properties[PROP_ACTIVE_CHAT_FRIEND] = g_param_spec_uint(
+        "active-chat-friend", "Active chat friend",
+        "Focused chat friend number", 0, UINT32_MAX, 0, param2);
 
     gint param3 = G_PARAM_READABLE;
     obj_properties[PROP_ADDRESS] = g_param_spec_string(
