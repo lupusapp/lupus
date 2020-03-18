@@ -27,6 +27,12 @@ G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
 #define SEPARATOR_MARGIN 5
 #define FRIENDLIST_WIDTH 350
 
+/*
+ * TODO(ogromny): delete friend
+ * TODO(ogromny): friend request notification
+ * TODO(ogromny): chat basic
+ */
+
 static gboolean friend_list_button_press_event_cb(GtkMenu *menu,
                                                   GdkEvent *event) {
     if (event->type == GDK_BUTTON_PRESS && event->button.button == 3) {
@@ -92,15 +98,6 @@ end:
     gtk_widget_destroy(GTK_WIDGET(dialog));
 }
 
-static gboolean friend_button_press_event_cb(LupusMainFriend *instance,
-                                             GdkEvent *event) {
-    if (event->type == GDK_BUTTON_PRESS && event->button.button == 1) {
-        lupus_wrapper_set_active_chat_friend(
-            lupus_wrapper, lupus_mainfriend_get_friend_number(instance));
-    }
-    return FALSE;
-}
-
 static void wrapper_notify_friends_cb(GtkBox *box) {
     gtk_container_foreach(GTK_CONTAINER(box), (GtkCallback)gtk_widget_destroy,
                           NULL);
@@ -116,9 +113,6 @@ static void wrapper_notify_friends_cb(GtkBox *box) {
         gtk_widget_set_margin_start(separator, SEPARATOR_MARGIN);
         gtk_widget_set_margin_end(separator, SEPARATOR_MARGIN);
         gtk_box_pack_start(box, separator, FALSE, TRUE, 0);
-
-        g_signal_connect(friend, "button-press-event",
-                         G_CALLBACK(friend_button_press_event_cb), NULL);
     }
     g_list_free(friends);
 

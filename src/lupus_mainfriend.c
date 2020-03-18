@@ -89,6 +89,15 @@ static void friend_notify_name_cb(LupusMainFriend *instance) {
     gtk_widget_set_tooltip_text(GTK_WIDGET(instance->name), name);
 }
 
+static gboolean friend_button_press_event_cb(LupusMainFriend *instance,
+                                             GdkEvent *event) {
+    if (event->type == GDK_BUTTON_PRESS && event->button.button == 1) {
+        lupus_wrapper_set_active_chat_friend(
+            lupus_wrapper, lupus_mainfriend_get_friend_number(instance));
+    }
+    return FALSE;
+}
+
 static void lupus_mainfriend_constructed(GObject *object) {
     LupusMainFriend *instance = LUPUS_MAINFRIEND(object);
     LupusWrapperFriend *friend = WRAPPER_FRIEND;
@@ -105,6 +114,9 @@ static void lupus_mainfriend_constructed(GObject *object) {
                              G_CALLBACK(friend_notify_status_cb), instance);
     g_signal_connect_swapped(friend, "notify::connection",
                              G_CALLBACK(friend_notify_connection_cb), instance);
+
+    g_signal_connect(instance, "button-press-event",
+                     G_CALLBACK(friend_button_press_event_cb), NULL);
 
     G_OBJECT_CLASS(lupus_mainfriend_parent_class) // NOLINT
         ->constructed(G_OBJECT(instance));        // NOLINT
