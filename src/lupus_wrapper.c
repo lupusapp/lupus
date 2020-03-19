@@ -90,6 +90,20 @@ void lupus_wrapper_add_friend(LupusWrapper *instance, guchar *address_bin,
                              obj_properties[PROP_FRIENDS]);
 }
 
+void lupus_wrapper_remove_friend(LupusWrapper *instance, guint friend_number) {
+    gpointer key = GUINT_TO_POINTER(friend_number);
+    LupusWrapperFriend *friend = g_hash_table_lookup(instance->friends, key);
+
+    if (!friend) {
+        return;
+    }
+
+    g_clear_object(&friend); // NOLINT
+    g_hash_table_remove(instance->friends, key);
+    g_object_notify_by_pspec(G_OBJECT(instance), // NOLINT
+                             obj_properties[PROP_FRIENDS]);
+}
+
 LupusWrapperFriend *lupus_wrapper_get_friend(LupusWrapper *instance,
                                              guint friend_number) {
     return g_hash_table_lookup(instance->friends,

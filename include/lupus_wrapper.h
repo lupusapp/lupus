@@ -23,6 +23,7 @@ LupusWrapperFriend *lupus_wrapper_get_friend(LupusWrapper *instance,
                                              guint friend_number);
 void lupus_wrapper_add_friend(LupusWrapper *instance, guchar *address_bin,
                               guint8 *message, gsize message_size);
+void lupus_wrapper_remove_friend(LupusWrapper *instance, guint friend_number);
 
 header_getter(wrapper, Wrapper, tox, Tox *);
 header_getter_setter(wrapper, Wrapper, name, gchar *);
