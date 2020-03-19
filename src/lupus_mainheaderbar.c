@@ -32,6 +32,11 @@ G_DEFINE_TYPE(LupusMainHeaderBar, lupus_mainheaderbar, GTK_TYPE_BOX)
 
 #define TOXID_DIALOG_MARGIN 20
 
+void lupus_mainheaderbar_reset_titles(LupusMainHeaderBar *instance) {
+    gtk_header_bar_set_title(instance->right_headerbar, NULL);
+    gtk_header_bar_set_subtitle(instance->right_headerbar, NULL);
+}
+
 static gboolean profile_button_press_event(LupusMainHeaderBar *instance,
                                            GdkEvent *event) {
     if (event->type == GDK_BUTTON_PRESS && event->button.button == 3) {
