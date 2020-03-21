@@ -17,6 +17,8 @@ struct _LupusMain {
 };
 
 static GHashTable *mainchats;
+static GHashTable *mainfriends;
+static LupusMain *static_instance;
 
 G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
 
@@ -28,7 +30,6 @@ G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
 #define FRIENDLIST_WIDTH 350
 
 /*
- * TODO(ogromny): delete friend
  * TODO(ogromny): friend request notification
  * TODO(ogromny): chat basic
  */
@@ -99,23 +100,78 @@ end:
 }
 
 static void wrapper_notify_friends_cb(GtkBox *box) {
-    gtk_container_foreach(GTK_CONTAINER(box), (GtkCallback)gtk_widget_destroy,
-                          NULL);
+    /* Temporary GHashTable (will contains all existing friends) */
+    GHashTable *tmp = g_hash_table_new(NULL, NULL);
 
     GList *friends =
         g_hash_table_get_values(lupus_wrapper_get_friends(lupus_wrapper));
     for (GList *i = friends; i; i = i->next) {
-        LupusMainFriend *friend = lupus_mainfriend_new(
-            lupus_wrapperfriend_get_id(LUPUS_WRAPPERFRIEND(i->data)));
+        guint friend_number =
+            lupus_wrapperfriend_get_id(LUPUS_WRAPPERFRIEND(i->data));
+        gpointer key = GUINT_TO_POINTER(friend_number);
+
+        LupusMainFriend *friend = g_hash_table_lookup(mainfriends, key);
+
+        /* If friend already exist push it in tmp */
+        if (friend) {
+            g_hash_table_insert(tmp, key, friend);
+            continue;
+        }
+
+        /* Otherwise create it and push it in mainfriends and tmp */
+        friend = lupus_mainfriend_new(friend_number);
         gtk_box_pack_start(box, GTK_WIDGET(friend), FALSE, TRUE, 0);
 
         GtkWidget *separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
         gtk_widget_set_margin_start(separator, SEPARATOR_MARGIN);
         gtk_widget_set_margin_end(separator, SEPARATOR_MARGIN);
         gtk_box_pack_start(box, separator, FALSE, TRUE, 0);
+
+        g_hash_table_insert(mainfriends, key, friend);
+        g_hash_table_insert(tmp, key, friend);
     }
     g_list_free(friends);
 
+    /* Check if all friend in mainfriends is present in tmp
+     * If not delete it from mainfriends and mainchats
+     */
+    GHashTableIter iter;
+    g_hash_table_iter_init(&iter, mainfriends);
+    for (gpointer key = NULL, value = NULL;
+         g_hash_table_iter_next(&iter, &key, &value);) {
+        if (g_hash_table_contains(tmp, key)) {
+            continue;
+        }
+
+        /* Delete from mainfriends */
+        GList *children = gtk_container_get_children(GTK_CONTAINER(box));
+        for (GList *child = children; child; child = child->next) {
+            /* Delete mainfriend and the next separator */
+            if (child->data == value) {
+                gtk_widget_destroy(GTK_WIDGET(child->data));
+                gtk_widget_destroy(GTK_WIDGET(child->next->data));
+                break;
+            }
+        }
+        g_list_free(children);
+        g_hash_table_iter_remove(&iter);
+
+        /* Delete from mainchats */
+        LupusMainChat *main_chat =
+            LUPUS_MAINCHAT(g_hash_table_lookup(mainchats, key));
+        if (main_chat) {
+            if (main_chat == static_instance->active_chat) {
+                lupus_mainheaderbar_reset_titles(
+                    static_instance->main_header_bar);
+                static_instance->active_chat = NULL;
+            }
+
+            gtk_widget_destroy(GTK_WIDGET(main_chat));
+            g_hash_table_remove(mainchats, key);
+        }
+    }
+
+    g_hash_table_destroy(tmp);
     gtk_widget_show_all(GTK_WIDGET(box));
 }
 
@@ -164,8 +220,9 @@ static void wrapper_notify_active_chat_friend_cb(LupusMain *instance) {
         GUINT_TO_POINTER(lupus_wrapper_get_active_chat_friend(lupus_wrapper));
 
     if (instance->active_chat) {
+        g_object_ref(instance->active_chat);
         gtk_container_remove(GTK_CONTAINER(instance->box),
-                             GTK_WIDGET(g_object_ref(instance->active_chat)));
+                             GTK_WIDGET(instance->active_chat));
     }
 
     LupusMainChat *chat = g_hash_table_lookup(mainchats, key);
@@ -179,18 +236,26 @@ static void wrapper_notify_active_chat_friend_cb(LupusMain *instance) {
 }
 
 static void lupus_main_finalize(GObject *object) {
+    /* FIXME: clean by hand */
+
     g_hash_table_destroy(mainchats);
+    g_hash_table_destroy(mainfriends);
 
     G_OBJECT_CLASS(lupus_main_parent_class)->finalize(object); // NOLINT
 }
 
 static void lupus_main_class_init(LupusMainClass *class) {
     mainchats = g_hash_table_new(NULL, NULL);
+    mainfriends = g_hash_table_new(NULL, NULL);
 
     G_OBJECT_CLASS(class)->finalize = lupus_main_finalize; // NOLINT
 }
 
 static void lupus_main_init(LupusMain *instance) {
+    static_instance = instance;
+
+    instance->active_chat = NULL;
+
     instance->main_header_bar = lupus_mainheaderbar_new();
     gtk_window_set_titlebar(GTK_WINDOW(instance),
                             GTK_WIDGET(instance->main_header_bar));

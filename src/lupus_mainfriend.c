@@ -9,12 +9,18 @@ struct _LupusMainFriend {
 
     guint32 friend_number;
 
+    GtkMenu *menu;
+
     GtkButton *profile;
     GtkImage *profile_image;
     GtkLabel *name, *status_message;
 };
 
 G_DEFINE_TYPE(LupusMainFriend, lupus_mainfriend, GTK_TYPE_EVENT_BOX)
+
+#define REMOVEFRIEND_DIALOG_WIDTH 250
+#define REMOVEFRIEND_DIALOG_HEIGHT 100
+#define REMOVEFRIEND_DIALOG_MARGIN 20
 
 #define WRAPPER_FRIEND                                                         \
     (lupus_wrapper_get_friend(lupus_wrapper, instance->friend_number))
@@ -91,11 +97,75 @@ static void friend_notify_name_cb(LupusMainFriend *instance) {
 
 static gboolean friend_button_press_event_cb(LupusMainFriend *instance,
                                              GdkEvent *event) {
-    if (event->type == GDK_BUTTON_PRESS && event->button.button == 1) {
-        lupus_wrapper_set_active_chat_friend(
-            lupus_wrapper, lupus_mainfriend_get_friend_number(instance));
+    if (event->type == GDK_BUTTON_PRESS) {
+        if (event->button.button == 3) {
+            gtk_menu_popup_at_pointer(instance->menu, event);
+            return TRUE;
+        }
+
+        if (event->button.button == 1) {
+            lupus_wrapper_set_active_chat_friend(
+                lupus_wrapper, lupus_mainfriend_get_friend_number(instance));
+        }
     }
+
     return FALSE;
+}
+
+static void menu_item_removefriend_activate_cb(LupusMainFriend *instance) {
+    GtkDialog *dialog =
+        GTK_DIALOG(g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, NULL));
+    gtk_dialog_add_buttons(dialog, "Yes", 1, "No", 2, NULL);
+
+    GtkBox *box =
+        GTK_BOX(gtk_container_get_children(GTK_CONTAINER(dialog))->data);
+    gtk_widget_set_margin_top(GTK_WIDGET(box), REMOVEFRIEND_DIALOG_MARGIN);
+    gtk_widget_set_margin_end(GTK_WIDGET(box), REMOVEFRIEND_DIALOG_MARGIN);
+    gtk_widget_set_margin_bottom(GTK_WIDGET(box), REMOVEFRIEND_DIALOG_MARGIN);
+    gtk_widget_set_margin_start(GTK_WIDGET(box), REMOVEFRIEND_DIALOG_MARGIN);
+
+    gtk_box_pack_start(box, gtk_label_new("Remove friend ?"), TRUE, TRUE, 0);
+
+    gtk_widget_show_all(GTK_WIDGET(dialog));
+
+    gtk_window_set_geometry_hints(
+        GTK_WINDOW(dialog), NULL,
+        &(GdkGeometry){.min_width = REMOVEFRIEND_DIALOG_WIDTH,
+                       .min_height = REMOVEFRIEND_DIALOG_HEIGHT,
+                       .max_width = REMOVEFRIEND_DIALOG_WIDTH,
+                       .max_height = REMOVEFRIEND_DIALOG_HEIGHT},
+        GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE); // NOLINT
+
+    if (gtk_dialog_run(dialog) == 1) {
+        lupus_wrapper_remove_friend(lupus_wrapper, instance->friend_number);
+    }
+
+    gtk_widget_destroy(GTK_WIDGET(dialog));
+}
+
+static void init_popover(LupusMainFriend *instance) {
+    GtkBox *menu_item_removefriend_box =
+        GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
+    gtk_box_pack_start(
+        menu_item_removefriend_box,
+        gtk_image_new_from_icon_name("list-remove", GTK_ICON_SIZE_MENU), FALSE,
+        TRUE, 0);
+    gtk_box_pack_start(menu_item_removefriend_box,
+                       gtk_label_new("Remove friend"), TRUE, TRUE, 0);
+
+    GtkWidget *menu_item_removefriend = gtk_menu_item_new();
+    gtk_container_add(GTK_CONTAINER(menu_item_removefriend),
+                      GTK_WIDGET(menu_item_removefriend_box));
+
+    instance->menu = GTK_MENU(gtk_menu_new());
+    gtk_menu_shell_append(GTK_MENU_SHELL(instance->menu),
+                          menu_item_removefriend);
+
+    gtk_widget_show_all(GTK_WIDGET(instance->menu));
+
+    g_signal_connect_swapped(menu_item_removefriend, "activate",
+                             G_CALLBACK(menu_item_removefriend_activate_cb),
+                             instance);
 }
 
 static void lupus_mainfriend_constructed(GObject *object) {
@@ -104,6 +174,8 @@ static void lupus_mainfriend_constructed(GObject *object) {
 
     friend_notify_name_cb(instance);
     friend_notify_status_message_cb(instance);
+
+    init_popover(instance);
 
     g_signal_connect_swapped(friend, "notify::name",
                              G_CALLBACK(friend_notify_name_cb), instance);

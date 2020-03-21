@@ -98,6 +98,15 @@ void lupus_wrapper_remove_friend(LupusWrapper *instance, guint friend_number) {
         return;
     }
 
+    Tox_Err_Friend_Delete tox_err_friend_delete = TOX_ERR_FRIEND_DELETE_OK;
+    tox_friend_delete(instance->tox, friend_number, &tox_err_friend_delete);
+    if (tox_err_friend_delete != TOX_ERR_FRIEND_DELETE_OK) {
+        lupus_error("Cannot delete friend.");
+        return;
+    }
+
+    lupus_wrapper_save(instance);
+
     g_clear_object(&friend); // NOLINT
     g_hash_table_remove(instance->friends, key);
     g_object_notify_by_pspec(G_OBJECT(instance), // NOLINT
