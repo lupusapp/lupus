@@ -10,8 +10,7 @@ struct _LupusMain {
     GtkApplicationWindow parent_instance;
 
     LupusMainHeaderBar *main_header_bar;
-    GtkBox *box;
-    //    GtkBox *chat_box;
+    GtkBox *box, *parent_box;
 
     LupusMainChat *active_chat;
 };
@@ -30,8 +29,11 @@ G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
 #define FRIENDLIST_WIDTH 350
 
 /*
- * TODO(ogromny): friend request notification
  * TODO(ogromny): chat basic
+ * TODO(ogromny): add notification center
+ * TODO(ogromny): add about
+ * TODO(ogromny): add settings
+ * TODO(ogromny): toupper all address
  */
 
 static gboolean friend_list_button_press_event_cb(GtkMenu *menu,
@@ -235,6 +237,62 @@ static void wrapper_notify_active_chat_friend_cb(LupusMain *instance) {
     instance->active_chat = chat;
 }
 
+static gboolean destroy_return_false(gpointer widget) {
+    gtk_widget_destroy(widget);
+    return FALSE;
+}
+
+static void friend_request_response_cb(GtkInfoBar *info_bar, gint response_id,
+                                       guint8 *address) {
+    if (response_id == 1) {
+        lupus_wrapper_add_friend(lupus_wrapper, address, NULL, 0);
+    }
+    g_free(address);
+
+    gtk_info_bar_set_revealed(info_bar, FALSE);
+    /* Wait 2s to be sure that the widget disappear */
+    g_timeout_add_seconds(2, destroy_return_false, info_bar);
+}
+
+static void friend_request_cb(Tox *tox, // NOLINT
+                              guint8 const *public_key, guint8 const *message,
+                              gsize length, gpointer user_data) { // NOLINT
+    gchar address_hex[TOX_PUBLIC_KEY_SIZE * 2 + 1];
+    sodium_bin2hex(address_hex, sizeof(address_hex), public_key,
+                   TOX_PUBLIC_KEY_SIZE);
+
+    gchar *address = g_ascii_strup(address_hex, sizeof(address_hex));
+    gchar *text = g_strdup_printf(
+        "<sup><b>Friend request</b></sup>\n<sub><i>%s</i></sub>\n%s", address,
+        message);
+
+    GtkLabel *label = GTK_LABEL(gtk_label_new(text));
+    gtk_label_set_use_markup(label, TRUE);
+    gtk_label_set_selectable(label, TRUE);
+    gtk_label_set_line_wrap_mode(label, PANGO_WRAP_WORD_CHAR);
+    gtk_label_set_line_wrap(label, TRUE);
+
+    g_free(address);
+    g_free(text);
+
+    GtkInfoBar *info_bar = GTK_INFO_BAR(
+        gtk_info_bar_new_with_buttons("Accept", 1, "Reject", 2, NULL));
+    gtk_info_bar_set_message_type(info_bar, GTK_MESSAGE_QUESTION);
+    gtk_container_add(GTK_CONTAINER(gtk_info_bar_get_content_area(info_bar)),
+                      GTK_WIDGET(label));
+
+    gtk_box_pack_start(static_instance->parent_box, GTK_WIDGET(info_bar), FALSE,
+                       TRUE, 0);
+    gtk_box_reorder_child(static_instance->parent_box, GTK_WIDGET(info_bar), 0);
+
+    gtk_widget_show_all(GTK_WIDGET(info_bar));
+    gtk_info_bar_set_revealed(info_bar, TRUE);
+
+    g_signal_connect(info_bar, "response",
+                     G_CALLBACK(friend_request_response_cb),
+                     g_memdup(public_key, TOX_PUBLIC_KEY_SIZE));
+}
+
 static void lupus_main_finalize(GObject *object) {
     /* FIXME: clean by hand */
 
@@ -260,6 +318,9 @@ static void lupus_main_init(LupusMain *instance) {
     gtk_window_set_titlebar(GTK_WINDOW(instance),
                             GTK_WIDGET(instance->main_header_bar));
 
+    /*
+     * box
+     */
     instance->box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
 
     init_friend_list(instance);
@@ -269,12 +330,23 @@ static void lupus_main_init(LupusMain *instance) {
     gtk_widget_set_margin_bottom(separator, SEPARATOR_MARGIN);
     gtk_box_pack_start(instance->box, separator, FALSE, TRUE, 0);
 
-    gtk_container_add(GTK_CONTAINER(instance), GTK_WIDGET(instance->box));
+    /*
+     * parent_box
+     */
+    instance->parent_box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0));
+    gtk_box_pack_start(instance->parent_box, GTK_WIDGET(instance->box), TRUE,
+                       TRUE, 0);
 
-    gtk_widget_show_all(GTK_WIDGET(instance->box));
+    gtk_container_add(GTK_CONTAINER(instance),
+                      GTK_WIDGET(instance->parent_box));
+
+    gtk_widget_show_all(GTK_WIDGET(instance->parent_box));
 
     lupus_wrapper_bootstrap(lupus_wrapper);
     lupus_wrapper_start_listening(lupus_wrapper);
+
+    tox_callback_friend_request(lupus_wrapper_get_tox(lupus_wrapper),
+                                friend_request_cb);
 
     g_signal_connect_swapped(lupus_wrapper, "notify::active-chat-friend",
                              G_CALLBACK(wrapper_notify_active_chat_friend_cb),

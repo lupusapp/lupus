@@ -1,8 +1,7 @@
 #include "../include/lupus_wrapper.h"
-#include "../include/lupus.h"
 #include <gtk/gtk.h>
 #include <sodium/utils.h>
-#include <toxencryptsave/toxencryptsave.h>
+#include <tox/toxencryptsave.h>
 
 #define TOX_PORT 33445
 
@@ -55,8 +54,12 @@ getter_setter(wrapper, Wrapper, active_chat_friend, guint32);
 void lupus_wrapper_add_friend(LupusWrapper *instance, guchar *address_bin,
                               guint8 *message, gsize message_size) {
     Tox_Err_Friend_Add tox_err_friend_add = TOX_ERR_FRIEND_ADD_OK;
-    guint friend_number = tox_friend_add(instance->tox, address_bin, message,
-                                         message_size, &tox_err_friend_add);
+    guint friend_number =
+        (!message && !message_size)
+            ? tox_friend_add_norequest(instance->tox, address_bin,
+                                       &tox_err_friend_add)
+            : tox_friend_add(instance->tox, address_bin, message, message_size,
+                             &tox_err_friend_add);
 
     switch (tox_err_friend_add) {
     case TOX_ERR_FRIEND_ADD_OK:

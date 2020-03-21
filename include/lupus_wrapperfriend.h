@@ -2,8 +2,8 @@
 #define __LUPUS_LUPUS_WRAPPERFRIEND_H__
 
 #include "../include/lupus.h"
-#include "toxcore/tox.h"
 #include <glib-object.h>
+#include <tox/tox.h>
 
 #define LUPUS_TYPE_WRAPPERFRIEND lupus_wrapperfriend_get_type()
 

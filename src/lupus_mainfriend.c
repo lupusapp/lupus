@@ -1,5 +1,4 @@
 #include "../include/lupus_mainfriend.h"
-#include "../include/lupus.h"
 #include "../include/lupus_wrapper.h"
 #include "../include/utils.h"
 #include <sodium.h>

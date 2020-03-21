@@ -3,8 +3,8 @@
 
 #include "../include/lupus.h"
 #include "lupus_main.h"
-#include "toxcore/tox.h"
 #include <gtk/gtk.h>
+#include <tox/tox.h>
 
 #define LUPUS_TYPE_MAINFRIEND lupus_mainfriend_get_type()
 

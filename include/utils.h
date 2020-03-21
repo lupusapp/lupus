@@ -1,8 +1,8 @@
 #ifndef __LUPUS_UTILS_H__
 #define __LUPUS_UTILS_H__
 
-#include "toxcore/tox.h"
 #include <gtk/gtk.h>
+#include <tox/tox.h>
 
 #define remove_class_with_prefix(i, n)                                         \
     ({                                                                         \

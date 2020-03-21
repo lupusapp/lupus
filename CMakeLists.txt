@@ -17,18 +17,21 @@ add_executable(Lupus main.c ${SRCS} ${INCLUDES})
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 pkg_check_modules(LIBSODIUM libsodium REQUIRED)
+pkg_check_modules(TOXCORE toxcore REQUIRED)
 
 include_directories(${GTK3_INCLUDE_DIRS})
 include_directories(${LIBSODIUM_INCLUDE_DIRS})
+include_directories(${TOXCORE_INCLUDE_DIRS})
 
 link_directories(${GTK3_LIBRARY_DIRS})
 link_directories(${LIBSODIUM_LIBRARY_DIRS})
+link_directories(${TOXCORE_LIBRARY_DIRS})
 
 add_definitions(${GTK3_CFLAGS_OTHER})
 add_definitions(${LIBSODIUM_CFLAGS_OTHER})
+add_definitions(${TOXCORE_CFLAGS_OTHER})
 
-include_directories(c-toxcore/)
-target_link_libraries(Lupus ${GTK3_LIBRARIES} ${LIBSODIUM_LIBRARIES} ${CMAKE_SOURCE_DIR}/c-toxcore/_build/libtoxcore.so)
+target_link_libraries(Lupus ${GTK3_LIBRARIES} ${LIBSODIUM_LIBRARIES} ${TOXCORE_LIBRARIES})
 
 add_custom_command(
         TARGET Lupus

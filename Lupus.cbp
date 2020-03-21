@@ -66,7 +66,7 @@
 					<Add directory="/usr/include/at-spi-2.0"/>
 					<Add directory="/usr/include/dbus-1.0"/>
 					<Add directory="/usr/lib64/dbus-1.0/include"/>
-					<Add directory="/home/ogromny/Code/C/lupus/c-toxcore"/>
+					<Add directory="/usr/include/opus"/>
 					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/9.2.0/include"/>
 					<Add directory="/usr/local/include"/>
 					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/9.2.0/include-fixed"/>
@@ -108,7 +108,7 @@
 					<Add directory="/usr/include/at-spi-2.0"/>
 					<Add directory="/usr/include/dbus-1.0"/>
 					<Add directory="/usr/lib64/dbus-1.0/include"/>
-					<Add directory="/home/ogromny/Code/C/lupus/c-toxcore"/>
+					<Add directory="/usr/include/opus"/>
 					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/9.2.0/include"/>
 					<Add directory="/usr/local/include"/>
 					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/9.2.0/include-fixed"/>

@@ -1,5 +1,4 @@
 #include "../include/lupus_editablelabel.h"
-#include "../include/lupus.h"
 
 struct _LupusEditableLabel {
     GtkEventBox parent_instance;

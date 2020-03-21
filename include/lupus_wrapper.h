@@ -3,8 +3,8 @@
 
 #include "../include/lupus.h"
 #include "../include/lupus_wrapperfriend.h"
-#include "../include/tox/tox.h"
 #include <glib-object.h>
+#include <tox/tox.h>
 
 #define LUPUS_TYPE_WRAPPER lupus_wrapper_get_type()
 

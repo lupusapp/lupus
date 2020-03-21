@@ -2,9 +2,9 @@
 #include "../include/lupus.h"
 #include "../include/lupus_main.h"
 #include "../include/lupus_wrapper.h"
-#include "toxcore/tox.h"
-#include "toxencryptsave/toxencryptsave.h"
 #include <errno.h>
+#include <tox/tox.h>
+#include <tox/toxencryptsave.h>
 
 #define DEFAULT_NAME "Lupus's user"
 #define DEFAULT_STATUS_MESSAGE "Lupus's rocks !"
@@ -92,7 +92,7 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance) {
 
     struct Tox_Options *options = tox_options_new(NULL);
     if (!options) {
-        lupus_error("Cannot create <i>Tox_Options</i>.");
+        lupus_error("Cannot create <i>Tox_Options</i>."); // NOLINT
         goto free;
     }
     tox_options_set_savedata_type(options, TOX_SAVEDATA_TYPE_TOX_SAVE);
