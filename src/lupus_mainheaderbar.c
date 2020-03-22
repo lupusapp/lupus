@@ -211,26 +211,14 @@ static void init_profile_popover(LupusMainHeaderBar *instance) {
 }
 
 static void menu_popover_about_activate_cb() {
-    static GtkAboutDialog *about_dialog = NULL;
-    static gchar const *authors[] = {"Ogromny", 0};
+    static gchar const *authors[] = {"Ogromny", NULL};
 
-    if (!about_dialog) {
-        about_dialog = GTK_ABOUT_DIALOG(gtk_about_dialog_new());
-
-        gtk_about_dialog_set_authors(about_dialog, authors);
-        gtk_about_dialog_set_license_type(about_dialog, GTK_LICENSE_MIT_X11);
-        gtk_about_dialog_set_logo(
-            about_dialog,
-            gdk_pixbuf_new_from_resource(LUPUS_RESOURCES "/lupus.svg", NULL));
-        gtk_about_dialog_set_program_name(about_dialog, "Lupus");
-        gtk_about_dialog_set_version(about_dialog, LUPUS_VERSION);
-        gtk_about_dialog_set_website(about_dialog,
-                                     "https://github.com/LupusApp/Lupus");
-        gtk_about_dialog_set_website_label(about_dialog, "Github");
-        gtk_about_dialog_set_wrap_license(about_dialog, TRUE);
-    }
-
-    gtk_dialog_run(GTK_DIALOG(about_dialog));
+    gtk_show_about_dialog(
+        NULL, "authors", authors, "license_type", GTK_LICENSE_MIT_X11, "logo",
+        gdk_pixbuf_new_from_resource(LUPUS_RESOURCES "/lupus.svg", NULL),
+        "program-name", "Lupus", "version", LUPUS_VERSION, "website",
+        "https://github.com/LupusApp/Lupus", "website-label", "Github",
+        "wrap-license", TRUE, NULL);
 }
 
 static void init_menu_popover(LupusMainHeaderBar *instance) {
