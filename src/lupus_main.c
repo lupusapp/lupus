@@ -32,7 +32,6 @@ G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
  * 1.0.0
  * ---
  * TODO(ogromny): chat basic
- * TODO(ogromny): toupper all address
  *
  * 1.0.1
  * ---

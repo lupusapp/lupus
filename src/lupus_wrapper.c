@@ -356,6 +356,7 @@ static void lupus_wrapper_constructed(GObject *object) {
     tox_self_get_address(instance->tox, tox_address_bin);
     sodium_bin2hex(instance->address, TOX_ADDRESS_SIZE * 2 + 1, tox_address_bin,
                    sizeof(tox_address_bin));
+    instance->address = g_ascii_strup(instance->address, -1);
 
     instance->status = tox_self_get_status(instance->tox);
 

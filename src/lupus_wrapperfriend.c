@@ -165,7 +165,7 @@ static void lupus_wrapperfriend_constructed(GObject *object) {
         sodium_bin2hex(friend_address_hex, sizeof(friend_address_hex),
                        friend_address_bin, sizeof(friend_address_bin));
 
-        instance->name = g_strdup(friend_address_hex);
+        instance->name = g_ascii_strup(friend_address_hex, -1);
     }
 
     gsize status_message_size =
