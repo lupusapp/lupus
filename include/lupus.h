@@ -3,6 +3,7 @@
 
 #define LUPUS_APPLICATION_ID "ru.ogromny.lupus"
 #define LUPUS_RESOURCES "/ru/ogromny/lupus"
+#define LUPUS_VERSION "0.9.9"
 
 #define lupus_error(...)                                                       \
     (lupus_message(GTK_MESSAGE_ERROR, "<b>Error</b>", __VA_ARGS__))

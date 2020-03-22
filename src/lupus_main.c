@@ -29,11 +29,16 @@ G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
 #define FRIENDLIST_WIDTH 350
 
 /*
+ * 1.0.0
+ * ---
  * TODO(ogromny): chat basic
- * TODO(ogromny): add notification center
- * TODO(ogromny): add about
- * TODO(ogromny): add settings
  * TODO(ogromny): toupper all address
+ *
+ * 1.1.0
+ * TODO(ogromny): add notification center
+ *
+ * 1.2.0
+ * TODO(ogromny): add settings
  */
 
 static gboolean friend_list_button_press_event_cb(GtkMenu *menu,

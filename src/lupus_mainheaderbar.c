@@ -18,7 +18,7 @@ struct _LupusMainHeaderBar {
     GtkHeaderBar *left_headerbar, *right_headerbar;
     GtkButton *profile;
     GtkImage *profile_image;
-    GtkMenu *profile_popover;
+    GtkMenu *profile_popover, *menu_popover;
     GtkMenuItem *profile_popover_none, *profile_popover_away,
         *profile_popover_busy, *profile_popover_toxid;
     GtkPopover *popover;
@@ -210,6 +210,49 @@ static void init_profile_popover(LupusMainHeaderBar *instance) {
     gtk_widget_show_all(GTK_WIDGET(instance->profile_popover));
 }
 
+static void menu_popover_about_activate_cb() {
+    static GtkAboutDialog *about_dialog = NULL;
+    static gchar const *authors[] = {"Ogromny", 0};
+
+    if (!about_dialog) {
+        about_dialog = GTK_ABOUT_DIALOG(gtk_about_dialog_new());
+
+        gtk_about_dialog_set_authors(about_dialog, authors);
+        gtk_about_dialog_set_license_type(about_dialog, GTK_LICENSE_MIT_X11);
+        gtk_about_dialog_set_logo(
+            about_dialog,
+            gdk_pixbuf_new_from_resource(LUPUS_RESOURCES "/lupus.svg", NULL));
+        gtk_about_dialog_set_program_name(about_dialog, "Lupus");
+        gtk_about_dialog_set_version(about_dialog, LUPUS_VERSION);
+        gtk_about_dialog_set_website(about_dialog,
+                                     "https://github.com/LupusApp/Lupus");
+        gtk_about_dialog_set_website_label(about_dialog, "Github");
+        gtk_about_dialog_set_wrap_license(about_dialog, TRUE);
+    }
+
+    gtk_dialog_run(GTK_DIALOG(about_dialog));
+}
+
+static void init_menu_popover(LupusMainHeaderBar *instance) {
+    GtkBox *box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
+    gtk_box_pack_start(
+        box, gtk_image_new_from_icon_name("help-about", GTK_ICON_SIZE_MENU),
+        FALSE, TRUE, 0);
+    gtk_box_pack_start(box, gtk_label_new("About"), TRUE, TRUE, 0);
+
+    GtkMenuItem *about_menu = GTK_MENU_ITEM(gtk_menu_item_new());
+    gtk_container_add(GTK_CONTAINER(about_menu), GTK_WIDGET(box));
+
+    gtk_menu_shell_append(GTK_MENU_SHELL(instance->menu_popover),
+                          GTK_WIDGET(about_menu));
+
+    gtk_widget_show_all(GTK_WIDGET(instance->menu_popover));
+
+    g_signal_connect_swapped(about_menu, "activate",
+                             G_CALLBACK(menu_popover_about_activate_cb),
+                             instance);
+}
+
 static void active_chat_friend_notify_name_cb(LupusMainHeaderBar *instance) {
     LupusWrapperFriend *friend = lupus_wrapper_get_friend(
         lupus_wrapper, lupus_wrapper_get_active_chat_friend(lupus_wrapper));
@@ -304,6 +347,8 @@ static void lupus_mainheaderbar_class_init(LupusMainHeaderBarClass *class) {
                                          profile_bigger_image);
     gtk_widget_class_bind_template_child(widget_class, LupusMainHeaderBar,
                                          vbox);
+    gtk_widget_class_bind_template_child(widget_class, LupusMainHeaderBar,
+                                         menu_popover);
 
     G_OBJECT_CLASS(class)->constructed = // NOLINT
         lupus_mainheaderbar_constructed;
@@ -313,6 +358,7 @@ static void lupus_mainheaderbar_init(LupusMainHeaderBar *instance) {
     gtk_widget_init_template(GTK_WIDGET(instance));
 
     init_profile_popover(instance);
+    init_menu_popover(instance);
 
     g_signal_connect_swapped(lupus_wrapper, "notify::name",
                              G_CALLBACK(wrapper_notify_name_cb), instance);
