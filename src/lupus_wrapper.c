@@ -14,7 +14,7 @@ struct _LupusWrapper {
     gchar *name;
     gchar *status_message;
     /* FIXME: emit notify::address when nospan or PK change */
-    gchar address[TOX_ADDRESS_SIZE * 2 + 1];
+    gchar *address;
     Tox_User_Status status;
     Tox_Connection connection;
 
@@ -319,6 +319,7 @@ static void lupus_wrapper_finalize(GObject *object) {
     g_free(instance->password);
     g_free(instance->name);
     g_free(instance->status_message);
+    g_free(instance->address);
 
     g_hash_table_foreach_remove(instance->friends, friends_destroy, NULL);
     g_hash_table_destroy(instance->friends);
@@ -350,10 +351,11 @@ static void lupus_wrapper_constructed(GObject *object) {
         instance->status_message = NULL;
     }
 
+    instance->address = g_malloc0(TOX_ADDRESS_SIZE * 2 + 1);
     guint8 tox_address_bin[TOX_ADDRESS_SIZE];
     tox_self_get_address(instance->tox, tox_address_bin);
-    sodium_bin2hex(instance->address, sizeof(instance->address),
-                   tox_address_bin, sizeof(tox_address_bin));
+    sodium_bin2hex(instance->address, TOX_ADDRESS_SIZE * 2 + 1, tox_address_bin,
+                   sizeof(tox_address_bin));
 
     instance->status = tox_self_get_status(instance->tox);
 

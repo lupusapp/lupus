@@ -34,10 +34,16 @@ G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
  * TODO(ogromny): chat basic
  * TODO(ogromny): toupper all address
  *
+ * 1.0.1
+ * ---
+ * TODO(ogromny): Ensure windows and macos compatibility
+ *
  * 1.1.0
+ * ---
  * TODO(ogromny): add notification center
  *
  * 1.2.0
+ * ---
  * TODO(ogromny): add settings
  */
 
