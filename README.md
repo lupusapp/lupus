@@ -1,21 +1,16 @@
-# Lupus
+<p align="center">
+  <img height="150" src="https://github.com/lupusapp/lupus/blob/master/res/images/lupus.svg">
+</p>
 
-## Build
-```sh
-$ git clone https://github.com/lupusapp/lupus
-$ cd lupus
-$ git clone https://github.com/TokTok/c-toxcore
-$ cd c-toxcore
-$ mkdir _build && cd _build
-$ cmake ..
-$ make
-$ cd ../..
-$ mkdir build && cd build
-$ cmake ..
-$ make
-$ ./Lupus
-```
+### Lupus
+### A simple GTK+3 Tox client
+---
 
-## Todo
-- [x] Support encrypted profile
-- [ ] Main
+## Installation
+> TODO
+
+## Roadmap
+> TODO
+
+## Contact
+> TODO
