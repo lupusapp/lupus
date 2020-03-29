@@ -6,20 +6,6 @@
     <property name="visible">True</property>
     <property name="can_focus">False</property>
   </object>
-  <object class="GtkImage" id="profile_bigger_image">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="pixel_size">64</property>
-    <property name="icon_size">0</property>
-  </object>
-  <object class="GtkImage" id="profile_image">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="halign">center</property>
-    <property name="valign">center</property>
-    <property name="pixel_size">24</property>
-    <property name="icon_size">0</property>
-  </object>
   <template class="LupusMainHeaderBar" parent="GtkBox">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -38,12 +24,21 @@
             <property name="receives_default">True</property>
             <property name="halign">center</property>
             <property name="valign">center</property>
-            <property name="image">profile_image</property>
             <property name="relief">none</property>
             <property name="always_show_image">True</property>
+            <child>
+              <object class="GtkImage" id="profile_image">
+                <property name="width_request">36</property>
+                <property name="height_request">36</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+            </child>
             <style>
               <class name="profile"/>
               <class name="profile--offline"/>
+              <class name="small"/>
+              <class name="pa-0"/>
             </style>
           </object>
         </child>
@@ -63,6 +58,7 @@
           </object>
           <packing>
             <property name="pack_type">end</property>
+            <property name="position">1</property>
           </packing>
         </child>
       </object>
@@ -109,12 +105,21 @@
             <property name="receives_default">True</property>
             <property name="halign">center</property>
             <property name="valign">center</property>
-            <property name="image">profile_bigger_image</property>
             <property name="relief">none</property>
             <property name="always_show_image">True</property>
+            <child>
+              <object class="GtkImage" id="profile_bigger_image">
+                <property name="width_request">64</property>
+                <property name="height_request">64</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+            </child>
             <style>
               <class name="profile"/>
               <class name="profile--offline"/>
+              <class name="big"/>
+              <class name="pa-0"/>
             </style>
           </object>
           <packing>
@@ -135,6 +140,7 @@
               <object class="GtkSeparator">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="valign">center</property>
               </object>
               <packing>
                 <property name="expand">True</property>

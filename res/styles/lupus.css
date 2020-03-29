@@ -1,5 +1,7 @@
+/* TODO(gtk4): round */
+
 .profile {
-    border-radius: 90%;
+/*    border-radius: 90%;*/
     border-width: 5px;
     border-style: solid;
     transition: all .4s ease;
@@ -8,6 +10,16 @@
 .profile:hover {
     border-radius: 4px;
     transition: all .4s ease;
+}
+
+.profile.small {
+    min-width: 36px;
+    min-height: 36px;
+}
+
+.profile.big {
+    min-width: 64px;
+    min-height: 64px;
 }
 
 .profile.profile--none {
@@ -28,4 +40,8 @@
 .profile.profile--offline {
     border-color: #d8dee9;
     box-shadow: 0 0 2px #d8dee9;
+}
+
+.pa-0 {
+    padding: 0;
 }

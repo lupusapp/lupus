@@ -24,14 +24,17 @@ LupusWrapperFriend *lupus_wrapper_get_friend(LupusWrapper *instance,
 void lupus_wrapper_add_friend(LupusWrapper *instance, guchar *address_bin,
                               guint8 *message, gsize message_size);
 void lupus_wrapper_remove_friend(LupusWrapper *instance, guint friend_number);
+void lupus_wrapper_set_avatar_hash(LupusWrapper *instance);
 
 header_getter(wrapper, Wrapper, tox, Tox *);
 header_getter_setter(wrapper, Wrapper, name, gchar *);
 header_getter_setter(wrapper, Wrapper, status_message, gchar *);
+header_getter(wrapper, Wrapper, public_key, gchar *);
 header_getter(wrapper, Wrapper, address, gchar *);
 header_getter_setter(wrapper, Wrapper, status, Tox_User_Status);
 header_getter(wrapper, Wrapper, connection, Tox_Connection);
 header_getter(wrapper, Wrapper, friends, GHashTable *);
 header_getter_setter(wrapper, Wrapper, active_chat_friend, guint32);
+header_getter(wrapper, Wrapper, avatar_hash, gchar *);
 
 #endif

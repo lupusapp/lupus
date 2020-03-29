@@ -4,7 +4,7 @@ project(Lupus C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_C_CLANG_TIDY /usr/lib/llvm/9/bin/clang-tidy; # not portable
+set(CMAKE_C_CLANG_TIDY /usr/lib/llvm/9/bin/clang-tidy; # TODO: not portable
         -header-filter="./include/*.h$";
         -checks=*;
         -warnings-as-errors=*;)

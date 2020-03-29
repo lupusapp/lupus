@@ -3,6 +3,7 @@
 #include "../include/lupus_editablelabel.h"
 #include "../include/lupus_wrapper.h"
 #include "../include/utils.h"
+#include <glib/gstdio.h>
 #include <sodium/utils.h>
 
 /*
@@ -31,6 +32,10 @@ struct _LupusMainHeaderBar {
 G_DEFINE_TYPE(LupusMainHeaderBar, lupus_mainheaderbar, GTK_TYPE_BOX)
 
 #define TOXID_DIALOG_MARGIN 20
+#define FILE_CHOOSER_DIALOG_PREVIEW_SIZE 128
+#define AVATAR_MAX_FILE_SIZE 65536
+#define AVATAR_SIZE 64
+#define AVATAR_SIZE_MINI 36
 
 void lupus_mainheaderbar_reset_titles(LupusMainHeaderBar *instance) {
     gtk_header_bar_set_title(instance->right_headerbar, NULL);
@@ -285,6 +290,154 @@ static void wrapper_notify_active_chat_friend_cb(LupusMainHeaderBar *instance) {
         G_CALLBACK(active_chat_friend_notify_status_message_cb), instance);
 }
 
+static void file_chooser_dialog_update_preview_cb(GtkFileChooser *chooser,
+                                                  GtkWidget *preview) {
+    gchar *filename = gtk_file_chooser_get_preview_filename(chooser);
+    if (!filename) {
+        return;
+    }
+
+    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_size(
+        filename, FILE_CHOOSER_DIALOG_PREVIEW_SIZE,
+        FILE_CHOOSER_DIALOG_PREVIEW_SIZE, NULL);
+    g_free(filename);
+
+    gtk_image_set_from_pixbuf(GTK_IMAGE(preview), pixbuf);
+
+    if (pixbuf) {
+        g_object_unref(pixbuf);
+    }
+
+    gtk_file_chooser_set_preview_widget_active(chooser, pixbuf != NULL);
+}
+
+static void profile_bigger_clicked_cb(LupusMainHeaderBar *instance) {
+    static GtkFileChooser *chooser;
+
+    if (!chooser) {
+        chooser = GTK_FILE_CHOOSER(gtk_file_chooser_dialog_new(
+            "Select avatar",
+            GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(instance))),
+            GTK_FILE_CHOOSER_ACTION_OPEN, "Select", GTK_RESPONSE_ACCEPT,
+            "Cancel", GTK_RESPONSE_CANCEL, NULL));
+
+        GtkFileFilter *filter = gtk_file_filter_new();
+        gtk_file_filter_add_mime_type(filter, "image/png");
+        gtk_file_chooser_set_filter(chooser, filter);
+
+        GtkWidget *preview = gtk_image_new();
+        gtk_file_chooser_set_preview_widget(chooser, preview);
+
+        g_signal_connect(chooser, "update-preview",
+                         G_CALLBACK(file_chooser_dialog_update_preview_cb),
+                         preview);
+    }
+
+    if (gtk_dialog_run(GTK_DIALOG(chooser)) == GTK_RESPONSE_ACCEPT) {
+        gchar *filename = gtk_file_chooser_get_filename(chooser);
+
+        /*
+         * Check file size
+         */
+        struct stat file_stat;
+        g_stat(filename, &file_stat);
+
+        if (file_stat.st_size > AVATAR_MAX_FILE_SIZE) {
+            lupus_error("Avatar maximum size is <b>%d</b>.",
+                        AVATAR_MAX_FILE_SIZE);
+            goto end;
+        }
+
+        /*
+         * Create avatars directory if not exist
+         */
+        gchar *avatars_directory = g_strconcat(LUPUS_TOX_DIR, "avatars/", NULL);
+        if (!g_file_test(avatars_directory, G_FILE_TEST_IS_DIR)) {
+            if (g_mkdir(avatars_directory, 755) != 0) { // NOLINT
+                lupus_error("Cannot create avatars directory\n<b>%s</b>",
+                            avatars_directory);
+                g_free(avatars_directory);
+                goto end;
+            }
+        }
+
+        /*
+         * Square image and save it
+         */
+        cairo_surface_t *image = cairo_image_surface_create(
+            CAIRO_FORMAT_ARGB32, AVATAR_SIZE, AVATAR_SIZE);
+
+        cairo_t *cr = cairo_create(image);
+        cairo_set_source_rgba(cr, 0, 0, 0, 0);
+        cairo_paint(cr);
+
+        cairo_surface_t *avatar = cairo_image_surface_create_from_png(filename);
+        gint width = cairo_image_surface_get_width(avatar);
+        gint height = cairo_image_surface_get_height(avatar);
+        gfloat x = (AVATAR_SIZE - width) / 2.0;  // NOLINT
+        gfloat y = (AVATAR_SIZE - height) / 2.0; // NOLINT
+        cairo_set_source_surface(cr, avatar, x, y);
+        cairo_paint(cr);
+        cairo_surface_destroy(avatar);
+
+        cairo_surface_flush(image);
+        cairo_destroy(cr);
+
+        gchar *avatar_filename = g_strconcat(
+            avatars_directory, lupus_wrapper_get_public_key(lupus_wrapper),
+            ".png", NULL);
+        g_free(avatars_directory);
+
+        cairo_surface_write_to_png(image, avatar_filename);
+        cairo_surface_destroy(image);
+        g_free(avatar_filename);
+
+        lupus_wrapper_set_avatar_hash(lupus_wrapper);
+    }
+
+end:
+    gtk_widget_hide(GTK_WIDGET(chooser));
+}
+
+static void wrapper_notify_avatar_hash_cb(LupusMainHeaderBar *instance) {
+    gchar *avatar_hash = lupus_wrapper_get_avatar_hash(lupus_wrapper);
+    gchar *public_key = lupus_wrapper_get_public_key(lupus_wrapper);
+
+    gchar *filename =
+        g_strconcat(LUPUS_TOX_DIR, "avatars/", public_key, ".png", NULL);
+
+    if (!g_file_test(filename, G_FILE_TEST_EXISTS)) {
+        g_free(filename);
+        return;
+    }
+
+    gsize contents_length = 0;
+    gchar *contents = NULL;
+    g_file_get_contents(filename, &contents, &contents_length, NULL);
+
+    guint8 hash[TOX_HASH_LENGTH];
+    tox_hash(hash, (guint8 *)contents, contents_length);
+    g_free(contents);
+
+    gchar hash_hex[TOX_HASH_LENGTH * 2 + 1];
+    sodium_bin2hex(hash_hex, sizeof(hash_hex), hash, sizeof(hash));
+
+    if (g_strcmp0(hash_hex, avatar_hash)) {
+        lupus_error("Avatar hash don't match.");
+        goto end;
+    }
+
+    gtk_image_set_from_pixbuf(
+        instance->profile_image,
+        gdk_pixbuf_new_from_file_at_size(filename, AVATAR_SIZE_MINI,
+                                         AVATAR_SIZE_MINI, NULL));
+    gtk_image_set_from_pixbuf(instance->profile_bigger_image,
+                              gdk_pixbuf_new_from_file_at_size(
+                                  filename, AVATAR_SIZE, AVATAR_SIZE, NULL));
+end:
+    g_free(filename);
+}
+
 static void lupus_mainheaderbar_constructed(GObject *object) {
     LupusMainHeaderBar *instance = LUPUS_MAINHEADERBAR(object);
 
@@ -304,9 +457,13 @@ static void lupus_mainheaderbar_constructed(GObject *object) {
                      NULL);
     g_signal_connect(instance->status_message, "submit",
                      G_CALLBACK(status_message_submit_cb), NULL);
+    g_signal_connect_swapped(instance->profile_bigger, "clicked",
+                             G_CALLBACK(profile_bigger_clicked_cb), instance);
 
     instance->active_chat_friend_notify_name_handler_id = 0;
     instance->active_chat_friend_notify_status_message_handler_id = 0;
+
+    wrapper_notify_avatar_hash_cb(instance);
 
     G_OBJECT_CLASS(lupus_mainheaderbar_parent_class) // NOLINT
         ->constructed(object);
@@ -357,6 +514,9 @@ static void lupus_mainheaderbar_init(LupusMainHeaderBar *instance) {
                              G_CALLBACK(wrapper_notify_status_cb), instance);
     g_signal_connect_swapped(lupus_wrapper, "notify::connection",
                              G_CALLBACK(wrapper_notify_connection_cb),
+                             instance);
+    g_signal_connect_swapped(lupus_wrapper, "notify::avatar-hash",
+                             G_CALLBACK(wrapper_notify_avatar_hash_cb),
                              instance);
 
     g_signal_connect_swapped(instance->profile, "clicked",

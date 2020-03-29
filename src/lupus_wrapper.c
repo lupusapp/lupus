@@ -1,4 +1,5 @@
 #include "../include/lupus_wrapper.h"
+#include <glib/gstdio.h>
 #include <gtk/gtk.h>
 #include <sodium/utils.h>
 #include <tox/toxencryptsave.h>
@@ -10,10 +11,12 @@ struct _LupusWrapper {
 
     guint listenning;
     guint32 active_chat_friend;
+    gchar *avatar_hash;
 
     gchar *name;
     gchar *status_message;
-    /* FIXME: emit notify::address when nospan or PK change */
+    gchar *public_key;
+    /* FIXME: emit notify::address when nospam or PK change */
     gchar *address;
     Tox_User_Status status;
     Tox_Connection connection;
@@ -33,11 +36,13 @@ typedef enum {
     PROP_PASSWORD,
     PROP_NAME,
     PROP_STATUS_MESSAGE,
+    PROP_PUBLIC_KEY,
     PROP_ADDRESS,
     PROP_STATUS,
     PROP_CONNECTION,
     PROP_FRIENDS,
     PROP_ACTIVE_CHAT_FRIEND,
+    PROP_AVATAR_HASH,
     N_PROPERTIES,
 } LupusWrapperProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
@@ -45,11 +50,35 @@ static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 getter(wrapper, Wrapper, tox, Tox *);
 getter_setter(wrapper, Wrapper, name, gchar *);
 getter_setter(wrapper, Wrapper, status_message, gchar *);
+getter(wrapper, Wrapper, public_key, gchar *);
 getter(wrapper, Wrapper, address, gchar *);
 getter_setter(wrapper, Wrapper, status, Tox_User_Status);
 getter(wrapper, Wrapper, connection, Tox_Connection);
 getter(wrapper, Wrapper, friends, GHashTable *);
 getter_setter(wrapper, Wrapper, active_chat_friend, guint32);
+getter(wrapper, Wrapper, avatar_hash, gchar *);
+
+void lupus_wrapper_set_avatar_hash(LupusWrapper *instance) {
+    gchar *filename = g_strconcat(LUPUS_TOX_DIR, "avatars/",
+                                  instance->public_key, ".png", NULL);
+
+    gsize contents_length = 0;
+    gchar *contents = NULL;
+    g_file_get_contents(filename, &contents, &contents_length, NULL);
+    g_free(filename);
+
+    guint8 hash[TOX_HASH_LENGTH];
+    tox_hash(hash, (guint8 *)contents, contents_length);
+    g_free(contents);
+
+    gchar hash_hex[TOX_HASH_LENGTH * 2 + 1];
+    sodium_bin2hex(hash_hex, sizeof(hash_hex), hash, sizeof(hash));
+
+    instance->avatar_hash = g_strdup(hash_hex);
+
+    g_object_notify_by_pspec(G_OBJECT(instance), // NOLINT
+                             obj_properties[PROP_AVATAR_HASH]);
+}
 
 void lupus_wrapper_add_friend(LupusWrapper *instance, guchar *address_bin,
                               guint8 *message, gsize message_size) {
@@ -239,26 +268,31 @@ static void lupus_wrapper_get_property(GObject *object, guint property_id,
         g_value_set_string(value, instance->password);
         break;
     case PROP_NAME:
-        g_value_set_string(value, lupus_wrapper_get_name(lupus_wrapper));
+        g_value_set_string(value, lupus_wrapper_get_name(instance));
         break;
     case PROP_STATUS_MESSAGE:
-        g_value_set_string(value,
-                           lupus_wrapper_get_status_message(lupus_wrapper));
+        g_value_set_string(value, lupus_wrapper_get_status_message(instance));
+        break;
+    case PROP_PUBLIC_KEY:
+        g_value_set_string(value, lupus_wrapper_get_public_key(instance));
         break;
     case PROP_ADDRESS:
-        g_value_set_string(value, lupus_wrapper_get_address(lupus_wrapper));
+        g_value_set_string(value, lupus_wrapper_get_address(instance));
         break;
     case PROP_STATUS:
-        g_value_set_int(value, lupus_wrapper_get_status(lupus_wrapper));
+        g_value_set_int(value, lupus_wrapper_get_status(instance));
         break;
     case PROP_CONNECTION:
-        g_value_set_int(value, lupus_wrapper_get_connection(lupus_wrapper));
+        g_value_set_int(value, lupus_wrapper_get_connection(instance));
         break;
     case PROP_FRIENDS:
-        g_value_set_pointer(value, lupus_wrapper_get_friends(lupus_wrapper));
+        g_value_set_pointer(value, lupus_wrapper_get_friends(instance));
         break;
     case PROP_ACTIVE_CHAT_FRIEND:
-        g_value_set_uint(value, instance->active_chat_friend);
+        g_value_set_uint(value, lupus_wrapper_get_active_chat_friend(instance));
+        break;
+    case PROP_AVATAR_HASH:
+        g_value_set_string(value, lupus_wrapper_get_avatar_hash(instance));
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -319,7 +353,9 @@ static void lupus_wrapper_finalize(GObject *object) {
     g_free(instance->password);
     g_free(instance->name);
     g_free(instance->status_message);
+    g_free(instance->public_key);
     g_free(instance->address);
+    g_free(instance->avatar_hash);
 
     g_hash_table_foreach_remove(instance->friends, friends_destroy, NULL);
     g_hash_table_destroy(instance->friends);
@@ -351,12 +387,19 @@ static void lupus_wrapper_constructed(GObject *object) {
         instance->status_message = NULL;
     }
 
-    instance->address = g_malloc0(TOX_ADDRESS_SIZE * 2 + 1);
+    guint8 public_key_bin[TOX_PUBLIC_KEY_SIZE];
+    tox_self_get_public_key(instance->tox, public_key_bin);
+    gchar public_key_hex[TOX_PUBLIC_KEY_SIZE * 2 + 1];
+    sodium_bin2hex(public_key_hex, sizeof(public_key_hex), public_key_bin,
+                   sizeof(public_key_bin));
+    instance->public_key = g_ascii_strup(public_key_hex, -1);
+
     guint8 tox_address_bin[TOX_ADDRESS_SIZE];
     tox_self_get_address(instance->tox, tox_address_bin);
-    sodium_bin2hex(instance->address, TOX_ADDRESS_SIZE * 2 + 1, tox_address_bin,
+    gchar tox_address_hex[TOX_ADDRESS_SIZE * 2 + 1];
+    sodium_bin2hex(tox_address_hex, sizeof(tox_address_hex), tox_address_bin,
                    sizeof(tox_address_bin));
-    instance->address = g_ascii_strup(instance->address, -1);
+    instance->address = g_ascii_strup(tox_address_hex, -1);
 
     instance->status = tox_self_get_status(instance->tox);
 
@@ -373,6 +416,8 @@ static void lupus_wrapper_constructed(GObject *object) {
                                 lupus_wrapperfriend_new(instance, friends[i]));
         }
     }
+
+    lupus_wrapper_set_avatar_hash(instance);
 
     tox_callback_self_connection_status(instance->tox,
                                         self_connection_status_cb);
@@ -409,6 +454,8 @@ static void lupus_wrapper_class_init(LupusWrapperClass *class) {
         "Focused chat friend number", 0, UINT32_MAX, 0, param2);
 
     gint param3 = G_PARAM_READABLE;
+    obj_properties[PROP_PUBLIC_KEY] = g_param_spec_string(
+        "public-key", "Public Key", "Profile Public Key", NULL, param3);
     obj_properties[PROP_ADDRESS] = g_param_spec_string(
         "address", "Address", "Profile address", NULL, param3);
     obj_properties[PROP_CONNECTION] = g_param_spec_int(
@@ -416,6 +463,8 @@ static void lupus_wrapper_class_init(LupusWrapperClass *class) {
         TOX_CONNECTION_NONE, TOX_CONNECTION_UDP, TOX_CONNECTION_NONE, param3);
     obj_properties[PROP_FRIENDS] =
         g_param_spec_pointer("friends", "Friends", "Profile friends", param3);
+    obj_properties[PROP_AVATAR_HASH] = g_param_spec_string(
+        "avatar-hash", "Avatar Hash", "Profile Avatar Hash", NULL, param3);
 
     g_object_class_install_properties(object_class, N_PROPERTIES,
                                       obj_properties);

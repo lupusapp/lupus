@@ -80,7 +80,7 @@ static void status_cb(Tox *tox, guint32 friend_number,              // NOLINT
                              obj_properties[PROP_STATUS]);
 }
 
-static void connection_cb(Tox *tox, uint32_t friend_number, // NOLINT
+static void connection_cb(Tox *tox, guint32 friend_number,  // NOLINT
                           TOX_CONNECTION connection_status, // NOLINT
                           gpointer user_data) {             // NOLINT
     LupusWrapperFriend *instance =
@@ -90,6 +90,18 @@ static void connection_cb(Tox *tox, uint32_t friend_number, // NOLINT
 
     g_object_notify_by_pspec(G_OBJECT(instance), // NOLINT
                              obj_properties[PROP_CONNECTION]);
+}
+
+static void lossless_cb(Tox *tox, guint32 friend_number, guint8 const *data, // NOLINT
+                        gsize length, gpointer user_data) { // NOLINT
+    printf("get lossless packet from %d\n", friend_number);
+    fflush(stdout);
+}
+
+static void lossy_cb(Tox *tox, guint32 friend_number, guint8 const *data, gsize length, // NOLINT
+                     gpointer user_data) { // NOLINT
+    printf("get lossy packet from %d\n", friend_number);
+    fflush(stdout);
 }
 
 static void lupus_wrapperfriend_get_property(GObject *object, guint property_id,
@@ -186,6 +198,8 @@ static void lupus_wrapperfriend_constructed(GObject *object) {
     tox_callback_friend_status_message(tox, status_message_cb);
     tox_callback_friend_status(tox, status_cb);
     tox_callback_friend_connection_status(tox, connection_cb);
+    tox_callback_friend_lossless_packet(tox, lossless_cb);
+    tox_callback_friend_lossy_packet(tox, lossy_cb);
 
     G_OBJECT_CLASS(lupus_wrapperfriend_parent_class) // NOLINT
         ->constructed(object);
