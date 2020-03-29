@@ -76,6 +76,17 @@ void lupus_wrapper_set_avatar_hash(LupusWrapper *instance) {
 
     instance->avatar_hash = g_strdup(hash_hex);
 
+    GList *keys = g_hash_table_get_keys(instance->friends);
+    for (GList *key = keys; key; key = key->next) {
+        filename = g_strconcat(instance->public_key, ".png", NULL);
+        tox_file_send(instance->tox, GPOINTER_TO_UINT(key->data),
+                      TOX_FILE_KIND_AVATAR, contents_length,
+                      (guint8 *)instance->avatar_hash, (guint8 *)filename,
+                      strlen(filename), NULL);
+        g_free(filename);
+    }
+    g_list_free(keys);
+
     g_object_notify_by_pspec(G_OBJECT(instance), // NOLINT
                              obj_properties[PROP_AVATAR_HASH]);
 }

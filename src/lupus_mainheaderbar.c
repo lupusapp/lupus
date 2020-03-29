@@ -311,6 +311,7 @@ static void file_chooser_dialog_update_preview_cb(GtkFileChooser *chooser,
     gtk_file_chooser_set_preview_widget_active(chooser, pixbuf != NULL);
 }
 
+/* TODO(ogromny): check if new avatar */
 static void profile_bigger_clicked_cb(LupusMainHeaderBar *instance) {
     static GtkFileChooser *chooser;
 
