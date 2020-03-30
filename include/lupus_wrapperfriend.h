@@ -18,5 +18,6 @@ header_getter(wrapperfriend, WrapperFriend, name, gchar *);
 header_getter(wrapperfriend, WrapperFriend, status_message, gchar *);
 header_getter(wrapperfriend, WrapperFriend, status, Tox_User_Status);
 header_getter(wrapperfriend, WrapperFriend, connection, Tox_Connection);
-
+header_getter_setter(wrapperfriend, WrapperFriend, last_avatar_hash_transmitted,
+                     gchar *);
 #endif

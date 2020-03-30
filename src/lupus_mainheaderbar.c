@@ -363,6 +363,34 @@ static void profile_bigger_clicked_cb(LupusMainHeaderBar *instance) {
         }
 
         /*
+         * Check if an avatar is already set, and if so, if it's the same
+         */
+        gchar *avatar_filename = g_strconcat(
+            avatars_directory, lupus_wrapper_get_public_key(lupus_wrapper),
+            ".png", NULL);
+        g_free(avatars_directory);
+        if (g_file_test(avatar_filename, G_FILE_TEST_EXISTS)) {
+            gsize length = 0;
+            gchar *contents = NULL;
+            g_file_get_contents(filename, &contents, &length, NULL);
+
+            gchar new_avatar_hash[TOX_HASH_LENGTH];
+            tox_hash((guint8 *)new_avatar_hash, (guint8 *)contents, length);
+            g_free(contents);
+
+            gchar new_avatar_hash_hex[TOX_HASH_LENGTH * 2 + 1];
+            sodium_bin2hex(new_avatar_hash_hex, sizeof(new_avatar_hash_hex),
+                           (guint8 *)new_avatar_hash, sizeof(new_avatar_hash));
+
+            if (g_strcmp0(new_avatar_hash_hex,
+                          lupus_wrapper_get_avatar_hash(lupus_wrapper)) == 0) {
+                lupus_error("This avatar is already set.");
+                g_free(avatar_filename);
+                goto end;
+            }
+        }
+
+        /*
          * Square image and save it
          */
         cairo_surface_t *image = cairo_image_surface_create(
@@ -384,15 +412,13 @@ static void profile_bigger_clicked_cb(LupusMainHeaderBar *instance) {
         cairo_surface_flush(image);
         cairo_destroy(cr);
 
-        gchar *avatar_filename = g_strconcat(
-            avatars_directory, lupus_wrapper_get_public_key(lupus_wrapper),
-            ".png", NULL);
-        g_free(avatars_directory);
-
         cairo_surface_write_to_png(image, avatar_filename);
         cairo_surface_destroy(image);
         g_free(avatar_filename);
 
+        /*
+         * And finally, set avatar hash
+         */
         lupus_wrapper_set_avatar_hash(lupus_wrapper);
     }
 

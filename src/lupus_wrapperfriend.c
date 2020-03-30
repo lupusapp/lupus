@@ -5,6 +5,8 @@
 struct _LupusWrapperFriend {
     GObject parent_instance;
 
+    gchar *last_avatar_hash_transmitted;
+
     LupusWrapper *wrapper;
     guint id;
     gchar *name;
@@ -33,6 +35,7 @@ typedef enum {
     PROP_STATUS_MESSAGE,
     PROP_STATUS,
     PROP_CONNECTION,
+    PROP_LAST_AVATAR_HASH_TRANSMITTED,
     N_PROPERTIES,
 } LupusWrapperFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
@@ -42,9 +45,11 @@ getter(wrapperfriend, WrapperFriend, name, gchar *);
 getter(wrapperfriend, WrapperFriend, status_message, gchar *);
 getter(wrapperfriend, WrapperFriend, status, Tox_User_Status);
 getter(wrapperfriend, WrapperFriend, connection, Tox_Connection);
+getter_setter(wrapperfriend, WrapperFriend, last_avatar_hash_transmitted,
+              gchar *);
 
 static void name_cb(Tox *tox, guint32 friend_number,  // NOLINT
-                    const guint8 *name, gsize length, // NOLINT
+                    guint8 const *name, gsize length, // NOLINT
                     gpointer user_data) {             // NOLINT
     LupusWrapperFriend *instance = LUPUS_WRAPPERFRIEND(
         lupus_wrapper_get_friend(lupus_wrapper, friend_number));
@@ -88,20 +93,19 @@ static void connection_cb(Tox *tox, guint32 friend_number,  // NOLINT
 
     instance->connection = connection_status;
 
+    /*
+     * Check if last avatar has been sent
+     */
+    if (connection_status != TOX_CONNECTION_NONE) {
+        gchar *actual_hash = lupus_wrapper_get_avatar_hash(lupus_wrapper);
+
+        if (g_strcmp0(actual_hash, instance->last_avatar_hash_transmitted)) {
+            lupus_wrapper_send_avatar(lupus_wrapper, friend_number);
+        }
+    }
+
     g_object_notify_by_pspec(G_OBJECT(instance), // NOLINT
                              obj_properties[PROP_CONNECTION]);
-}
-
-static void lossless_cb(Tox *tox, guint32 friend_number, guint8 const *data, // NOLINT
-                        gsize length, gpointer user_data) { // NOLINT
-    printf("get lossless packet from %d\n", friend_number);
-    fflush(stdout);
-}
-
-static void lossy_cb(Tox *tox, guint32 friend_number, guint8 const *data, gsize length, // NOLINT
-                     gpointer user_data) { // NOLINT
-    printf("get lossy packet from %d\n", friend_number);
-    fflush(stdout);
 }
 
 static void lupus_wrapperfriend_get_property(GObject *object, guint property_id,
@@ -127,6 +131,9 @@ static void lupus_wrapperfriend_get_property(GObject *object, guint property_id,
     case PROP_CONNECTION:
         g_value_set_int(value, instance->connection);
         break;
+    case PROP_LAST_AVATAR_HASH_TRANSMITTED:
+        g_value_set_string(value, instance->last_avatar_hash_transmitted);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     }
@@ -143,6 +150,10 @@ static void lupus_wrapperfriend_set_property(GObject *object, guint property_id,
         break;
     case PROP_ID:
         instance->id = g_value_get_uint(value);
+        break;
+    case PROP_LAST_AVATAR_HASH_TRANSMITTED:
+        instance->last_avatar_hash_transmitted =
+            (gchar *)g_value_get_string(value);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -194,12 +205,12 @@ static void lupus_wrapperfriend_constructed(GObject *object) {
     instance->connection =
         tox_friend_get_connection_status(tox, instance->id, NULL);
 
+    instance->last_avatar_hash_transmitted = NULL;
+
     tox_callback_friend_name(tox, name_cb);
     tox_callback_friend_status_message(tox, status_message_cb);
     tox_callback_friend_status(tox, status_cb);
     tox_callback_friend_connection_status(tox, connection_cb);
-    tox_callback_friend_lossless_packet(tox, lossless_cb);
-    tox_callback_friend_lossy_packet(tox, lossy_cb);
 
     G_OBJECT_CLASS(lupus_wrapperfriend_parent_class) // NOLINT
         ->constructed(object);
@@ -230,6 +241,11 @@ static void lupus_wrapperfriend_class_init(LupusWrapperFriendClass *class) {
     obj_properties[PROP_CONNECTION] = g_param_spec_int(
         "connection", "Connection", "Friend connection", TOX_CONNECTION_NONE,
         TOX_CONNECTION_UDP, TOX_CONNECTION_NONE, param2);
+
+    gint param3 = G_PARAM_READWRITE;
+    obj_properties[PROP_LAST_AVATAR_HASH_TRANSMITTED] = g_param_spec_string(
+        "last-avatar-hash-transmitted", "Last Avatar Hash Transmitted",
+        "The last transmitted avatar hash", NULL, param3);
 
     g_object_class_install_properties(object_class, N_PROPERTIES,
                                       obj_properties);

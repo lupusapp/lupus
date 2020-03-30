@@ -25,6 +25,7 @@ void lupus_wrapper_add_friend(LupusWrapper *instance, guchar *address_bin,
                               guint8 *message, gsize message_size);
 void lupus_wrapper_remove_friend(LupusWrapper *instance, guint friend_number);
 void lupus_wrapper_set_avatar_hash(LupusWrapper *instance);
+void lupus_wrapper_send_avatar(LupusWrapper *instance, guint32 friend_number);
 
 header_getter(wrapper, Wrapper, tox, Tox *);
 header_getter_setter(wrapper, Wrapper, name, gchar *);
