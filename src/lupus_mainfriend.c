@@ -20,6 +20,7 @@ G_DEFINE_TYPE(LupusMainFriend, lupus_mainfriend, GTK_TYPE_EVENT_BOX)
 #define REMOVEFRIEND_DIALOG_WIDTH 250
 #define REMOVEFRIEND_DIALOG_HEIGHT 100
 #define REMOVEFRIEND_DIALOG_MARGIN 20
+#define AVATAR_SIZE 48
 
 #define WRAPPER_FRIEND                                                         \
     (lupus_wrapper_get_friend(lupus_wrapper, instance->friend_number))
@@ -92,6 +93,18 @@ static void friend_notify_name_cb(LupusMainFriend *instance) {
     gchar *name = lupus_wrapperfriend_get_name(WRAPPER_FRIEND);
     gtk_label_set_text(instance->name, name);
     gtk_widget_set_tooltip_text(GTK_WIDGET(instance->name), name);
+}
+
+static void friend_notify_avatar_hash_cb(LupusMainFriend *instance) {
+    gchar *public_key = lupus_wrapperfriend_get_public_key(WRAPPER_FRIEND);
+    gchar *filename =
+        g_strconcat(LUPUS_TOX_DIR, "avatars/", public_key, ".png", NULL);
+
+    gtk_image_set_from_pixbuf(instance->profile_image,
+                              gdk_pixbuf_new_from_file_at_size(
+                                  filename, AVATAR_SIZE, AVATAR_SIZE, NULL));
+
+    g_free(filename);
 }
 
 static gboolean friend_button_press_event_cb(LupusMainFriend *instance,
@@ -173,6 +186,7 @@ static void lupus_mainfriend_constructed(GObject *object) {
 
     friend_notify_name_cb(instance);
     friend_notify_status_message_cb(instance);
+    friend_notify_avatar_hash_cb(instance);
 
     init_popover(instance);
 
@@ -185,6 +199,9 @@ static void lupus_mainfriend_constructed(GObject *object) {
                              G_CALLBACK(friend_notify_status_cb), instance);
     g_signal_connect_swapped(friend, "notify::connection",
                              G_CALLBACK(friend_notify_connection_cb), instance);
+    g_signal_connect_swapped(friend, "notify::avatar-hash",
+                             G_CALLBACK(friend_notify_avatar_hash_cb),
+                             instance);
 
     g_signal_connect(instance, "button-press-event",
                      G_CALLBACK(friend_button_press_event_cb), NULL);

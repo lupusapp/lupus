@@ -17,6 +17,11 @@
     min-height: 36px;
 }
 
+.profile.medium {
+    min-width: 48px;
+    min-height: 48px;
+}
+
 .profile.big {
     min-width: 64px;
     min-height: 64px;
