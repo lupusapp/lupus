@@ -304,8 +304,6 @@ static void friend_request_cb(Tox *tox, // NOLINT
 }
 
 static void lupus_main_finalize(GObject *object) {
-    /* FIXME: clean by hand */
-
     g_hash_table_destroy(mainchats);
     g_hash_table_destroy(mainfriends);
 

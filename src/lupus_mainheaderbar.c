@@ -6,10 +6,6 @@
 #include <glib/gstdio.h>
 #include <sodium/utils.h>
 
-/*
- * TODO(ogromny): avatar
- */
-
 struct _LupusMainHeaderBar {
     GtkBox parent_instance;
 
@@ -50,14 +46,12 @@ static gboolean profile_button_press_event(LupusMainHeaderBar *instance,
     return FALSE;
 }
 
-/* FIXME: edit when lupus_wrapper_set_property blabla return code handled */
 static gboolean name_submit_cb(gpointer _, gchar *value) { // NOLINT
     lupus_wrapper_set_name(lupus_wrapper, value);
     lupus_wrapper_save(lupus_wrapper);
     return TRUE;
 }
 
-/* FIXME: edit when lupus_wrapper_set_property blabla return code handled */
 static gboolean status_message_submit_cb(gpointer _, gchar *value) { // NOLINT
     lupus_wrapper_set_status_message(lupus_wrapper, value);
     lupus_wrapper_save(lupus_wrapper);
@@ -108,9 +102,6 @@ static void wrapper_notify_status_cb(LupusMainHeaderBar *instance) {
 static void wrapper_notify_connection_cb(LupusMainHeaderBar *instance) {
     Tox_Connection connection = lupus_wrapper_get_connection(lupus_wrapper);
 
-    /*
-     * FIXME: maybe change this in future, imho not necessary but we never know
-     */
     if (connection != TOX_CONNECTION_NONE) {
         wrapper_notify_status_cb(instance);
         return;
@@ -139,33 +130,40 @@ static void wrapper_notify_connection_cb(LupusMainHeaderBar *instance) {
 }
 
 static void toxid_cb() {
-    /*
-     * FIXME: static this ?
-     */
+    static GtkWidget *label;
+    static GtkWidget *box;
+    static GtkWidget *dialog;
 
-    GtkWidget *label = g_object_new(GTK_TYPE_LABEL, "label",
-                                    lupus_wrapper_get_address(lupus_wrapper),
-                                    "selectable", TRUE, NULL);
-    gtk_widget_set_margin_top(label, TOXID_DIALOG_MARGIN);
-    gtk_widget_set_margin_end(label, TOXID_DIALOG_MARGIN);
-    gtk_widget_set_margin_bottom(label, TOXID_DIALOG_MARGIN);
-    gtk_widget_set_margin_start(label, TOXID_DIALOG_MARGIN);
+    if (!label) {
+        gchar *address = lupus_wrapper_get_address(lupus_wrapper);
+        label = g_object_new(GTK_TYPE_LABEL, "label", address, "selectable",
+                             TRUE, NULL);
 
-    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-    gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
+        gtk_widget_set_margin_top(label, TOXID_DIALOG_MARGIN);
+        gtk_widget_set_margin_end(label, TOXID_DIALOG_MARGIN);
+        gtk_widget_set_margin_bottom(label, TOXID_DIALOG_MARGIN);
+        gtk_widget_set_margin_start(label, TOXID_DIALOG_MARGIN);
+    }
 
-    GtkDialog *dialog =
-        GTK_DIALOG(g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE,
-                                "title", "ToxID", "resizable", FALSE, NULL));
-    gtk_container_remove(
-        GTK_CONTAINER(dialog),
-        gtk_container_get_children(GTK_CONTAINER(dialog))->data);
-    gtk_container_add(GTK_CONTAINER(dialog), GTK_WIDGET(box));
+    if (!box) {
+        box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+        gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
+    }
 
-    gtk_widget_show_all(GTK_WIDGET(dialog));
+    if (!dialog) {
+        dialog = g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, "title",
+                              "ToxID", "resizable", FALSE, NULL);
 
-    gtk_dialog_run(dialog);
-    gtk_widget_destroy(GTK_WIDGET(dialog));
+        GtkContainer *container = GTK_CONTAINER(dialog);
+        GtkWidget *child = gtk_container_get_children(container)->data;
+        gtk_container_remove(container, child);
+        gtk_container_add(container, box);
+
+        gtk_widget_show_all(dialog);
+    }
+
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_hide(dialog);
 }
 
 static void change_status_cb(GtkMenuItem *item, LupusMainHeaderBar *instance) {
@@ -311,7 +309,6 @@ static void file_chooser_dialog_update_preview_cb(GtkFileChooser *chooser,
     gtk_file_chooser_set_preview_widget_active(chooser, pixbuf != NULL);
 }
 
-/* TODO(ogromny): check if new avatar */
 static void profile_bigger_clicked_cb(LupusMainHeaderBar *instance) {
     static GtkFileChooser *chooser;
 

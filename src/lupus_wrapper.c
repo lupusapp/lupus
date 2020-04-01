@@ -591,7 +591,6 @@ static void lupus_wrapper_finalize(GObject *object) {
     g_hash_table_destroy(files_in);
 
     g_bytes_unref(avatar_bytes);
-    // FIXME: empty files_io ?
 
     G_OBJECT_CLASS(lupus_wrapper_parent_class)->finalize(object); // NOLINT
 }
