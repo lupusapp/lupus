@@ -6,13 +6,13 @@
 #define LUPUS_VERSION "0.9.9"
 
 #define lupus_error(...)                                                       \
-    (lupus_message(GTK_MESSAGE_ERROR, "<b>Error</b>", __VA_ARGS__))
+    lupus_message(GTK_MESSAGE_ERROR, "<b>Error</b>", __VA_ARGS__)
 
 #define lupus_success(...)                                                     \
-    (lupus_message(GTK_MESSAGE_INFO, "<b>Success</b>", __VA_ARGS__))
+    lupus_message(GTK_MESSAGE_INFO, "<b>Success</b>", __VA_ARGS__)
 
 #define lupus_message(t, s, ...)                                               \
-    ({                                                                         \
+    do {                                                                       \
         GtkWidget *d = gtk_message_dialog_new(NULL, GTK_DIALOG_USE_HEADER_BAR, \
                                               t, GTK_BUTTONS_CLOSE, NULL);     \
         gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(d), s);               \
@@ -20,7 +20,7 @@
                                                    __VA_ARGS__);               \
         gtk_dialog_run(GTK_DIALOG(d));                                         \
         gtk_widget_destroy(GTK_WIDGET(d));                                     \
-    })
+    } while (0)
 
 #define CONCAT(a, b, c, d) a##b##c##d
 #define header_getter(aclass, bclass, name, type)                              \

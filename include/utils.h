@@ -5,7 +5,7 @@
 #include <tox/tox.h>
 
 #define remove_class_with_prefix(i, n)                                         \
-    ({                                                                         \
+    do {                                                                       \
         GtkStyleContext *context =                                             \
             gtk_widget_get_style_context(GTK_WIDGET(i));                       \
         GList *classes = gtk_style_context_list_classes(context);              \
@@ -15,6 +15,6 @@
             }                                                                  \
         }                                                                      \
         g_list_free(classes);                                                  \
-    })
+    } while (0)
 
 #endif
