@@ -21,14 +21,13 @@ struct _LupusProfileChooser {
     GtkButton *register_button;
 };
 
-G_DEFINE_TYPE(LupusProfileChooser, lupus_profilechooser,
-              GTK_TYPE_APPLICATION_WINDOW)
+G_DEFINE_TYPE(LupusProfileChooser, lupus_profilechooser, GTK_TYPE_APPLICATION_WINDOW)
 
 LupusWrapper *lupus_wrapper;
 
-static gchar *ask_password(void) {
-    GtkWidget *dialog =
-        g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, NULL);
+static gchar *ask_password(void)
+{
+    GtkWidget *dialog = g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, NULL);
     gtk_dialog_add_button(GTK_DIALOG(dialog), "Decrypt", GTK_RESPONSE_ACCEPT);
     gtk_widget_set_size_request(dialog, PASSWORD_DIALOG_WIDTH, 0);
     gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
@@ -39,8 +38,7 @@ static gchar *ask_password(void) {
     gtk_widget_set_margin_bottom(entry, PASSWORD_DIALOG_MARGIN);
     gtk_widget_set_margin_start(entry, PASSWORD_DIALOG_MARGIN);
 
-    gtk_container_add(gtk_container_get_children(GTK_CONTAINER(dialog))->data,
-                      entry);
+    gtk_container_add(gtk_container_get_children(GTK_CONTAINER(dialog))->data, entry);
 
     gtk_widget_show_all(dialog);
 
@@ -55,9 +53,9 @@ destroy:
     return password;
 }
 
-static void login_cb(GtkButton *button, LupusProfileChooser *instance) {
-    gchar *filename =
-        g_strconcat(LUPUS_TOX_DIR, gtk_button_get_label(button), ".tox", NULL);
+static void login_cb(GtkButton *button, LupusProfileChooser *instance)
+{
+    gchar *filename = g_strconcat(LUPUS_TOX_DIR, gtk_button_get_label(button), ".tox", NULL);
 
     GError *error = NULL;
     gchar *savedata = NULL;
@@ -75,11 +73,8 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance) {
             goto free;
         }
 
-        guint8 *tmp =
-            g_malloc(savedata_size - TOX_PASS_ENCRYPTION_EXTRA_LENGTH);
-        if (!tox_pass_decrypt((guint8 *)savedata, savedata_size,
-                              (guint8 *)password, strlen(password), tmp,
-                              NULL)) {
+        guint8 *tmp = g_malloc(savedata_size - TOX_PASS_ENCRYPTION_EXTRA_LENGTH);
+        if (!tox_pass_decrypt((guint8 *)savedata, savedata_size, (guint8 *)password, strlen(password), tmp, NULL)) {
             lupus_error("Cannot decrypt profile.");
             g_free(tmp);
             goto free;
@@ -92,7 +87,7 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance) {
 
     struct Tox_Options *options = tox_options_new(NULL);
     if (!options) {
-        lupus_error("Cannot create <i>Tox_Options</i>."); // NOLINT
+        lupus_error("Cannot create <i>Tox_Options</i>.");
         goto free;
     }
     tox_options_set_savedata_type(options, TOX_SAVEDATA_TYPE_TOX_SAVE);
@@ -107,27 +102,25 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance) {
 
     lupus_wrapper = lupus_wrapper_new(tox, filename, password);
 
-    gtk_window_present(GTK_WINDOW(
-        lupus_main_new(gtk_window_get_application(GTK_WINDOW(instance)))));
+    gtk_window_present(GTK_WINDOW(lupus_main_new(gtk_window_get_application(GTK_WINDOW(instance)))));
     gtk_widget_destroy(GTK_WIDGET(instance));
 
 free:
-    g_free(password); // NOLINT
+    g_free(password);
     g_free(filename);
 }
 
-gboolean tox_save(Tox *tox, gchar *filename, gchar const *password) {
+gboolean tox_save(Tox *tox, gchar *filename, gchar const *password)
+{
     gsize savedata_size = tox_get_savedata_size(tox);
     guint8 *savedata = g_malloc(savedata_size);
     tox_get_savedata(tox, savedata);
 
     /* if password is set and is not empty */
     if (password && *password) {
-        guint8 *tmp =
-            g_malloc(savedata_size + TOX_PASS_ENCRYPTION_EXTRA_LENGTH);
+        guint8 *tmp = g_malloc(savedata_size + TOX_PASS_ENCRYPTION_EXTRA_LENGTH);
 
-        if (!tox_pass_encrypt(savedata, savedata_size, (guint8 *)password,
-                              strlen(password), tmp, NULL)) {
+        if (!tox_pass_encrypt(savedata, savedata_size, (guint8 *)password, strlen(password), tmp, NULL)) {
             lupus_error("Cannot encrypt profile.");
             g_free(tmp);
             g_free(savedata);
@@ -154,10 +147,9 @@ gboolean tox_save(Tox *tox, gchar *filename, gchar const *password) {
     return TRUE;
 }
 
-static void register_cb(LupusProfileChooser *instance) {
-    gchar *filename =
-        g_strconcat(LUPUS_TOX_DIR, gtk_entry_get_text(instance->register_name),
-                    ".tox", NULL);
+static void register_cb(LupusProfileChooser *instance)
+{
+    gchar *filename = g_strconcat(LUPUS_TOX_DIR, gtk_entry_get_text(instance->register_name), ".tox", NULL);
 
     if (g_file_test(filename, G_FILE_TEST_EXISTS)) {
         lupus_error("Profile \"%s\" already exists.", filename);
@@ -172,8 +164,7 @@ static void register_cb(LupusProfileChooser *instance) {
 
     // not a problem if name or status fail
     tox_self_set_name(tox, (guint8 *)DEFAULT_NAME, strlen(DEFAULT_NAME), NULL);
-    tox_self_set_status_message(tox, (guint8 *)DEFAULT_STATUS_MESSAGE,
-                                strlen(DEFAULT_STATUS_MESSAGE), NULL);
+    tox_self_set_status_message(tox, (guint8 *)DEFAULT_STATUS_MESSAGE, strlen(DEFAULT_STATUS_MESSAGE), NULL);
 
     tox_save(tox, filename, gtk_entry_get_text(instance->register_pass));
     tox_kill(tox);
@@ -182,7 +173,8 @@ free:
     g_free(filename);
 }
 
-static void list_profiles(LupusProfileChooser *instance) {
+static void list_profiles(LupusProfileChooser *instance)
+{
     GError *error = NULL;
     GDir *dir = g_dir_open(LUPUS_TOX_DIR, 0, &error);
     if (error) {
@@ -205,12 +197,10 @@ static void list_profiles(LupusProfileChooser *instance) {
         errno = 0;
     }
 
-    gtk_container_foreach(GTK_CONTAINER(instance->login_box),
-                          (GtkCallback)gtk_widget_destroy, NULL);
+    gtk_container_foreach(GTK_CONTAINER(instance->login_box), (GtkCallback)gtk_widget_destroy, NULL);
 
     for (guint i = 0; i < profiles->len; ++i) {
-        gchar *name =
-            g_strndup(profiles->pdata[i], strlen(profiles->pdata[i]) - 4);
+        gchar *name = g_strndup(profiles->pdata[i], strlen(profiles->pdata[i]) - 4);
 
         GtkWidget *button = gtk_button_new_with_label(name);
         gtk_widget_set_focus_on_click(button, FALSE);
@@ -233,44 +223,38 @@ static void list_profiles(LupusProfileChooser *instance) {
     g_ptr_array_free(profiles, TRUE);
 }
 
-static void stack_change_cb(LupusProfileChooser *instance) {
-    if (g_strcmp0(gtk_stack_get_visible_child_name(instance->stack), "login") ==
-        0) {
+static void stack_change_cb(LupusProfileChooser *instance)
+{
+    if (g_strcmp0(gtk_stack_get_visible_child_name(instance->stack), "login") == 0) {
         list_profiles(instance);
     }
 }
 
-static void lupus_profilechooser_class_init(LupusProfileChooserClass *class) {
+static void lupus_profilechooser_class_init(LupusProfileChooserClass *class)
+{
     GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
-    gtk_widget_class_set_template_from_resource(widget_class, LUPUS_RESOURCES
-                                                "/profilechooser.ui");
-    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser,
-                                         stack);
-    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser,
-                                         login_box);
-    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser,
-                                         register_name);
-    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser,
-                                         register_pass);
-    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser,
-                                         register_button);
+    gtk_widget_class_set_template_from_resource(widget_class, LUPUS_RESOURCES "/profilechooser.ui");
+    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser, stack);
+    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser, login_box);
+    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser, register_name);
+    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser, register_pass);
+    gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser, register_button);
 }
 
-static void lupus_profilechooser_init(LupusProfileChooser *instance) {
+static void lupus_profilechooser_init(LupusProfileChooser *instance)
+{
     gtk_widget_init_template(GTK_WIDGET(instance));
 
-    g_signal_connect_swapped(instance->register_button, "clicked",
-                             G_CALLBACK(register_cb), instance);
-    g_signal_connect_swapped(instance->stack, "notify::visible-child-name",
-                             G_CALLBACK(stack_change_cb), instance);
+    g_signal_connect_swapped(instance->register_button, "clicked", G_CALLBACK(register_cb), instance);
+    g_signal_connect_swapped(instance->stack, "notify::visible-child-name", G_CALLBACK(stack_change_cb), instance);
 
     list_profiles(instance);
 
     gtk_widget_show_all(GTK_WIDGET(instance));
 }
 
-LupusProfileChooser *lupus_profilechooser_new(LupusApplication *application) {
-    return g_object_new(LUPUS_TYPE_PROFILECHOOSER, "application", application,
-                        NULL);
+LupusProfileChooser *lupus_profilechooser_new(LupusApplication *application)
+{
+    return g_object_new(LUPUS_TYPE_PROFILECHOOSER, "application", application, NULL);
 }

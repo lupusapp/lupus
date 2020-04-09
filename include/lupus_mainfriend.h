@@ -8,8 +8,7 @@
 
 #define LUPUS_TYPE_MAINFRIEND lupus_mainfriend_get_type()
 
-G_DECLARE_FINAL_TYPE(LupusMainFriend, lupus_mainfriend, LUPUS, MAINFRIEND,
-                     GtkEventBox)
+G_DECLARE_FINAL_TYPE(LupusMainFriend, lupus_mainfriend, LUPUS, MAINFRIEND, GtkEventBox)
 
 LupusMainFriend *lupus_mainfriend_new(guint32 friend_number);
 header_getter(mainfriend, MainFriend, friend_number, guint32);

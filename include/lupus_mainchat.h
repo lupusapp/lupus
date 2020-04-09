@@ -5,8 +5,7 @@
 
 #define LUPUS_TYPE_MAINCHAT lupus_mainchat_get_type()
 
-G_DECLARE_FINAL_TYPE(LupusMainChat, lupus_mainchat, LUPUS, MAINCHAT,
-                     GtkEventBox)
+G_DECLARE_FINAL_TYPE(LupusMainChat, lupus_mainchat, LUPUS, MAINCHAT, GtkEventBox)
 
 LupusMainChat *lupus_mainchat_new(void);
 
