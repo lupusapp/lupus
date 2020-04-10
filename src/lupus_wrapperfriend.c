@@ -113,6 +113,7 @@ static void status_cb(Tox *tox, guint32 friend_number, TOX_USER_STATUS status, g
     g_object_notify_by_pspec(object, obj_properties[PROP_STATUS]);
 }
 
+// NOLINTNEXTLINE
 static void connection_cb(Tox *tox, guint32 friend_number, TOX_CONNECTION connection_status, gpointer user_data)
 {
     LupusWrapperFriend *instance = lupus_wrapper_get_friend(lupus_wrapper, friend_number);

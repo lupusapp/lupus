@@ -31,6 +31,7 @@ G_DEFINE_TYPE(LupusMainHeaderBar, lupus_mainheaderbar, GTK_TYPE_BOX)
 #define AVATAR_MAX_FILE_SIZE 65536
 #define AVATAR_SIZE 64
 #define AVATAR_SIZE_MINI 36
+#define AVATAR_DIRECTORY_PERMISSIONS 755
 
 void lupus_mainheaderbar_reset_titles(LupusMainHeaderBar *instance)
 {
@@ -46,14 +47,14 @@ static gboolean profile_button_press_event(LupusMainHeaderBar *instance, GdkEven
     return FALSE;
 }
 
-static gboolean name_submit_cb(gpointer _, gchar *value)
+static gboolean name_submit_cb(gpointer _, gchar *value) // NOLINT
 {
     lupus_wrapper_set_name(lupus_wrapper, value);
     lupus_wrapper_save(lupus_wrapper);
     return TRUE;
 }
 
-static gboolean status_message_submit_cb(gpointer _, gchar *value)
+static gboolean status_message_submit_cb(gpointer _, gchar *value) // NOLINT
 {
     lupus_wrapper_set_status_message(lupus_wrapper, value);
     lupus_wrapper_save(lupus_wrapper);
@@ -323,7 +324,7 @@ static void profile_bigger_clicked_cb(LupusMainHeaderBar *instance)
          */
         gchar *avatars_directory = g_strconcat(LUPUS_TOX_DIR, "avatars/", NULL);
         if (!g_file_test(avatars_directory, G_FILE_TEST_IS_DIR)) {
-            if (g_mkdir(avatars_directory, 755) != 0) {
+            if (g_mkdir(avatars_directory, AVATAR_DIRECTORY_PERMISSIONS) != 0) {
                 lupus_error("Cannot create avatars directory\n<b>%s</b>", avatars_directory);
                 g_free(avatars_directory);
                 goto end;
@@ -368,8 +369,8 @@ static void profile_bigger_clicked_cb(LupusMainHeaderBar *instance)
         cairo_surface_t *avatar = cairo_image_surface_create_from_png(filename);
         gint width = cairo_image_surface_get_width(avatar);
         gint height = cairo_image_surface_get_height(avatar);
-        gfloat x = (AVATAR_SIZE - width) / 2.0;
-        gfloat y = (AVATAR_SIZE - height) / 2.0;
+        gfloat x = (AVATAR_SIZE - width) / 2.0; // NOLINT
+        gfloat y = (AVATAR_SIZE - height) / 2.0; // NOLINT
         cairo_set_source_surface(cr, avatar, x, y);
         cairo_paint(cr);
         cairo_surface_destroy(avatar);

@@ -246,8 +246,8 @@ static void friend_request_response_cb(GtkInfoBar *info_bar, gint response_id, g
     g_timeout_add_seconds(2, destroy_return_false, info_bar);
 }
 
-static void friend_request_cb(Tox *tox, guint8 const *public_key, guint8 const *message, gsize length,
-                              gpointer user_data)
+// NOLINTNEXTLINE
+static void friend_request_cb(Tox *tox, guint8 const *public_key, guint8 const *message, gsize length, gpointer data)
 {
     gchar address_hex[TOX_PUBLIC_KEY_SIZE * 2 + 1];
     sodium_bin2hex(address_hex, sizeof(address_hex), public_key, TOX_PUBLIC_KEY_SIZE);

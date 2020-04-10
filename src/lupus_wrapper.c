@@ -28,7 +28,7 @@ struct _LupusWrapper {
     gchar *password;
 };
 
-G_DEFINE_TYPE(LupusWrapper, lupus_wrapper, G_TYPE_OBJECT)
+G_DEFINE_TYPE(LupusWrapper, lupus_wrapper, G_TYPE_OBJECT) // NOLINT
 
 typedef struct {
     /*
@@ -668,7 +668,7 @@ static void lupus_wrapper_class_init(LupusWrapperClass *class)
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 }
 
-static void lupus_wrapper_init(LupusWrapper *instance)
+static void lupus_wrapper_init(LupusWrapper *instance) // NOLINT
 {
     files_out = g_hash_table_new(NULL, NULL);
     files_in = g_hash_table_new(NULL, NULL);

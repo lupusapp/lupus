@@ -106,7 +106,8 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance)
     gtk_widget_destroy(GTK_WIDGET(instance));
 
 free:
-    g_free(password);
+    g_free(password); // NOLINT
+    g_free(savedata);
     g_free(filename);
 }
 

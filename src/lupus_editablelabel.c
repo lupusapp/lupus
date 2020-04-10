@@ -97,7 +97,7 @@ static void lupus_editablelabel_class_init(LupusEditableLabelClass *class)
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 
     signals[SUBMIT] = g_signal_new("submit", LUPUS_TYPE_EDITABLELABEL, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
-                                   G_TYPE_BOOLEAN, 1, G_TYPE_STRING);
+                                   G_TYPE_BOOLEAN, 1, G_TYPE_STRING); // NOLINT
 }
 
 static void lupus_editablelabel_init(LupusEditableLabel *instance)
