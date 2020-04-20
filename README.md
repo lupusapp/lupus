@@ -4,7 +4,9 @@
 
 ### Lupus
 ### A simple GTK+3 Tox client
----
+<p align="center">
+  <img height="500" src="https://i.imgur.com/y7y0LM8.png">
+</p>
 
 ## Installation
 > TODO
