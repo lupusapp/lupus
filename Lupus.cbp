@@ -143,6 +143,9 @@
 		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_mainheaderbar.h">
 			<Option target="Lupus"/>
 		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_mainmessage.h">
+			<Option target="Lupus"/>
+		</Unit>
 		<Unit filename="/home/ogromny/Code/C/lupus/include/lupus_profilechooser.h">
 			<Option target="Lupus"/>
 		</Unit>
@@ -174,6 +177,9 @@
 			<Option target="Lupus"/>
 		</Unit>
 		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_mainheaderbar.c">
+			<Option target="Lupus"/>
+		</Unit>
+		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_mainmessage.c">
 			<Option target="Lupus"/>
 		</Unit>
 		<Unit filename="/home/ogromny/Code/C/lupus/src/lupus_profilechooser.c">

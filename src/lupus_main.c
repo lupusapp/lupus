@@ -31,11 +31,24 @@ G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
 /*
  * 1.0.0
  * ---
- * TODO(ogromny): chat basic
+ * DONE(ogromny): chat basic
+ * TODO(ogromny): LupusMainFriend (status, unread messages, etc)
  *
  * 1.0.1
  * ---
  * TODO(ogromny): Ensure windows and macos compatibility
+ *
+ * 1.0.2
+ * ---
+ * TODO(ogromny): default avatar
+ *
+ * 1.0.3
+ * ---
+ * TODO(ogromny): messages status
+ *
+ * 1.0.4
+ * ---
+ * TODO(ogromny): friend avatar change in LupusMainMessage (add avatar pixbuf in LupusWrapperFriend)
  *
  * 1.1.0
  * ---
@@ -44,7 +57,23 @@ G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
  * 1.2.0
  * ---
  * TODO(ogromny): add settings
+ *
+ * 1.3.0
+ * ---
+ * TODO(ogromny): basic group support
+ * 
  */
+
+static void lupus_mainchat_submit_cb(gpointer user_data, gchar *message)
+{
+    guint32 friend_number = GPOINTER_TO_UINT(user_data);
+    Tox *tox = lupus_wrapper_get_tox(lupus_wrapper);
+
+    /*
+     * FIXME: handle error in `1.0.3`
+     */
+    tox_friend_send_message(tox, friend_number, TOX_MESSAGE_TYPE_NORMAL, (guint8 *)message, strlen(message), NULL);
+}
 
 static gboolean friend_list_button_press_event_cb(GtkMenu *menu, GdkEvent *event)
 {
@@ -222,6 +251,8 @@ static void wrapper_notify_active_chat_friend_cb(LupusMain *instance)
     if (!chat) {
         chat = lupus_mainchat_new();
         g_hash_table_insert(mainchats, key, chat);
+
+        g_signal_connect_swapped(chat, "submit", G_CALLBACK(lupus_mainchat_submit_cb), key);
     }
 
     gtk_box_pack_start(instance->box, GTK_WIDGET(chat), TRUE, TRUE, 0);
@@ -244,6 +275,23 @@ static void friend_request_response_cb(GtkInfoBar *info_bar, gint response_id, g
     gtk_info_bar_set_revealed(info_bar, FALSE);
     /* Wait 2s to be sure that the widget disappear */
     g_timeout_add_seconds(2, destroy_return_false, info_bar);
+}
+
+static void friend_message_cb(Tox *tox, guint32 friend_number, TOX_MESSAGE_TYPE type, guint8 const *message, // NOLINT
+                              gsize length, gpointer user_data) // NOLINT
+{
+    gpointer key = GUINT_TO_POINTER(friend_number);
+    LupusMainChat *chat = g_hash_table_lookup(mainchats, key);
+    LupusWrapperFriend *mainfriend = lupus_wrapper_get_friend(lupus_wrapper, friend_number);
+
+    if (!chat) {
+        chat = lupus_mainchat_new();
+        g_hash_table_insert(mainchats, key, chat);
+
+        g_signal_connect_swapped(chat, "submit", G_CALLBACK(lupus_mainchat_submit_cb), key);
+    }
+
+    lupus_mainchat_add_message(chat, mainfriend, (gchar *)message);
 }
 
 // NOLINTNEXTLINE
@@ -330,7 +378,9 @@ static void lupus_main_init(LupusMain *instance)
     lupus_wrapper_bootstrap(lupus_wrapper);
     lupus_wrapper_start_listening(lupus_wrapper);
 
-    tox_callback_friend_request(lupus_wrapper_get_tox(lupus_wrapper), friend_request_cb);
+    Tox *tox = lupus_wrapper_get_tox(lupus_wrapper);
+    tox_callback_friend_request(tox, friend_request_cb);
+    tox_callback_friend_message(tox, friend_message_cb);
 
     g_signal_connect_swapped(lupus_wrapper, "notify::active-chat-friend",
                              G_CALLBACK(wrapper_notify_active_chat_friend_cb), instance);
