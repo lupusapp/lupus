@@ -18,8 +18,10 @@
           <object class="GtkBox" id="chat_box">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="valign">start</property>
             <property name="margin_bottom">5</property>
             <property name="orientation">vertical</property>
+            <property name="baseline_position">top</property>
             <child>
               <placeholder/>
             </child>
@@ -31,17 +33,83 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry" id="submit">
+          <placeholder/>
+        </child>
+        <child>
+          <object class="GtkSeparator">
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="shadow_type">out</property>
-            <property name="show_emoji_icon">True</property>
-            <property name="enable_emoji_completion">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">5</property>
+            <property name="margin_right">5</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">5</property>
           </object>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">1</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="spacing">5</property>
+            <child>
+              <object class="GtkEntry" id="entry">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="has_frame">False</property>
+                <property name="shadow_type">none</property>
+                <property name="caps_lock_warning">False</property>
+                <property name="secondary_icon_name">face-smile-symbolic</property>
+                <property name="secondary_icon_tooltip_text" translatable="yes">Insérer un émoji</property>
+                <property name="secondary_icon_tooltip_markup" translatable="yes">Insérer un émoji</property>
+                <property name="show_emoji_icon">True</property>
+                <property name="enable_emoji_completion">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparator">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="submit">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="relief">none</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="icon_name">document-send</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">3</property>
           </packing>
         </child>
       </object>
