@@ -1,3 +1,5 @@
+## Temporary stopped due to personal issues
+
 <p align="center">
   <img height="150" src="https://github.com/lupusapp/lupus/blob/master/res/images/lupus.svg">
 </p>
