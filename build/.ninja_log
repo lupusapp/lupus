@@ -1,0 +1,23 @@
+# ninja log v5
+2	1893	1591086558040190295	CMakeFiles/Lupus.dir/src/lupus_application.c.o	732d383a5a5655d
+20	1931	1591086558076856964	CMakeFiles/Lupus.dir/src/lupus_mainmessage.c.o	db4812ddb40f7c98
+3	2010	1591086558170190302	CMakeFiles/Lupus.dir/src/lupus_mainchat.c.o	baa2697bc5af96de
+3	2060	1591086558200190302	CMakeFiles/Lupus.dir/src/lupus_mainfriend.c.o	4611dbc492ebc3ea
+0	2065	1591086558216856971	CMakeFiles/Lupus.dir/main.c.o	db3fc4c605a23ba8
+49	2185	1591086558326856975	CMakeFiles/Lupus.dir/src/lupus_profilechooser.c.o	1408190a40268a93
+62	2258	1591086558400190312	CMakeFiles/Lupus.dir/src/lupus_wrapper.c.o	9ec1ec3f7b20f5f5
+3	2321	1591086558480190316	CMakeFiles/Lupus.dir/src/lupus_main.c.o	8bb2a9408c89259f
+4	2364	1591086558526856985	CMakeFiles/Lupus.dir/src/lupus_mainheaderbar.c.o	85e8e8af45259bd3
+2	2366	1591086558526856985	CMakeFiles/Lupus.dir/src/lupus_editablelabel.c.o	ecab2aba39063901
+1898	2485	1591086558650190323	CMakeFiles/Lupus.dir/src/lupus_wrapperfriend.c.o	1e98b878ea037499
+1931	2614	1591086558776856996	CMakeFiles/Lupus.dir/src/resources.c.o	3bf50c25bd6719e
+2614	2817	1591086558986857006	Lupus	5e27dbece48bb1d2
+4	476	1591087047840212692	CMakeFiles/Lupus.dir/src/resources.c.o	3bf50c25bd6719e
+4	943	1591087048306879380	CMakeFiles/Lupus.dir/src/lupus_profilechooser.c.o	1408190a40268a93
+943	1137	1591087048506879389	Lupus	5e27dbece48bb1d2
+3	447	1591087196813552836	CMakeFiles/Lupus.dir/src/resources.c.o	3bf50c25bd6719e
+3	810	1591087197173552853	CMakeFiles/Lupus.dir/main.c.o	db3fc4c605a23ba8
+810	992	1591087197360219527	Lupus	5e27dbece48bb1d2
+6	450	1591087456786898055	CMakeFiles/Lupus.dir/src/resources.c.o	3bf50c25bd6719e
+5	843	1591087457180231407	CMakeFiles/Lupus.dir/main.c.o	db3fc4c605a23ba8
+843	1033	1591087457373564748	Lupus	5e27dbece48bb1d2
