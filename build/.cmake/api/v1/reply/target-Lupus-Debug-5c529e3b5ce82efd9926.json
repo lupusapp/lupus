@@ -162,11 +162,7 @@
 				4,
 				5,
 				6,
-				7,
-				8,
-				9,
-				10,
-				11
+				7
 			]
 		}
 	],
@@ -271,29 +267,20 @@
 				4,
 				5,
 				6,
-				7,
-				8,
-				9,
-				10,
-				11
+				7
 			]
 		},
 		{
 			"name" : "Header Files",
 			"sourceIndexes" : 
 			[
+				8,
+				9,
+				10,
+				11,
 				12,
 				13,
-				14,
-				15,
-				16,
-				17,
-				18,
-				19,
-				20,
-				21,
-				22,
-				23
+				14
 			]
 		}
 	],
@@ -326,43 +313,19 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "src/lupus_mainchat.c",
+			"path" : "src/lupus_objectself.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "src/lupus_mainfriend.c",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "src/lupus_mainheaderbar.c",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "src/lupus_mainmessage.c",
+			"path" : "src/lupus_profile.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "src/lupus_profilechooser.c",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "src/lupus_wrapper.c",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "src/lupus_wrapperfriend.c",
 			"sourceGroupIndex" : 0
 		},
 		{
@@ -393,42 +356,17 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "include/lupus_mainchat.h",
+			"path" : "include/lupus_objectself.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "include/lupus_mainfriend.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "include/lupus_mainheaderbar.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "include/lupus_mainmessage.h",
+			"path" : "include/lupus_profile.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
 			"path" : "include/lupus_profilechooser.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "include/lupus_wrapper.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "include/lupus_wrapperfriend.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "include/utils.h",
 			"sourceGroupIndex" : 1
 		}
 	],

@@ -78,29 +78,15 @@ build CMakeFiles/Lupus.dir/src/lupus_main.c.o: C_COMPILER__Lupus ../src/lupus_ma
   OBJECT_DIR = CMakeFiles/Lupus.dir
   OBJECT_FILE_DIR = CMakeFiles/Lupus.dir/src
 
-build CMakeFiles/Lupus.dir/src/lupus_mainchat.c.o: C_COMPILER__Lupus ../src/lupus_mainchat.c || cmake_object_order_depends_target_Lupus
-  DEP_FILE = CMakeFiles/Lupus.dir/src/lupus_mainchat.c.o.d
+build CMakeFiles/Lupus.dir/src/lupus_objectself.c.o: C_COMPILER__Lupus ../src/lupus_objectself.c || cmake_object_order_depends_target_Lupus
+  DEP_FILE = CMakeFiles/Lupus.dir/src/lupus_objectself.c.o.d
   FLAGS = -g   -pthread -std=gnu11
   INCLUDES = -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus
   OBJECT_DIR = CMakeFiles/Lupus.dir
   OBJECT_FILE_DIR = CMakeFiles/Lupus.dir/src
 
-build CMakeFiles/Lupus.dir/src/lupus_mainfriend.c.o: C_COMPILER__Lupus ../src/lupus_mainfriend.c || cmake_object_order_depends_target_Lupus
-  DEP_FILE = CMakeFiles/Lupus.dir/src/lupus_mainfriend.c.o.d
-  FLAGS = -g   -pthread -std=gnu11
-  INCLUDES = -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus
-  OBJECT_DIR = CMakeFiles/Lupus.dir
-  OBJECT_FILE_DIR = CMakeFiles/Lupus.dir/src
-
-build CMakeFiles/Lupus.dir/src/lupus_mainheaderbar.c.o: C_COMPILER__Lupus ../src/lupus_mainheaderbar.c || cmake_object_order_depends_target_Lupus
-  DEP_FILE = CMakeFiles/Lupus.dir/src/lupus_mainheaderbar.c.o.d
-  FLAGS = -g   -pthread -std=gnu11
-  INCLUDES = -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus
-  OBJECT_DIR = CMakeFiles/Lupus.dir
-  OBJECT_FILE_DIR = CMakeFiles/Lupus.dir/src
-
-build CMakeFiles/Lupus.dir/src/lupus_mainmessage.c.o: C_COMPILER__Lupus ../src/lupus_mainmessage.c || cmake_object_order_depends_target_Lupus
-  DEP_FILE = CMakeFiles/Lupus.dir/src/lupus_mainmessage.c.o.d
+build CMakeFiles/Lupus.dir/src/lupus_profile.c.o: C_COMPILER__Lupus ../src/lupus_profile.c || cmake_object_order_depends_target_Lupus
+  DEP_FILE = CMakeFiles/Lupus.dir/src/lupus_profile.c.o.d
   FLAGS = -g   -pthread -std=gnu11
   INCLUDES = -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus
   OBJECT_DIR = CMakeFiles/Lupus.dir
@@ -108,20 +94,6 @@ build CMakeFiles/Lupus.dir/src/lupus_mainmessage.c.o: C_COMPILER__Lupus ../src/l
 
 build CMakeFiles/Lupus.dir/src/lupus_profilechooser.c.o: C_COMPILER__Lupus ../src/lupus_profilechooser.c || cmake_object_order_depends_target_Lupus
   DEP_FILE = CMakeFiles/Lupus.dir/src/lupus_profilechooser.c.o.d
-  FLAGS = -g   -pthread -std=gnu11
-  INCLUDES = -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus
-  OBJECT_DIR = CMakeFiles/Lupus.dir
-  OBJECT_FILE_DIR = CMakeFiles/Lupus.dir/src
-
-build CMakeFiles/Lupus.dir/src/lupus_wrapper.c.o: C_COMPILER__Lupus ../src/lupus_wrapper.c || cmake_object_order_depends_target_Lupus
-  DEP_FILE = CMakeFiles/Lupus.dir/src/lupus_wrapper.c.o.d
-  FLAGS = -g   -pthread -std=gnu11
-  INCLUDES = -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus
-  OBJECT_DIR = CMakeFiles/Lupus.dir
-  OBJECT_FILE_DIR = CMakeFiles/Lupus.dir/src
-
-build CMakeFiles/Lupus.dir/src/lupus_wrapperfriend.c.o: C_COMPILER__Lupus ../src/lupus_wrapperfriend.c || cmake_object_order_depends_target_Lupus
-  DEP_FILE = CMakeFiles/Lupus.dir/src/lupus_wrapperfriend.c.o.d
   FLAGS = -g   -pthread -std=gnu11
   INCLUDES = -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus
   OBJECT_DIR = CMakeFiles/Lupus.dir
@@ -142,7 +114,7 @@ build CMakeFiles/Lupus.dir/src/resources.c.o: C_COMPILER__Lupus ../src/resources
 #############################################
 # Link the executable Lupus
 
-build Lupus: C_EXECUTABLE_LINKER__Lupus CMakeFiles/Lupus.dir/main.c.o CMakeFiles/Lupus.dir/src/lupus_application.c.o CMakeFiles/Lupus.dir/src/lupus_editablelabel.c.o CMakeFiles/Lupus.dir/src/lupus_main.c.o CMakeFiles/Lupus.dir/src/lupus_mainchat.c.o CMakeFiles/Lupus.dir/src/lupus_mainfriend.c.o CMakeFiles/Lupus.dir/src/lupus_mainheaderbar.c.o CMakeFiles/Lupus.dir/src/lupus_mainmessage.c.o CMakeFiles/Lupus.dir/src/lupus_profilechooser.c.o CMakeFiles/Lupus.dir/src/lupus_wrapper.c.o CMakeFiles/Lupus.dir/src/lupus_wrapperfriend.c.o CMakeFiles/Lupus.dir/src/resources.c.o
+build Lupus: C_EXECUTABLE_LINKER__Lupus CMakeFiles/Lupus.dir/main.c.o CMakeFiles/Lupus.dir/src/lupus_application.c.o CMakeFiles/Lupus.dir/src/lupus_editablelabel.c.o CMakeFiles/Lupus.dir/src/lupus_main.c.o CMakeFiles/Lupus.dir/src/lupus_objectself.c.o CMakeFiles/Lupus.dir/src/lupus_profile.c.o CMakeFiles/Lupus.dir/src/lupus_profilechooser.c.o CMakeFiles/Lupus.dir/src/resources.c.o
   FLAGS = -g
   LINK_LIBRARIES = -lgtk-3  -lgdk-3  -lpangocairo-1.0  -lpango-1.0  -latk-1.0  -lcairo-gobject  -lcairo  -lgdk_pixbuf-2.0  -lgio-2.0  -lgobject-2.0  -lglib-2.0  -lsodium  -ltoxcore
   OBJECT_DIR = CMakeFiles/Lupus.dir
