@@ -47,6 +47,17 @@ static void lupus_main_set_property(GObject *object, guint property_id, GValue c
     }
 }
 
+static void lupus_main_finalize(GObject *object)
+{
+    LupusMain *instance = LUPUS_MAIN(object);
+
+    // TODO: inspect, can cause SIGABRT
+    // g_clear_object(&instance->object_self);
+
+    GObjectClass *object_class = G_OBJECT_CLASS(lupus_main_parent_class);
+    object_class->finalize(object);
+}
+
 static void lupus_main_constructed(GObject *object)
 {
     LupusMain *instance = LUPUS_MAIN(object);
@@ -54,6 +65,7 @@ static void lupus_main_constructed(GObject *object)
     instance->profile = lupus_profile_new(instance->object_self);
     GtkWidget *profile = GTK_WIDGET(instance->profile);
     gtk_box_pack_start(instance->sidebox, profile, FALSE, TRUE, 0);
+    gtk_box_pack_start(instance->sidebox, gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, TRUE, 0);
 
     GtkWidget *widget = GTK_WIDGET(instance);
     gtk_widget_show_all(widget);
@@ -78,6 +90,7 @@ static void lupus_main_class_init(LupusMainClass *class)
 
     GObjectClass *object_class = G_OBJECT_CLASS(class);
     object_class->constructed = lupus_main_constructed;
+    object_class->finalize = lupus_main_finalize;
     object_class->set_property = lupus_main_set_property;
     object_class->get_property = lupus_main_get_property;
 
@@ -91,3 +104,4 @@ LupusMain *lupus_main_new(GtkApplication *application, LupusObjectSelf *object_s
 {
     return g_object_new(LUPUS_TYPE_MAIN, "application", application, "object-self", object_self, NULL);
 }
+

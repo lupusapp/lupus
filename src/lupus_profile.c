@@ -1,5 +1,8 @@
 #include "../include/lupus_profile.h"
 #include "../include/lupus_editablelabel.h"
+#include "include/lupus.h"
+#include "include/lupus_objectself.h"
+#include <tox/tox.h>
 
 struct _LupusProfile {
     GtkBox parent_instance;
@@ -11,6 +14,7 @@ struct _LupusProfile {
     GtkEventBox *avatar_event_box;
     GtkImage *avatar;
     LupusEditableLabel *name, *status_message;
+    GtkMenu *popover;
 };
 
 G_DEFINE_TYPE(LupusProfile, lupus_profile, GTK_TYPE_BOX)
@@ -22,6 +26,44 @@ typedef enum {
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
 #define AVATAR_PREVIEW_SIZE 128
+
+static void object_self_user_status_cb(LupusProfile *instance)
+{
+    Tox_User_Status status;
+    g_object_get(instance->object_self, "user-status", &status, NULL);
+    Tox_Connection connection;
+    g_object_get(instance->object_self, "connection", &connection, NULL);
+
+    if (connection == TOX_CONNECTION_NONE) {
+        return;
+    }
+
+    widget_remove_classes_with_prefix(instance->avatar, "profile--");
+    switch (status) {
+    case TOX_USER_STATUS_NONE:
+        widget_add_class(instance->avatar, "profile--none");
+        break;
+    case TOX_USER_STATUS_AWAY:
+        widget_add_class(instance->avatar, "profile--away");
+        break;
+    case TOX_USER_STATUS_BUSY:
+        widget_add_class(instance->avatar, "profile--busy");
+        break;
+    }
+}
+
+static void object_self_connection_cb(LupusProfile *instance)
+{
+    Tox_Connection connection = TOX_CONNECTION_NONE;
+    g_object_get(instance->object_self, "connection", &connection, NULL);
+
+    if (connection != TOX_CONNECTION_NONE) {
+        object_self_user_status_cb(instance);
+        return;
+    }
+
+    widget_remove_classes_with_prefix(instance->avatar, "profile--");
+}
 
 static void object_self_avatar_pixbuf_cb(LupusProfile *instance)
 {
@@ -63,7 +105,11 @@ static void update_preview_cb(GtkFileChooser *file_chooser, GtkImage *preview)
 
 static gboolean avatar_button_press_event_cb(LupusProfile *instance, GdkEvent *event)
 {
-    if (event->type == GDK_BUTTON_PRESS && event->button.button == 1) {
+    if (event->type != GDK_BUTTON_PRESS) {
+        return false;
+    }
+
+    if (event->button.button == 1) {
         static GtkFileChooser *file_chooser;
 
         if (!file_chooser) {
@@ -89,9 +135,65 @@ static gboolean avatar_button_press_event_cb(LupusProfile *instance, GdkEvent *e
         }
 
         gtk_widget_hide(GTK_WIDGET(file_chooser));
+    } else if (event->button.button == 3) {
+        gtk_menu_popup_at_pointer(instance->popover, event);
     }
 
     return FALSE;
+}
+
+static void popover_status_activate_cb(GtkMenuItem *item, LupusProfile *instance)
+{
+    GtkWidget *box = gtk_bin_get_child(GTK_BIN(item));
+    GList *children = gtk_container_get_children(GTK_CONTAINER(box));
+    gchar const *text = gtk_label_get_text(GTK_LABEL(g_list_nth_data(children, 1)));
+    g_list_free(children);
+
+    Tox_User_Status status = TOX_USER_STATUS_NONE;
+    if (!g_strcmp0(text, "Away")) {
+        status = TOX_USER_STATUS_AWAY;
+    } else if (!g_strcmp0(text, "Busy")) {
+        status = TOX_USER_STATUS_BUSY;
+    }
+
+    g_object_set(instance->object_self, "user-status", status, NULL);
+}
+
+static void construct_popover(LupusProfile *instance)
+{
+    instance->popover = GTK_MENU(gtk_menu_new());
+
+    gchar *resource[] = {
+        LUPUS_RESOURCES "/status_none.svg",
+        LUPUS_RESOURCES "/status_away.svg",
+        LUPUS_RESOURCES "/status_busy.svg",
+        LUPUS_RESOURCES "/biometric.svg",
+    };
+    gchar *label[] = {
+        "Online",
+        "Away",
+        "Busy",
+        "My ID",
+    };
+
+    for (gsize i = 0, j = G_N_ELEMENTS(resource); i < j; ++i) {
+        GtkBox *box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
+        gtk_box_pack_start(box, gtk_image_new_from_resource(resource[i]), FALSE, TRUE, 0);
+        gtk_box_pack_start(box, gtk_label_new(label[i]), TRUE, TRUE, 0);
+
+        GtkWidget *item = gtk_menu_item_new();
+        gtk_container_add(GTK_CONTAINER(item), GTK_WIDGET(box));
+
+        if (i == (j - 1)) {
+            gtk_menu_shell_append(GTK_MENU_SHELL(instance->popover), gtk_separator_menu_item_new());
+        } else {
+            g_signal_connect(item, "activate", G_CALLBACK(popover_status_activate_cb), instance);
+        }
+
+        gtk_menu_shell_append(GTK_MENU_SHELL(instance->popover), item);
+    }
+
+    gtk_widget_show_all(GTK_WIDGET(instance->popover));
 }
 
 static void lupus_profile_get_property(GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
@@ -139,7 +241,13 @@ static void lupus_profile_constructed(GObject *object)
 
     GdkPixbuf *object_self_avatar_pixbuf;
     g_object_get(instance->object_self, "avatar-pixbuf", &object_self_avatar_pixbuf, NULL);
+    if (!object_self_avatar_pixbuf) {
+        // TODO: write default avatar ?
+        object_self_avatar_pixbuf =
+            gdk_pixbuf_new_from_resource_at_scale(LUPUS_RESOURCES "/lupus.svg", AVATAR_SIZE, AVATAR_SIZE, TRUE, NULL);
+    }
     instance->avatar = GTK_IMAGE(gtk_image_new_from_pixbuf(object_self_avatar_pixbuf));
+    widget_add_class(instance->avatar, "profile");
 
     instance->avatar_event_box = g_object_new(GTK_TYPE_EVENT_BOX, "child", instance->avatar, NULL);
 
@@ -152,11 +260,17 @@ static void lupus_profile_constructed(GObject *object)
     GtkWidget *widget = GTK_WIDGET(box);
     gtk_widget_show_all(widget);
 
+    construct_popover(instance);
+
     g_signal_connect_swapped(instance->name, "submit", G_CALLBACK(name_submitted_cb), instance);
     g_signal_connect_swapped(instance->status_message, "submit", G_CALLBACK(status_message_submitted_cb), instance);
     g_signal_connect_swapped(instance->avatar_event_box, "button-press-event", G_CALLBACK(avatar_button_press_event_cb),
                              instance);
     g_signal_connect_swapped(instance->object_self, "notify::avatar-pixbuf", G_CALLBACK(object_self_avatar_pixbuf_cb),
+                             instance);
+    g_signal_connect_swapped(instance->object_self, "notify::connection", G_CALLBACK(object_self_connection_cb),
+                             instance);
+    g_signal_connect_swapped(instance->object_self, "notify::user-status", G_CALLBACK(object_self_user_status_cb),
                              instance);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_profile_parent_class);
@@ -184,3 +298,4 @@ LupusProfile *lupus_profile_new(LupusObjectSelf *object_self)
     return g_object_new(LUPUS_TYPE_PROFILE, "object-self", object_self, "orientation", GTK_ORIENTATION_HORIZONTAL,
                         "border-width", 5, "spacing", 5, NULL);
 }
+

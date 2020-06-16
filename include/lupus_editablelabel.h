@@ -10,6 +10,4 @@ G_DECLARE_FINAL_TYPE(LupusEditableLabel, lupus_editablelabel, LUPUS, EDITABLELAB
 
 LupusEditableLabel *lupus_editablelabel_new(gchar *value, guint max_length);
 
-header_setter(editablelabel, EditableLabel, value, gchar *);
-
 #endif

@@ -3,6 +3,7 @@
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
 #include <sodium/utils.h>
+#include <tox/tox.h>
 #include <tox/toxencryptsave.h>
 
 struct _LupusObjectSelf {
@@ -17,6 +18,9 @@ struct _LupusObjectSelf {
     gchar *public_key;
     GdkPixbuf *avatar_pixbuf;
     gchar *avatar_hash;
+    Tox_Connection connection;
+    Tox_User_Status user_status;
+    guint iterate_event_id;
 };
 
 G_DEFINE_TYPE(LupusObjectSelf, lupus_objectself, G_TYPE_OBJECT)
@@ -31,12 +35,23 @@ typedef enum {
     PROP_AVATAR_FILENAME,
     PROP_AVATAR_PIXBUF,
     PROP_AVATAR_HASH,
+    PROP_CONNECTION,
+    PROP_USER_STATUS,
     N_PROPERTIES,
 } LupusObjectSelfProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
-#define AVATAR_SIZE 48
 #define AVATAR_MAX_FILE_SIZE 65536
+
+static void connection_status_cb(Tox *tox, Tox_Connection connection_status, gpointer user_data)
+{
+    LupusObjectSelf *instance = LUPUS_OBJECTSELF(user_data);
+
+    instance->connection = connection_status;
+
+    GObject *object = G_OBJECT(instance);
+    g_object_notify_by_pspec(object, obj_properties[PROP_CONNECTION]);
+}
 
 static void load_avatar(LupusObjectSelf *instance, gchar *filename)
 {
@@ -174,6 +189,12 @@ static void lupus_objectself_get_property(GObject *object, guint property_id, GV
     case PROP_AVATAR_HASH:
         g_value_set_string(value, instance->avatar_hash);
         break;
+    case PROP_CONNECTION:
+        g_value_set_int(value, instance->connection);
+        break;
+    case PROP_USER_STATUS:
+        g_value_set_int(value, instance->user_status);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     }
@@ -209,6 +230,10 @@ static void lupus_objectself_set_property(GObject *object, guint property_id, GV
     case PROP_AVATAR_FILENAME:
         load_avatar(instance, (gchar *)g_value_get_string(value));
         break;
+    case PROP_USER_STATUS:
+        instance->user_status = (Tox_User_Status)g_value_get_int(value);
+        tox_self_set_status(instance->tox, instance->user_status);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     }
@@ -232,6 +257,38 @@ static void lupus_objectself_finalize(GObject *object)
 
     GObjectClass *parent_class = G_OBJECT_CLASS(lupus_objectself_parent_class);
     parent_class->finalize(object);
+}
+
+static gboolean iterate(LupusObjectSelf *instance)
+{
+    tox_iterate(instance->tox, instance);
+    return TRUE;
+}
+
+// TODO: bulletproof this
+static void bootstrap(Tox *tox)
+{
+    typedef struct {
+        gchar *ip;
+        guint16 port;
+        gchar key_hex[TOX_PUBLIC_KEY_SIZE * 2 + 1];
+        guchar key_bin[TOX_PUBLIC_KEY_SIZE];
+    } Node;
+    static Node nodes[] = {
+        {"85.172.30.117", 33445, "8E7D0B859922EF569298B4D261A8CCB5FEA14FB91ED412A7603A585A25698832", {0}},
+        {"95.31.18.227", 33445, "257744DBF57BE3E117FE05D145B5F806089428D4DCE4E3D0D50616AA16D9417E", {0}},
+        {"94.45.70.19", 33445, "CE049A748EB31F0377F94427E8E3D219FC96509D4F9D16E181E956BC5B1C4564", {0}},
+        {"46.229.52.198", 33445, "813C8F4187833EF0655B10F7752141A352248462A567529A38B6BBF73E979307", {0}},
+    };
+
+    for (gsize i = 0, j = G_N_ELEMENTS(nodes); i < j; ++i) {
+        Node node = nodes[i];
+        sodium_hex2bin(node.key_bin, sizeof(node.key_bin), node.key_hex, sizeof(node.key_hex) - 1, NULL, NULL, NULL);
+
+        if (!tox_bootstrap(tox, node.ip, node.port, node.key_bin, NULL)) {
+            g_warning("Cannot bootstrap %s.", node.ip);
+        }
+    }
 }
 
 static void lupus_objectself_constructed(GObject *object)
@@ -264,7 +321,13 @@ static void lupus_objectself_constructed(GObject *object)
     instance->avatar_pixbuf = NULL;
     load_avatar(instance, NULL);
 
-    // TODO: listen tox
+    instance->connection = TOX_CONNECTION_NONE;
+    instance->user_status = TOX_USER_STATUS_NONE;
+
+    tox_callback_self_connection_status(instance->tox, connection_status_cb);
+
+    bootstrap(instance->tox);
+    g_timeout_add(tox_iteration_interval(instance->tox), G_SOURCE_FUNC(iterate), instance);
 
     GObjectClass *parent_class = G_OBJECT_CLASS(lupus_objectself_parent_class);
     parent_class->constructed(object);
@@ -290,6 +353,10 @@ static void lupus_objectself_class_init(LupusObjectSelfClass *class)
     obj_properties[PROP_AVATAR_FILENAME] = g_param_spec_string("avatar-filename", NULL, NULL, NULL, G_PARAM_WRITABLE);
     obj_properties[PROP_AVATAR_PIXBUF] = g_param_spec_pointer("avatar-pixbuf", NULL, NULL, G_PARAM_READABLE);
     obj_properties[PROP_AVATAR_HASH] = g_param_spec_string("avatar-hash", NULL, NULL, NULL, G_PARAM_READABLE);
+    obj_properties[PROP_CONNECTION] = g_param_spec_int("connection", NULL, NULL, TOX_CONNECTION_NONE,
+                                                       TOX_CONNECTION_UDP, TOX_CONNECTION_NONE, G_PARAM_READABLE);
+    obj_properties[PROP_USER_STATUS] = g_param_spec_int("user-status", NULL, NULL, TOX_USER_STATUS_NONE,
+                                                        TOX_USER_STATUS_BUSY, TOX_USER_STATUS_NONE, G_PARAM_READWRITE);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 }
@@ -301,3 +368,4 @@ LupusObjectSelf *lupus_objectself_new(Tox *tox, gchar *profile_filename, gchar *
     return g_object_new(LUPUS_TYPE_OBJECTSELF, "tox", tox, "profile-filename", profile_filename, "profile-password",
                         profile_password, NULL);
 }
+

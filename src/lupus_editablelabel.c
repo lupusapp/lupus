@@ -25,8 +25,6 @@ typedef enum {
 } LupusEditableLabelSignal;
 static guint signals[LAST_SIGNAL];
 
-setter(editablelabel, EditableLabel, value, char *);
-
 static void clicked_cb(LupusEditableLabel *instance)
 {
     gchar const *label = gtk_label_get_text(instance->label);

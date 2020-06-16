@@ -259,3 +259,4 @@ LupusProfileChooser *lupus_profilechooser_new(LupusApplication *application)
 {
     return g_object_new(LUPUS_TYPE_PROFILECHOOSER, "application", application, NULL);
 }
+
