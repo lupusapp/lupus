@@ -21,6 +21,7 @@ struct _LupusObjectSelf {
     Tox_Connection connection;
     Tox_User_Status user_status;
     guint iterate_event_id;
+    gchar *address; // TODO: emit when nospam/PK change
 };
 
 G_DEFINE_TYPE(LupusObjectSelf, lupus_objectself, G_TYPE_OBJECT)
@@ -37,6 +38,7 @@ typedef enum {
     PROP_AVATAR_HASH,
     PROP_CONNECTION,
     PROP_USER_STATUS,
+    PROP_ADDRESS,
     N_PROPERTIES,
 } LupusObjectSelfProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
@@ -195,6 +197,9 @@ static void lupus_objectself_get_property(GObject *object, guint property_id, GV
     case PROP_USER_STATUS:
         g_value_set_int(value, instance->user_status);
         break;
+    case PROP_ADDRESS:
+        g_value_set_string(value, instance->address);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     }
@@ -250,6 +255,7 @@ static void lupus_objectself_finalize(GObject *object)
         g_object_unref(instance->avatar_pixbuf);
     }
     g_free(instance->avatar_hash);
+    g_free(instance->address);
 
     tox_kill(instance->tox);
     g_free(instance->profile_filename);
@@ -291,6 +297,17 @@ static void bootstrap(Tox *tox)
     }
 }
 
+static gchar *get_address(LupusObjectSelf *instance)
+{
+    guint8 bin[TOX_ADDRESS_SIZE];
+    tox_self_get_address(instance->tox, bin);
+
+    gchar hex[TOX_ADDRESS_SIZE * 2 + 1];
+    sodium_bin2hex(hex, sizeof(hex), bin, sizeof(bin));
+
+    return g_ascii_strup(hex, -1);
+}
+
 static void lupus_objectself_constructed(GObject *object)
 {
     LupusObjectSelf *instance = LUPUS_OBJECTSELF(object);
@@ -323,6 +340,8 @@ static void lupus_objectself_constructed(GObject *object)
 
     instance->connection = TOX_CONNECTION_NONE;
     instance->user_status = TOX_USER_STATUS_NONE;
+
+    instance->address = get_address(instance);
 
     tox_callback_self_connection_status(instance->tox, connection_status_cb);
 
@@ -357,6 +376,7 @@ static void lupus_objectself_class_init(LupusObjectSelfClass *class)
                                                        TOX_CONNECTION_UDP, TOX_CONNECTION_NONE, G_PARAM_READABLE);
     obj_properties[PROP_USER_STATUS] = g_param_spec_int("user-status", NULL, NULL, TOX_USER_STATUS_NONE,
                                                         TOX_USER_STATUS_BUSY, TOX_USER_STATUS_NONE, G_PARAM_READWRITE);
+    obj_properties[PROP_ADDRESS] = g_param_spec_string("address", NULL, NULL, NULL, G_PARAM_READABLE);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 }

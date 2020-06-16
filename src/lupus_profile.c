@@ -159,6 +159,25 @@ static void popover_status_activate_cb(GtkMenuItem *item, LupusProfile *instance
     g_object_set(instance->object_self, "user-status", status, NULL);
 }
 
+static void popover_myid_activate_cb(LupusProfile *instance)
+{
+    // Cannot make widgets static, because address can be changed due to nospam or pk
+
+    gchar *address;
+    g_object_get(instance->object_self, "address", &address, NULL);
+
+    GtkWidget *dialog = g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, "title", "My ID", "resizable", FALSE,
+                                     "border-width", 5, NULL);
+
+    GtkBox *box = GTK_BOX(gtk_bin_get_child(GTK_BIN(dialog)));
+    GtkWidget *label = g_object_new(GTK_TYPE_LABEL, "label", address, "selectable", TRUE, NULL);
+    gtk_box_pack_start(box, label, TRUE, TRUE, 0);
+
+    gtk_widget_show_all(dialog);
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_hide(dialog);
+}
+
 static void construct_popover(LupusProfile *instance)
 {
     instance->popover = GTK_MENU(gtk_menu_new());
@@ -186,6 +205,8 @@ static void construct_popover(LupusProfile *instance)
 
         if (i == (j - 1)) {
             gtk_menu_shell_append(GTK_MENU_SHELL(instance->popover), gtk_separator_menu_item_new());
+
+            g_signal_connect_swapped(item, "activate", G_CALLBACK(popover_myid_activate_cb), instance);
         } else {
             g_signal_connect(item, "activate", G_CALLBACK(popover_status_activate_cb), instance);
         }
