@@ -270,7 +270,8 @@ static void lupus_profile_constructed(GObject *object)
     instance->avatar = GTK_IMAGE(gtk_image_new_from_pixbuf(object_self_avatar_pixbuf));
     widget_add_class(instance->avatar, "profile");
 
-    instance->avatar_event_box = g_object_new(GTK_TYPE_EVENT_BOX, "child", instance->avatar, NULL);
+    instance->avatar_event_box =
+        g_object_new(GTK_TYPE_EVENT_BOX, "child", instance->avatar, "valign", GTK_ALIGN_CENTER, NULL);
 
     GtkBox *box = GTK_BOX(instance);
     GtkWidget *vbox = GTK_WIDGET(instance->vbox);

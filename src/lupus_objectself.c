@@ -1,8 +1,11 @@
 #include "../include/lupus_objectself.h"
 #include "../include/lupus.h"
+#include "../include/lupus_objectfriend.h"
+#include "glibconfig.h"
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
 #include <sodium/utils.h>
+#include <string.h>
 #include <tox/tox.h>
 #include <tox/toxencryptsave.h>
 
@@ -12,6 +15,8 @@ struct _LupusObjectSelf {
     Tox *tox;
     gchar *profile_filename;
     gchar *profile_password;
+
+    GHashTable /*<guint32, ObjectFriend>*/ *objectfriends;
 
     gchar *name;
     gchar *status_message;
@@ -39,6 +44,7 @@ typedef enum {
     PROP_CONNECTION,
     PROP_USER_STATUS,
     PROP_ADDRESS,
+    PROP_OBJECTFRIENDS,
     N_PROPERTIES,
 } LupusObjectSelfProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
@@ -53,6 +59,23 @@ static void connection_status_cb(Tox *tox, Tox_Connection connection_status, gpo
 
     GObject *object = G_OBJECT(instance);
     g_object_notify_by_pspec(object, obj_properties[PROP_CONNECTION]);
+}
+
+static void load_friends(LupusObjectSelf *instance)
+{
+    gsize friend_list_size = tox_self_get_friend_list_size(instance->tox);
+    guint32 friend_list[friend_list_size];
+    memset(friend_list, 0, friend_list_size);
+
+    tox_self_get_friend_list(instance->tox, friend_list);
+
+    for (gsize i = 0; i < friend_list_size; ++i) {
+        guint32 friend_number = friend_list[i];
+
+        LupusObjectFriend *objectfriend = lupus_objectfriend_new(instance->tox, friend_number);
+
+        g_hash_table_insert(instance->objectfriends, GUINT_TO_POINTER(friend_number), objectfriend);
+    }
 }
 
 static void load_avatar(LupusObjectSelf *instance, gchar *filename)
@@ -119,6 +142,9 @@ static void load_avatar(LupusObjectSelf *instance, gchar *filename)
     gchar avatar_hash_hex[tox_hash_length() * 2 + 1];
     sodium_bin2hex(avatar_hash_hex, sizeof(avatar_hash_hex), avatar_hash_bin, sizeof(avatar_hash_bin));
     instance->avatar_hash = g_ascii_strup(avatar_hash_hex, -1);
+
+    instance->objectfriends = g_hash_table_new(NULL, NULL);
+    load_friends(instance);
 
     GObject *object = G_OBJECT(instance);
     g_object_notify_by_pspec(object, obj_properties[PROP_AVATAR_PIXBUF]);
@@ -200,6 +226,9 @@ static void lupus_objectself_get_property(GObject *object, guint property_id, GV
     case PROP_ADDRESS:
         g_value_set_string(value, instance->address);
         break;
+    case PROP_OBJECTFRIENDS:
+        g_value_set_pointer(value, instance->objectfriends);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     }
@@ -260,6 +289,8 @@ static void lupus_objectself_finalize(GObject *object)
     tox_kill(instance->tox);
     g_free(instance->profile_filename);
     g_free(instance->profile_password);
+
+    g_hash_table_destroy(instance->objectfriends);
 
     GObjectClass *parent_class = G_OBJECT_CLASS(lupus_objectself_parent_class);
     parent_class->finalize(object);
@@ -377,6 +408,7 @@ static void lupus_objectself_class_init(LupusObjectSelfClass *class)
     obj_properties[PROP_USER_STATUS] = g_param_spec_int("user-status", NULL, NULL, TOX_USER_STATUS_NONE,
                                                         TOX_USER_STATUS_BUSY, TOX_USER_STATUS_NONE, G_PARAM_READWRITE);
     obj_properties[PROP_ADDRESS] = g_param_spec_string("address", NULL, NULL, NULL, G_PARAM_READABLE);
+    obj_properties[PROP_OBJECTFRIENDS] = g_param_spec_pointer("objectfriends", NULL, NULL, G_PARAM_READABLE);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 }

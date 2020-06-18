@@ -6,6 +6,7 @@
 #define LUPUS_VERSION "0.9.9"
 
 #define AVATAR_SIZE 48
+#define AVATAR_FRIEND_SIZE 36
 
 #define widget_add_class(w, class_name)                                                                                \
     do {                                                                                                               \

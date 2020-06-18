@@ -6,5 +6,7 @@ srcs = files(
   'lupus_objectself.c',
   'lupus_application.c',
   'lupus_editablelabel.c',
-  'lupus_profilechooser.c'
+  'lupus_profilechooser.c',
+  'lupus_friend.c',
+  'lupus_objectfriend.c'
   )
