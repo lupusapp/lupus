@@ -49,6 +49,12 @@ typedef enum {
 } LupusObjectSelfProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
+typedef enum {
+    FRIEND_REQUEST, // (gchar *public_key, gchar *message) -> gboolean
+    LAST_SIGNAL,
+} LupusObjectSelfSignal;
+static guint signals[LAST_SIGNAL];
+
 #define AVATAR_MAX_FILE_SIZE 65536
 
 static void connection_status_cb(Tox *tox, Tox_Connection connection_status, gpointer user_data)
@@ -339,6 +345,27 @@ static gchar *get_address(LupusObjectSelf *instance)
     return g_ascii_strup(hex, -1);
 }
 
+static void friend_request_cb(Tox *tox, guint8 const *public_key, guint8 const *message, gsize length,
+                              gpointer user_data)
+{
+    LupusObjectSelf *instance = LUPUS_OBJECTSELF(user_data);
+
+    gsize public_key_size = tox_public_key_size();
+    gchar *message_request = g_strndup(message, length);
+    gchar *public_key_hex = g_malloc0(public_key_size * 2 + 1);
+    sodium_bin2hex(public_key_hex, public_key_size * 2 + 1, public_key, public_key_size);
+
+    gboolean accept = FALSE;
+    g_signal_emit(instance, signals[FRIEND_REQUEST], 0, public_key_hex, message_request, &accept);
+
+    if (accept) {
+        tox_friend_add_norequest(tox, public_key, NULL);
+    }
+
+    g_free(message_request);
+    g_free(public_key_hex);
+}
+
 static void lupus_objectself_constructed(GObject *object)
 {
     LupusObjectSelf *instance = LUPUS_OBJECTSELF(object);
@@ -375,6 +402,7 @@ static void lupus_objectself_constructed(GObject *object)
     instance->address = get_address(instance);
 
     tox_callback_self_connection_status(instance->tox, connection_status_cb);
+    tox_callback_friend_request(instance->tox, friend_request_cb);
 
     bootstrap(instance->tox);
     g_timeout_add(tox_iteration_interval(instance->tox), G_SOURCE_FUNC(iterate), instance);
@@ -411,6 +439,9 @@ static void lupus_objectself_class_init(LupusObjectSelfClass *class)
     obj_properties[PROP_OBJECTFRIENDS] = g_param_spec_pointer("objectfriends", NULL, NULL, G_PARAM_READABLE);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
+
+    signals[FRIEND_REQUEST] = g_signal_new("friend-request", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
+                                           NULL, G_TYPE_BOOLEAN, 2, G_TYPE_STRING, G_TYPE_STRING);
 }
 
 static void lupus_objectself_init(LupusObjectSelf *instance) {}
