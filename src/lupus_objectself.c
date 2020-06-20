@@ -51,6 +51,7 @@ static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
 typedef enum {
     FRIEND_REQUEST, // (gchar *public_key, gchar *message) -> gboolean
+    FRIEND_ADDED,   // (guint32 friend_number)
     LAST_SIGNAL,
 } LupusObjectSelfSignal;
 static guint signals[LAST_SIGNAL];
@@ -72,15 +73,14 @@ static void load_friends(LupusObjectSelf *instance)
     gsize friend_list_size = tox_self_get_friend_list_size(instance->tox);
     guint32 friend_list[friend_list_size];
     memset(friend_list, 0, friend_list_size);
-
     tox_self_get_friend_list(instance->tox, friend_list);
 
     for (gsize i = 0; i < friend_list_size; ++i) {
         guint32 friend_number = friend_list[i];
-
         LupusObjectFriend *objectfriend = lupus_objectfriend_new(instance->tox, friend_number);
 
-        g_hash_table_insert(instance->objectfriends, GUINT_TO_POINTER(friend_number), objectfriend);
+        gpointer key = GUINT_TO_POINTER(friend_number);
+        g_hash_table_insert(instance->objectfriends, key, objectfriend);
     }
 }
 
@@ -148,9 +148,6 @@ static void load_avatar(LupusObjectSelf *instance, gchar *filename)
     gchar avatar_hash_hex[tox_hash_length() * 2 + 1];
     sodium_bin2hex(avatar_hash_hex, sizeof(avatar_hash_hex), avatar_hash_bin, sizeof(avatar_hash_bin));
     instance->avatar_hash = g_ascii_strup(avatar_hash_hex, -1);
-
-    instance->objectfriends = g_hash_table_new(NULL, NULL);
-    load_friends(instance);
 
     GObject *object = G_OBJECT(instance);
     g_object_notify_by_pspec(object, obj_properties[PROP_AVATAR_PIXBUF]);
@@ -351,7 +348,7 @@ static void friend_request_cb(Tox *tox, guint8 const *public_key, guint8 const *
     LupusObjectSelf *instance = LUPUS_OBJECTSELF(user_data);
 
     gsize public_key_size = tox_public_key_size();
-    gchar *message_request = g_strndup(message, length);
+    gchar *message_request = g_strndup((gchar *)message, length);
     gchar *public_key_hex = g_malloc0(public_key_size * 2 + 1);
     sodium_bin2hex(public_key_hex, public_key_size * 2 + 1, public_key, public_key_size);
 
@@ -359,7 +356,14 @@ static void friend_request_cb(Tox *tox, guint8 const *public_key, guint8 const *
     g_signal_emit(instance, signals[FRIEND_REQUEST], 0, public_key_hex, message_request, &accept);
 
     if (accept) {
-        tox_friend_add_norequest(tox, public_key, NULL);
+        /* TODO: handle errors <20-06-20, Ogromny> */
+        guint32 friend_number = tox_friend_add_norequest(tox, public_key, NULL);
+        LupusObjectFriend *objectfriend = lupus_objectfriend_new(instance->tox, friend_number);
+
+        save(instance);
+
+        g_hash_table_insert(instance->objectfriends, GUINT_TO_POINTER(friend_number), objectfriend);
+        g_signal_emit(instance, signals[FRIEND_ADDED], 0, friend_number);
     }
 
     g_free(message_request);
@@ -400,6 +404,9 @@ static void lupus_objectself_constructed(GObject *object)
     instance->user_status = TOX_USER_STATUS_NONE;
 
     instance->address = get_address(instance);
+
+    instance->objectfriends = g_hash_table_new(NULL, NULL);
+    load_friends(instance);
 
     tox_callback_self_connection_status(instance->tox, connection_status_cb);
     tox_callback_friend_request(instance->tox, friend_request_cb);
@@ -442,6 +449,8 @@ static void lupus_objectself_class_init(LupusObjectSelfClass *class)
 
     signals[FRIEND_REQUEST] = g_signal_new("friend-request", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
                                            NULL, G_TYPE_BOOLEAN, 2, G_TYPE_STRING, G_TYPE_STRING);
+    signals[FRIEND_ADDED] = g_signal_new("friend-added", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
+                                         G_TYPE_NONE, 1, G_TYPE_UINT);
 }
 
 static void lupus_objectself_init(LupusObjectSelf *instance) {}
