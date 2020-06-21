@@ -1,4 +1,5 @@
 #include "../include/lupus_objectfriend.h"
+#include "../include/lupus_objectself.h"
 #include "glibconfig.h"
 #include <stdint.h>
 #include <tox/tox.h>
@@ -23,6 +24,54 @@ typedef enum {
     N_PROPERTIES,
 } LupusObjectFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
+
+static LupusObjectFriend *get_instance_from_objectself(LupusObjectSelf *user_data, guint32 friend_number)
+{
+    LupusObjectSelf *objectself = LUPUS_OBJECTSELF(user_data);
+    GHashTable *objectfriends;
+
+    g_object_get(objectself, "objectfriends", &objectfriends, NULL);
+    gpointer key = GUINT_TO_POINTER(friend_number);
+
+    return LUPUS_OBJECTFRIEND(g_hash_table_lookup(objectfriends, key));
+}
+
+static void name_cb(Tox *tox, guint32 friend_number, guint8 const *name, gsize length, gpointer user_data)
+{
+    LupusObjectSelf *objectself = LUPUS_OBJECTSELF(user_data);
+    LupusObjectFriend *instance = get_instance_from_objectself(objectself, friend_number);
+
+    gchar *new_name = g_strndup((gchar *)name, length);
+    if (!g_strcmp0(instance->name, new_name)) {
+        free(new_name);
+        return;
+    }
+
+    g_free(instance->name);
+    instance->name = new_name;
+
+    g_object_notify_by_pspec(G_OBJECT(instance), obj_properties[PROP_NAME]);
+    g_signal_emit_by_name(objectself, "save");
+}
+
+static void status_message_cb(Tox *tox, guint32 friend_number, guint8 const *status_message, gsize length,
+                              gpointer user_data)
+{
+    LupusObjectSelf *objectself = LUPUS_OBJECTSELF(user_data);
+    LupusObjectFriend *instance = get_instance_from_objectself(objectself, friend_number);
+
+    gchar *new_status_message = g_strndup((gchar *)status_message, length);
+    if (!g_strcmp0(instance->status_message, new_status_message)) {
+        free(new_status_message);
+        return;
+    }
+
+    g_free(instance->status_message);
+    instance->status_message = new_status_message;
+
+    g_object_notify_by_pspec(G_OBJECT(instance), obj_properties[PROP_STATUS_MESSAGE]);
+    g_signal_emit_by_name(objectself, "save");
+}
 
 static void lupus_objectfriend_set_property(GObject *object, guint property_id, GValue const *value, GParamSpec *pspec)
 {
@@ -72,6 +121,7 @@ static void lupus_objectfriend_finalize(GObject *object)
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_objectfriend_parent_class);
     object_class->finalize(object);
 }
+
 static void lupus_objectfriend_constructed(GObject *object)
 {
     LupusObjectFriend *instance = LUPUS_OBJECTFRIEND(object);
@@ -91,6 +141,9 @@ static void lupus_objectfriend_constructed(GObject *object)
     } else {
         instance->status_message = NULL;
     }
+
+    tox_callback_friend_name(instance->tox, name_cb);
+    tox_callback_friend_status_message(instance->tox, status_message_cb);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_objectfriend_parent_class);
     object_class->constructed(object);

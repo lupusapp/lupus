@@ -110,3 +110,4 @@ LupusEditableLabel *lupus_editablelabel_new(gchar *value, guint max_length)
 {
     return g_object_new(LUPUS_TYPE_EDITABLELABEL, "value", value, "max-length", max_length, NULL);
 }
+

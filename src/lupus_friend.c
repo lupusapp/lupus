@@ -21,6 +21,28 @@ typedef enum {
 } LupusFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
+static void objectfriend_name_cb(gpointer user_data)
+{
+    LupusFriend *instance = LUPUS_FRIEND(user_data);
+
+    gchar *name;
+    g_object_get(instance->objectfriend, "name", &name, NULL);
+
+    gtk_label_set_label(instance->name, name);
+    gtk_widget_set_tooltip_text(GTK_WIDGET(instance->name), name);
+}
+
+static void objectfriend_status_message_cb(gpointer user_data)
+{
+    LupusFriend *instance = LUPUS_FRIEND(user_data);
+
+    gchar *status_message;
+    g_object_get(instance->objectfriend, "status-message", &status_message, NULL);
+
+    gtk_label_set_label(instance->status_message, status_message);
+    gtk_widget_set_tooltip_text(GTK_WIDGET(instance->status_message), status_message);
+}
+
 static void lupus_friend_set_property(GObject *object, guint property_id, GValue const *value, GParamSpec *pspec)
 {
     LupusFriend *instance = LUPUS_FRIEND(object);
@@ -40,9 +62,12 @@ static void lupus_friend_constructed(GObject *object)
 
     gchar *name, *status_message;
     g_object_get(instance->objectfriend, "name", &name, "status-message", &status_message, NULL);
-    instance->name = GTK_LABEL(g_object_new(GTK_TYPE_LABEL, "label", name, "halign", GTK_ALIGN_START, NULL));
+    instance->name =
+        GTK_LABEL(g_object_new(GTK_TYPE_LABEL, "label", name, "halign", GTK_ALIGN_START, "wrap", TRUE, NULL));
     instance->status_message =
-        GTK_LABEL(g_object_new(GTK_TYPE_LABEL, "label", status_message, "halign", GTK_ALIGN_START, NULL));
+        GTK_LABEL(g_object_new(GTK_TYPE_LABEL, "label", status_message, "halign", GTK_ALIGN_START, "wrap", TRUE, NULL));
+    gtk_widget_set_tooltip_text(GTK_WIDGET(instance->name), name);
+    gtk_widget_set_tooltip_text(GTK_WIDGET(instance->status_message), status_message);
 
     instance->vbox = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0));
     gtk_box_pack_start(instance->vbox, GTK_WIDGET(instance->name), FALSE, TRUE, 0);
@@ -54,6 +79,10 @@ static void lupus_friend_constructed(GObject *object)
     gtk_box_pack_start(instance->hbox, GTK_WIDGET(instance->vbox), TRUE, TRUE, 0);
 
     gtk_container_add(GTK_CONTAINER(instance), GTK_WIDGET(instance->hbox));
+
+    g_signal_connect_swapped(instance->objectfriend, "notify::name", G_CALLBACK(objectfriend_name_cb), instance);
+    g_signal_connect_swapped(instance->objectfriend, "notify::status-message",
+                             G_CALLBACK(objectfriend_status_message_cb), instance);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_friend_parent_class);
     object_class->constructed(object);

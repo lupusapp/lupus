@@ -5,6 +5,8 @@
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
 #include <sodium/utils.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <tox/tox.h>
 #include <tox/toxencryptsave.h>
@@ -17,6 +19,12 @@ struct _LupusObjectSelf {
     gchar *profile_password;
 
     GHashTable /*<guint32, ObjectFriend>*/ *objectfriends;
+
+    struct NeedSave {
+        GMutex *mutex;
+        gboolean value;
+        guint event_source_id;
+    } NeedSave;
 
     gchar *name;
     gchar *status_message;
@@ -50,6 +58,7 @@ typedef enum {
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
 typedef enum {
+    SAVE,
     FRIEND_REQUEST, // (gchar *public_key, gchar *message) -> gboolean
     FRIEND_ADDED,   // (guint32 friend_number)
     LAST_SIGNAL,
@@ -57,6 +66,13 @@ typedef enum {
 static guint signals[LAST_SIGNAL];
 
 #define AVATAR_MAX_FILE_SIZE 65536
+
+static void need_save_set_cb(LupusObjectSelf *instance)
+{
+    g_mutex_lock(instance->NeedSave.mutex);
+    instance->NeedSave.value = TRUE;
+    g_mutex_unlock(instance->NeedSave.mutex);
+}
 
 static void connection_status_cb(Tox *tox, Tox_Connection connection_status, gpointer user_data)
 {
@@ -190,6 +206,20 @@ gboolean save(LupusObjectSelf *instance)
     return TRUE;
 }
 
+static gboolean need_save_check_cb(LupusObjectSelf *instance)
+{
+    g_mutex_lock(instance->NeedSave.mutex);
+
+    if (instance->NeedSave.value) {
+        save(instance);
+        instance->NeedSave.value = FALSE;
+    }
+
+    g_mutex_unlock(instance->NeedSave.mutex);
+
+    return TRUE;
+}
+
 static void lupus_objectself_get_property(GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
 {
     LupusObjectSelf *instance = LUPUS_OBJECTSELF(object);
@@ -294,6 +324,11 @@ static void lupus_objectself_finalize(GObject *object)
     g_free(instance->profile_password);
 
     g_hash_table_destroy(instance->objectfriends);
+
+    g_source_remove(instance->NeedSave.event_source_id);
+    g_mutex_unlock(instance->NeedSave.mutex);
+    g_mutex_clear(instance->NeedSave.mutex);
+    g_free(instance->NeedSave.mutex);
 
     GObjectClass *parent_class = G_OBJECT_CLASS(lupus_objectself_parent_class);
     parent_class->finalize(object);
@@ -408,11 +443,18 @@ static void lupus_objectself_constructed(GObject *object)
     instance->objectfriends = g_hash_table_new(NULL, NULL);
     load_friends(instance);
 
+    instance->NeedSave.mutex = g_malloc(sizeof(GMutex));
+    g_mutex_init(instance->NeedSave.mutex);
+    instance->NeedSave.value = FALSE;
+    instance->NeedSave.event_source_id = g_timeout_add(5000, G_SOURCE_FUNC(need_save_check_cb), instance);
+
     tox_callback_self_connection_status(instance->tox, connection_status_cb);
     tox_callback_friend_request(instance->tox, friend_request_cb);
 
     bootstrap(instance->tox);
     g_timeout_add(tox_iteration_interval(instance->tox), G_SOURCE_FUNC(iterate), instance);
+
+    g_signal_connect(instance, "save", G_CALLBACK(need_save_set_cb), NULL);
 
     GObjectClass *parent_class = G_OBJECT_CLASS(lupus_objectself_parent_class);
     parent_class->constructed(object);
@@ -451,6 +493,7 @@ static void lupus_objectself_class_init(LupusObjectSelfClass *class)
                                            NULL, G_TYPE_BOOLEAN, 2, G_TYPE_STRING, G_TYPE_STRING);
     signals[FRIEND_ADDED] = g_signal_new("friend-added", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
                                          G_TYPE_NONE, 1, G_TYPE_UINT);
+    signals[SAVE] = g_signal_new("save", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 }
 
 static void lupus_objectself_init(LupusObjectSelf *instance) {}
