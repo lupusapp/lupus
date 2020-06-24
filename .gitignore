@@ -111,3 +111,7 @@ c-toxcore/
 res/ui/*.ui~
 Lupus
 Lupus.cbp
+
+.clangd/
+./build/
+build/

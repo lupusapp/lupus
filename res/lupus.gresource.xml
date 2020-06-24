@@ -8,6 +8,7 @@
         <file preprocess="xml-stripblanks" alias="mainfriend.ui">ui/mainfriend.ui</file>
         <file preprocess="xml-stripblanks" alias="mainchat.ui">ui/mainchat.ui</file>
         <file preprocess="xml-stripblanks" alias="mainmessage.ui">ui/mainmessage.ui</file>
+        <file preprocess="xml-stripblanks" alias="main.ui">ui/main.ui</file>
         <file alias="lupus.css">styles/lupus.css</file>
         <file alias="status_none.svg">images/status_none.svg</file>
         <file alias="status_busy.svg">images/status_busy.svg</file>

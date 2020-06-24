@@ -1,7 +1,7 @@
 #include "../include/lupus_profilechooser.h"
 #include "../include/lupus.h"
 #include "../include/lupus_main.h"
-#include "../include/lupus_wrapper.h"
+#include "../include/lupus_objectself.h"
 #include <errno.h>
 #include <tox/tox.h>
 #include <tox/toxencryptsave.h>
@@ -22,8 +22,6 @@ struct _LupusProfileChooser {
 };
 
 G_DEFINE_TYPE(LupusProfileChooser, lupus_profilechooser, GTK_TYPE_APPLICATION_WINDOW)
-
-LupusWrapper *lupus_wrapper;
 
 static gchar *ask_password(void)
 {
@@ -100,13 +98,15 @@ static void login_cb(GtkButton *button, LupusProfileChooser *instance)
         goto free;
     }
 
-    lupus_wrapper = lupus_wrapper_new(tox, filename, password);
+    GtkApplication *application = gtk_window_get_application(GTK_WINDOW(instance));
+    LupusObjectSelf *object_self = lupus_objectself_new(tox, filename, password);
 
-    gtk_window_present(GTK_WINDOW(lupus_main_new(gtk_window_get_application(GTK_WINDOW(instance)))));
+    LupusMain *main = lupus_main_new(application, object_self);
+    gtk_window_present(GTK_WINDOW(main));
     gtk_widget_destroy(GTK_WIDGET(instance));
 
 free:
-    g_free(password); // NOLINT
+    g_free(password);
     g_free(savedata);
     g_free(filename);
 }
@@ -259,3 +259,4 @@ LupusProfileChooser *lupus_profilechooser_new(LupusApplication *application)
 {
     return g_object_new(LUPUS_TYPE_PROFILECHOOSER, "application", application, NULL);
 }
+

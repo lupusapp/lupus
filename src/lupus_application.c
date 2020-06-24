@@ -16,7 +16,7 @@ static void lupus_application_activate(GApplication *application)
 
 static void lupus_application_class_init(LupusApplicationClass *class)
 {
-    GApplicationClass *application_class = G_APPLICATION_CLASS(class); // NOLINT
+    GApplicationClass *application_class = G_APPLICATION_CLASS(class);
     application_class->activate = lupus_application_activate;
 }
 
