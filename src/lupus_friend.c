@@ -11,6 +11,7 @@ struct _LupusFriend {
     GtkBox *vbox;
     GtkLabel *name;
     GtkLabel *status_message;
+    GtkMenu *popover;
 };
 
 G_DEFINE_TYPE(LupusFriend, lupus_friend, GTK_TYPE_EVENT_BOX)
@@ -41,6 +42,58 @@ static void objectfriend_status_message_cb(gpointer user_data)
 
     gtk_label_set_label(instance->status_message, status_message);
     gtk_widget_set_tooltip_text(GTK_WIDGET(instance->status_message), status_message);
+}
+
+static gboolean button_press_event_cb(LupusFriend *instance, GdkEvent *event)
+{
+    if (event->type == GDK_BUTTON_PRESS && event->button.button == 3) {
+        gtk_menu_popup_at_pointer(instance->popover, event);
+    }
+
+    return FALSE;
+}
+
+static void popover_remove_friend_cb(LupusFriend *instance)
+{
+    GtkDialog *dialog = GTK_DIALOG(g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, "border-width", 5, "title",
+                                                "Are you sure ?", "resizable", FALSE, NULL));
+    gtk_dialog_add_buttons(dialog, "Yes", GTK_RESPONSE_YES, "Cancel", GTK_RESPONSE_CANCEL, NULL);
+
+    GtkBox *box = GTK_BOX(gtk_container_get_children(GTK_CONTAINER(dialog))->data);
+    gtk_box_pack_start(box, gtk_label_new("Remove friend ?"), TRUE, TRUE, 0);
+
+    gtk_widget_show_all(GTK_WIDGET(dialog));
+
+    if (gtk_dialog_run(dialog) == GTK_RESPONSE_YES) {
+        guint32 friend_number;
+        g_object_get(instance->objectfriend, "friend-number", &friend_number, NULL);
+
+        gboolean success;
+        g_signal_emit_by_name(instance->objectfriend, "remove-friend", friend_number, &success);
+        if (success) {
+            gtk_widget_destroy(GTK_WIDGET(instance));
+        }
+    }
+
+    gtk_widget_destroy(GTK_WIDGET(dialog));
+}
+
+static void construct_popover(LupusFriend *instance)
+{
+    instance->popover = GTK_MENU(gtk_menu_new());
+
+    GtkBox *box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
+    gtk_box_pack_start(box, gtk_image_new_from_icon_name("list-remove", GTK_ICON_SIZE_BUTTON), FALSE, TRUE, 0);
+    gtk_box_pack_start(box, gtk_label_new("Remove friend"), TRUE, TRUE, 0);
+
+    GtkMenuItem *item = GTK_MENU_ITEM(gtk_menu_item_new());
+    gtk_container_add(GTK_CONTAINER(item), GTK_WIDGET(box));
+
+    gtk_menu_shell_append(GTK_MENU_SHELL(instance->popover), GTK_WIDGET(item));
+
+    gtk_widget_show_all(GTK_WIDGET(instance->popover));
+
+    g_signal_connect_swapped(item, "activate", G_CALLBACK(popover_remove_friend_cb), instance);
 }
 
 static void lupus_friend_set_property(GObject *object, guint property_id, GValue const *value, GParamSpec *pspec)
@@ -80,9 +133,12 @@ static void lupus_friend_constructed(GObject *object)
 
     gtk_container_add(GTK_CONTAINER(instance), GTK_WIDGET(instance->hbox));
 
+    construct_popover(instance);
+
     g_signal_connect_swapped(instance->objectfriend, "notify::name", G_CALLBACK(objectfriend_name_cb), instance);
     g_signal_connect_swapped(instance->objectfriend, "notify::status-message",
                              G_CALLBACK(objectfriend_status_message_cb), instance);
+    g_signal_connect(instance, "button-press-event", G_CALLBACK(button_press_event_cb), NULL);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_friend_parent_class);
     object_class->constructed(object);

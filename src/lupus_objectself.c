@@ -67,6 +67,42 @@ static guint signals[LAST_SIGNAL];
 
 #define AVATAR_MAX_FILE_SIZE 65536
 
+gboolean save(LupusObjectSelf *instance)
+{
+    gsize savedata_size = tox_get_savedata_size(instance->tox);
+    guint8 *savedata = g_malloc(savedata_size);
+    tox_get_savedata(instance->tox, savedata);
+
+    /* if password is set and is not empty */
+    if (instance->profile_password && *instance->profile_password) {
+        guint8 *tmp = g_malloc(savedata_size + tox_pass_encryption_extra_length());
+
+        if (!tox_pass_encrypt(savedata, savedata_size, (guint8 *)instance->profile_password,
+                              strlen(instance->profile_password), tmp, NULL)) {
+            lupus_error("Cannot encrypt profile.");
+            g_free(tmp);
+            g_free(savedata);
+            return FALSE;
+        }
+
+        g_free(savedata);
+        savedata = tmp;
+        savedata_size += TOX_PASS_ENCRYPTION_EXTRA_LENGTH;
+    }
+
+    GError *error = NULL;
+    g_file_set_contents(instance->profile_filename, (gchar *)savedata, savedata_size, &error);
+    if (error) {
+        lupus_error("Cannot save profile: %s", error->message);
+        g_error_free(error);
+        g_free(savedata);
+        return FALSE;
+    }
+
+    g_free(savedata);
+    return TRUE;
+}
+
 static void need_save_set_cb(LupusObjectSelf *instance)
 {
     g_mutex_lock(instance->NeedSave.mutex);
@@ -84,6 +120,24 @@ static void connection_status_cb(Tox *tox, Tox_Connection connection_status, gpo
     g_object_notify_by_pspec(object, obj_properties[PROP_CONNECTION]);
 }
 
+static gboolean objectfriend_remove_friend_cb(LupusObjectFriend *objectfriend, guint friend_number,
+                                              LupusObjectSelf *instance)
+{
+    Tox_Err_Friend_Delete tox_err_friend_delete = TOX_ERR_FRIEND_DELETE_OK;
+    tox_friend_delete(instance->tox, friend_number, &tox_err_friend_delete);
+    if (tox_err_friend_delete != TOX_ERR_FRIEND_DELETE_OK) {
+        lupus_error("Cannot delete friend.");
+        return FALSE;
+    }
+
+    save(instance);
+
+    g_hash_table_remove(instance->objectfriends, GUINT_TO_POINTER(friend_number));
+    g_object_unref(objectfriend);
+
+    return TRUE;
+}
+
 static void load_friends(LupusObjectSelf *instance)
 {
     gsize friend_list_size = tox_self_get_friend_list_size(instance->tox);
@@ -97,6 +151,8 @@ static void load_friends(LupusObjectSelf *instance)
 
         gpointer key = GUINT_TO_POINTER(friend_number);
         g_hash_table_insert(instance->objectfriends, key, objectfriend);
+
+        g_signal_connect(objectfriend, "remove-friend", G_CALLBACK(objectfriend_remove_friend_cb), instance);
     }
 }
 
@@ -168,42 +224,6 @@ static void load_avatar(LupusObjectSelf *instance, gchar *filename)
     GObject *object = G_OBJECT(instance);
     g_object_notify_by_pspec(object, obj_properties[PROP_AVATAR_PIXBUF]);
     g_object_notify_by_pspec(object, obj_properties[PROP_AVATAR_HASH]);
-}
-
-gboolean save(LupusObjectSelf *instance)
-{
-    gsize savedata_size = tox_get_savedata_size(instance->tox);
-    guint8 *savedata = g_malloc(savedata_size);
-    tox_get_savedata(instance->tox, savedata);
-
-    /* if password is set and is not empty */
-    if (instance->profile_password && *instance->profile_password) {
-        guint8 *tmp = g_malloc(savedata_size + tox_pass_encryption_extra_length());
-
-        if (!tox_pass_encrypt(savedata, savedata_size, (guint8 *)instance->profile_password,
-                              strlen(instance->profile_password), tmp, NULL)) {
-            lupus_error("Cannot encrypt profile.");
-            g_free(tmp);
-            g_free(savedata);
-            return FALSE;
-        }
-
-        g_free(savedata);
-        savedata = tmp;
-        savedata_size += TOX_PASS_ENCRYPTION_EXTRA_LENGTH;
-    }
-
-    GError *error = NULL;
-    g_file_set_contents(instance->profile_filename, (gchar *)savedata, savedata_size, &error);
-    if (error) {
-        lupus_error("Cannot save profile: %s", error->message);
-        g_error_free(error);
-        g_free(savedata);
-        return FALSE;
-    }
-
-    g_free(savedata);
-    return TRUE;
 }
 
 static gboolean need_save_check_cb(LupusObjectSelf *instance)
@@ -399,6 +419,8 @@ static void friend_request_cb(Tox *tox, guint8 const *public_key, guint8 const *
 
         g_hash_table_insert(instance->objectfriends, GUINT_TO_POINTER(friend_number), objectfriend);
         g_signal_emit(instance, signals[FRIEND_ADDED], 0, friend_number);
+
+        g_signal_connect(objectfriend, "remove-friend", G_CALLBACK(objectfriend_remove_friend_cb), instance);
     }
 
     g_free(message_request);

@@ -25,6 +25,12 @@ typedef enum {
 } LupusObjectFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
+typedef enum {
+    REMOVE_FRIEND,
+    LAST_SIGNAL,
+} LupusObjectFriendSignal;
+static guint signals[LAST_SIGNAL];
+
 static LupusObjectFriend *get_instance_from_objectself(LupusObjectSelf *user_data, guint32 friend_number)
 {
     LupusObjectSelf *objectself = LUPUS_OBJECTSELF(user_data);
@@ -165,6 +171,9 @@ static void lupus_objectfriend_class_init(LupusObjectFriendClass *class)
     obj_properties[PROP_STATUS_MESSAGE] = g_param_spec_string("status-message", NULL, NULL, NULL, G_PARAM_READABLE);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
+
+    signals[REMOVE_FRIEND] = g_signal_new("remove-friend", LUPUS_TYPE_OBJECTFRIEND, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
+                                          NULL, G_TYPE_BOOLEAN, 1, G_TYPE_UINT);
 }
 
 static void lupus_objectfriend_init(LupusObjectFriend *instance) {}
