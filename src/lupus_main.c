@@ -18,6 +18,7 @@ struct _LupusMain {
     GtkBox *sidebox;
     GtkScrolledWindow *sidebox_friends_scrolled_window;
     GtkBox *sidebox_friends_box;
+    GtkActionBar *sidebox_actionbar;
 };
 
 G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
@@ -62,6 +63,60 @@ static void construct_sidebox_friends(LupusMain *instance)
     while (g_hash_table_iter_next(&iter, NULL, &value)) {
         add_lupus_friend(instance, LUPUS_OBJECTFRIEND(value));
     }
+}
+
+static void sidebox_actionbar_about_activate_cb(LupusMain *instance)
+{
+    static GtkAboutDialog *about_dialog;
+
+    if (!about_dialog) {
+        GdkPixbuf *pixbuf = GDK_PIXBUF(gdk_pixbuf_new_from_resource(LUPUS_RESOURCES "/lupus.svg", NULL));
+
+        about_dialog = GTK_ABOUT_DIALOG(gtk_about_dialog_new());
+        gtk_about_dialog_set_program_name(about_dialog, "Lupus");
+        gtk_about_dialog_set_version(about_dialog, LUPUS_VERSION);
+        gtk_about_dialog_set_copyright(about_dialog, "© 2019-2020 Ogromny");
+        gtk_about_dialog_set_wrap_license(about_dialog, TRUE);
+        gtk_about_dialog_set_license_type(about_dialog, GTK_LICENSE_GPL_3_0);
+        gtk_about_dialog_set_website(about_dialog, "https://github.com/LupusApp/Lupus");
+        gtk_about_dialog_set_website_label(about_dialog, "GitHub");
+        gtk_about_dialog_set_authors(about_dialog, (gchar const *[]){"Ogromny", NULL});
+        gtk_about_dialog_set_logo(about_dialog, pixbuf);
+    }
+
+    gtk_dialog_run(GTK_DIALOG(about_dialog));
+    gtk_widget_hide(GTK_WIDGET(about_dialog));
+}
+
+static void construct_sidebox_actionbar(LupusMain *instance)
+{
+    instance->sidebox_actionbar = GTK_ACTION_BAR(gtk_action_bar_new());
+
+    GtkBox *popover_about_box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
+    GtkWidget *popover_about_image = gtk_image_new_from_icon_name("help-about", GTK_ICON_SIZE_MENU);
+    gtk_box_pack_start(popover_about_box, popover_about_image, FALSE, TRUE, 0);
+    gtk_box_pack_start(popover_about_box, gtk_label_new("About"), TRUE, TRUE, 0);
+    GtkWidget *popover_about = gtk_menu_item_new();
+    gtk_container_add(GTK_CONTAINER(popover_about), GTK_WIDGET(popover_about_box));
+
+    GtkWidget *popover = gtk_menu_new();
+    gtk_menu_shell_append(GTK_MENU_SHELL(popover), popover_about);
+    gtk_widget_show_all(popover);
+
+    GtkMenuButton *button_settings = GTK_MENU_BUTTON(gtk_menu_button_new());
+    gtk_menu_button_set_popup(button_settings, GTK_WIDGET(popover));
+    GtkContainer *button_settings_container = GTK_CONTAINER(button_settings);
+    GtkWidget *button_settings_image = gtk_image_new_from_icon_name("open-menu-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
+    gtk_container_add(button_settings_container, button_settings_image);
+
+    GtkButton *button_add_friend = GTK_BUTTON(gtk_button_new_from_icon_name("list-add", GTK_ICON_SIZE_SMALL_TOOLBAR));
+
+    gtk_action_bar_pack_start(instance->sidebox_actionbar, GTK_WIDGET(button_add_friend));
+    gtk_action_bar_pack_start(instance->sidebox_actionbar, GTK_WIDGET(button_settings));
+
+    gtk_box_pack_end(instance->sidebox_friends_box, GTK_WIDGET(instance->sidebox_actionbar), FALSE, TRUE, 0);
+
+    g_signal_connect_swapped(popover_about, "activate", G_CALLBACK(sidebox_actionbar_about_activate_cb), instance);
 }
 
 typedef struct {
@@ -175,6 +230,8 @@ static void lupus_main_constructed(GObject *object)
     gtk_box_pack_start(instance->sidebox, separator, FALSE, TRUE, 0);
 
     construct_sidebox_friends(instance);
+
+    construct_sidebox_actionbar(instance);
 
     GtkWidget *widget = GTK_WIDGET(instance);
     gtk_widget_show_all(widget);
