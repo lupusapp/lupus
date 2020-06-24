@@ -28,6 +28,17 @@ typedef enum {
 } LupusMainProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
+static void add_lupus_friend(LupusMain *instance, LupusObjectFriend *objectfriend)
+{
+    LupusFriend *friend = lupus_friend_new(objectfriend);
+    GtkWidget *separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+
+    gtk_box_pack_start(instance->sidebox_friends_box, GTK_WIDGET(friend), FALSE, TRUE, 0);
+    gtk_box_pack_start(instance->sidebox_friends_box, separator, FALSE, TRUE, 0);
+
+    g_signal_connect_swapped(friend, "destroy", G_CALLBACK(gtk_widget_destroy), separator);
+}
+
 static void construct_sidebox_friends(LupusMain *instance)
 {
     GtkWidget *sidebox_friends_scrolled_window = gtk_scrolled_window_new(NULL, NULL);
@@ -49,12 +60,7 @@ static void construct_sidebox_friends(LupusMain *instance)
     gpointer value = NULL;
 
     while (g_hash_table_iter_next(&iter, NULL, &value)) {
-        LupusObjectFriend *objectfriend = LUPUS_OBJECTFRIEND(value);
-        LupusFriend *friend = lupus_friend_new(objectfriend);
-
-        gtk_box_pack_start(instance->sidebox_friends_box, GTK_WIDGET(friend), FALSE, TRUE, 0);
-        gtk_box_pack_start(instance->sidebox_friends_box, gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, TRUE,
-                           0);
+        add_lupus_friend(instance, LUPUS_OBJECTFRIEND(value));
     }
 }
 
@@ -87,12 +93,7 @@ static void friend_added_cb(LupusMain *instance, guint32 friend_number)
 
     gpointer key = GUINT_TO_POINTER(friend_number);
     LupusObjectFriend *objectfriend = LUPUS_OBJECTFRIEND(g_hash_table_lookup(objectfriends, key));
-    LupusFriend *friend = lupus_friend_new(objectfriend);
-
-    gtk_box_pack_start(instance->sidebox_friends_box, GTK_WIDGET(friend), FALSE, TRUE, 0);
-    gtk_box_pack_start(instance->sidebox_friends_box, gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, TRUE, 0);
-
-    gtk_widget_show_all(GTK_WIDGET(instance->sidebox_friends_box));
+    add_lupus_friend(instance, objectfriend);
 }
 
 static gboolean friend_request_cb(LupusMain *instance, gchar *public_key_hex, gchar *request_message)
