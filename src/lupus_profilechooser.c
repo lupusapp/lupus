@@ -198,7 +198,7 @@ static void list_profiles(LupusProfileChooser *instance)
         errno = 0;
     }
 
-    gtk_container_foreach(GTK_CONTAINER(instance->login_box), (GtkCallback)gtk_widget_destroy, NULL);
+    gtk_container_foreach(GTK_CONTAINER(instance->login_box), G_CALLBACK(gtk_widget_destroy), NULL);
 
     for (guint i = 0; i < profiles->len; ++i) {
         gchar *name = g_strndup(profiles->pdata[i], strlen(profiles->pdata[i]) - 4);

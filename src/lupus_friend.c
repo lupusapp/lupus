@@ -1,10 +1,15 @@
 #include "../include/lupus_friend.h"
+#include "include/lupus_objectfriend.h"
+#include "include/lupus_objectself.h"
 #include <gtk/gtk.h>
 
 struct _LupusFriend {
     GtkEventBox parent_instance;
 
     LupusObjectFriend *objectfriend;
+    // We need to store this, because when `objectself` friend-removed event will be fired,
+    // objectfriend will already be unrefed
+    guint objectfriend_friend_number;
 
     GtkBox *hbox;
     GtkImage *avatar;
@@ -21,6 +26,13 @@ typedef enum {
     N_PROPERTIES,
 } LupusFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
+
+static void friend_removed_cb(LupusFriend *instance, guint friend_number)
+{
+    if (instance->objectfriend_friend_number == friend_number) {
+        gtk_widget_destroy(GTK_WIDGET(instance));
+    }
+}
 
 static void objectfriend_name_cb(gpointer user_data)
 {
@@ -68,11 +80,11 @@ static void popover_remove_friend_cb(LupusFriend *instance)
         guint32 friend_number;
         g_object_get(instance->objectfriend, "friend-number", &friend_number, NULL);
 
+        LupusObjectSelf *objectself = NULL;
+        g_object_get(instance->objectfriend, "objectself", &objectself, NULL);
+
         gboolean success;
-        g_signal_emit_by_name(instance->objectfriend, "remove-friend", friend_number, &success);
-        if (success) {
-            gtk_widget_destroy(GTK_WIDGET(instance));
-        }
+        g_signal_emit_by_name(objectself, "remove-friend", friend_number, &success);
     }
 
     gtk_widget_destroy(GTK_WIDGET(dialog));
@@ -135,10 +147,16 @@ static void lupus_friend_constructed(GObject *object)
 
     construct_popover(instance);
 
+    g_object_get(instance->objectfriend, "friend-number", &(instance->objectfriend_friend_number), NULL);
+
     g_signal_connect_swapped(instance->objectfriend, "notify::name", G_CALLBACK(objectfriend_name_cb), instance);
     g_signal_connect_swapped(instance->objectfriend, "notify::status-message",
                              G_CALLBACK(objectfriend_status_message_cb), instance);
     g_signal_connect(instance, "button-press-event", G_CALLBACK(button_press_event_cb), NULL);
+
+    LupusObjectSelf *objectself;
+    g_object_get(instance->objectfriend, "objectself", &objectself, NULL);
+    g_signal_connect_swapped(objectself, "friend-removed", G_CALLBACK(friend_removed_cb), instance);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_friend_parent_class);
     object_class->constructed(object);

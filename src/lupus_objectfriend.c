@@ -7,6 +7,7 @@
 struct _LupusObjectFriend {
     GObject parent_instance;
 
+    LupusObjectSelf *objectself;
     Tox *tox;
     guint32 friend_number;
 
@@ -17,19 +18,13 @@ struct _LupusObjectFriend {
 G_DEFINE_TYPE(LupusObjectFriend, lupus_objectfriend, G_TYPE_OBJECT)
 
 typedef enum {
-    PROP_TOX = 1,
+    PROP_OBJECTSELF = 1,
     PROP_FRIEND_NUMBER,
     PROP_NAME,
     PROP_STATUS_MESSAGE,
     N_PROPERTIES,
 } LupusObjectFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
-
-typedef enum {
-    REMOVE_FRIEND,
-    LAST_SIGNAL,
-} LupusObjectFriendSignal;
-static guint signals[LAST_SIGNAL];
 
 static LupusObjectFriend *get_instance_from_objectself(LupusObjectSelf *user_data, guint32 friend_number)
 {
@@ -84,8 +79,8 @@ static void lupus_objectfriend_set_property(GObject *object, guint property_id, 
     LupusObjectFriend *instance = LUPUS_OBJECTFRIEND(object);
 
     switch ((LupusObjectFriendProperty)property_id) {
-    case PROP_TOX:
-        instance->tox = g_value_get_pointer(value);
+    case PROP_OBJECTSELF:
+        instance->objectself = g_value_get_pointer(value);
         break;
     case PROP_FRIEND_NUMBER:
         instance->friend_number = g_value_get_uint(value);
@@ -100,8 +95,8 @@ static void lupus_objectfriend_get_property(GObject *object, guint property_id, 
     LupusObjectFriend *instance = LUPUS_OBJECTFRIEND(object);
 
     switch ((LupusObjectFriendProperty)property_id) {
-    case PROP_TOX:
-        g_value_set_pointer(value, instance->tox);
+    case PROP_OBJECTSELF:
+        g_value_set_pointer(value, instance->objectself);
         break;
     case PROP_FRIEND_NUMBER:
         g_value_set_uint(value, instance->friend_number);
@@ -131,25 +126,27 @@ static void lupus_objectfriend_finalize(GObject *object)
 static void lupus_objectfriend_constructed(GObject *object)
 {
     LupusObjectFriend *instance = LUPUS_OBJECTFRIEND(object);
+    Tox *tox = NULL;
+    g_object_get(instance->objectself, "tox", &tox, NULL);
 
-    gsize name_size = tox_friend_get_name_size(instance->tox, instance->friend_number, NULL);
+    gsize name_size = tox_friend_get_name_size(tox, instance->friend_number, NULL);
     if (name_size) {
         instance->name = g_malloc0(name_size + 1);
-        tox_friend_get_name(instance->tox, instance->friend_number, (guint8 *)instance->name, NULL);
+        tox_friend_get_name(tox, instance->friend_number, (guint8 *)instance->name, NULL);
     } else {
         instance->name = NULL;
     }
 
-    gsize status_message_size = tox_friend_get_status_message_size(instance->tox, instance->friend_number, NULL);
+    gsize status_message_size = tox_friend_get_status_message_size(tox, instance->friend_number, NULL);
     if (status_message_size) {
         instance->status_message = g_malloc0(status_message_size + 1);
-        tox_friend_get_status_message(instance->tox, instance->friend_number, (guint8 *)instance->status_message, NULL);
+        tox_friend_get_status_message(tox, instance->friend_number, (guint8 *)instance->status_message, NULL);
     } else {
         instance->status_message = NULL;
     }
 
-    tox_callback_friend_name(instance->tox, name_cb);
-    tox_callback_friend_status_message(instance->tox, status_message_cb);
+    tox_callback_friend_name(tox, name_cb);
+    tox_callback_friend_status_message(tox, status_message_cb);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_objectfriend_parent_class);
     object_class->constructed(object);
@@ -164,21 +161,19 @@ static void lupus_objectfriend_class_init(LupusObjectFriendClass *class)
     object_class->set_property = lupus_objectfriend_set_property;
     object_class->get_property = lupus_objectfriend_get_property;
 
-    obj_properties[PROP_TOX] = g_param_spec_pointer("tox", NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+    obj_properties[PROP_OBJECTSELF] =
+        g_param_spec_pointer("objectself", NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
     obj_properties[PROP_FRIEND_NUMBER] =
         g_param_spec_uint("friend-number", NULL, NULL, 0, INT32_MAX, 0, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
     obj_properties[PROP_NAME] = g_param_spec_string("name", NULL, NULL, NULL, G_PARAM_READABLE);
     obj_properties[PROP_STATUS_MESSAGE] = g_param_spec_string("status-message", NULL, NULL, NULL, G_PARAM_READABLE);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
-
-    signals[REMOVE_FRIEND] = g_signal_new("remove-friend", LUPUS_TYPE_OBJECTFRIEND, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
-                                          NULL, G_TYPE_BOOLEAN, 1, G_TYPE_UINT);
 }
 
 static void lupus_objectfriend_init(LupusObjectFriend *instance) {}
 
-LupusObjectFriend *lupus_objectfriend_new(Tox *tox, guint32 friend_number)
+LupusObjectFriend *lupus_objectfriend_new(LupusObjectSelf *objectself, guint32 friend_number)
 {
-    return g_object_new(LUPUS_TYPE_OBJECTFRIEND, "tox", tox, "friend-number", friend_number, NULL);
+    return g_object_new(LUPUS_TYPE_OBJECTFRIEND, "objectself", objectself, "friend-number", friend_number, NULL);
 }

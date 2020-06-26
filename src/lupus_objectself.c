@@ -61,6 +61,9 @@ typedef enum {
     SAVE,
     FRIEND_REQUEST, // (gchar *public_key, gchar *message) -> gboolean
     FRIEND_ADDED,   // (guint32 friend_number)
+    FRIEND_REMOVED, // (guint32 friend_number)
+    ADD_FRIEND,     // (gchar *address_hex, gchar *message) -> gboolean
+    REMOVE_FRIEND,  // (guint32 friend_number) -> gboolean
     LAST_SIGNAL,
 } LupusObjectSelfSignal;
 static guint signals[LAST_SIGNAL];
@@ -103,6 +106,90 @@ gboolean save(LupusObjectSelf *instance)
     return TRUE;
 }
 
+static void objectfriends_remove_friend(LupusObjectSelf *instance, guint32 friend_number)
+{
+    gconstpointer key = GUINT_TO_POINTER(friend_number);
+    LupusObjectFriend *objectfriend = LUPUS_OBJECTFRIEND(g_hash_table_lookup(instance->objectfriends, key));
+
+    g_hash_table_remove(instance->objectfriends, GUINT_TO_POINTER(friend_number));
+    g_object_unref(objectfriend);
+
+    g_object_notify_by_pspec(G_OBJECT(instance), obj_properties[PROP_OBJECTFRIENDS]);
+    g_signal_emit(instance, signals[FRIEND_REMOVED], 0, friend_number);
+}
+
+static void objectfriends_add_friend(LupusObjectSelf *instance, guint32 friend_number)
+{
+    LupusObjectFriend *objectfriend = lupus_objectfriend_new(instance, friend_number);
+
+    gpointer key = GUINT_TO_POINTER(friend_number);
+    g_hash_table_insert(instance->objectfriends, key, objectfriend);
+
+    g_object_notify_by_pspec(G_OBJECT(instance), obj_properties[PROP_OBJECTFRIENDS]);
+    g_signal_emit(instance, signals[FRIEND_ADDED], 0, friend_number);
+}
+
+static gboolean add_friend_cb(LupusObjectSelf *instance, gchar *address_hex, gchar *message)
+{
+    guint8 address[tox_address_size()];
+    sodium_hex2bin(address, sizeof(address), address_hex, tox_address_size() * 2, NULL, 0, NULL);
+
+    Tox_Err_Friend_Add tox_err_friend_add = TOX_ERR_FRIEND_ADD_OK;
+    guint32 friend_number =
+        tox_friend_add(instance->tox, address, (guint8 *)message, strlen(message), &tox_err_friend_add);
+
+    switch (tox_err_friend_add) {
+    case TOX_ERR_FRIEND_ADD_ALREADY_SENT:
+        lupus_error("Request already sent.");
+        break;
+    case TOX_ERR_FRIEND_ADD_BAD_CHECKSUM:
+        lupus_error("Bad checksum.");
+        break;
+    case TOX_ERR_FRIEND_ADD_MALLOC:
+        lupus_error("Allocation for friend request failed.");
+        break;
+    case TOX_ERR_FRIEND_ADD_NO_MESSAGE:
+        lupus_error("No message provied.");
+        break;
+    case TOX_ERR_FRIEND_ADD_NULL:
+        lupus_error("Missing arguments, please open an issue at https://github.com/LupusApp/Lupus.");
+        break;
+    case TOX_ERR_FRIEND_ADD_OK:
+        objectfriends_add_friend(instance, friend_number);
+        save(instance);
+        return TRUE;
+    case TOX_ERR_FRIEND_ADD_OWN_KEY:
+        lupus_error("It's your own public key.");
+        break;
+    case TOX_ERR_FRIEND_ADD_SET_NEW_NOSPAM:
+        lupus_error("The friend is already here, but the nospam value is different.");
+        break;
+    case TOX_ERR_FRIEND_ADD_TOO_LONG:
+        lupus_error("Request message is too long.");
+        break;
+    }
+
+    return FALSE;
+}
+
+static gboolean remove_friend_cb(LupusObjectSelf *instance, guint friend_number)
+{
+    Tox_Err_Friend_Delete tox_err_friend_delete;
+    tox_friend_delete(instance->tox, friend_number, &tox_err_friend_delete);
+
+    switch (tox_err_friend_delete) {
+    case TOX_ERR_FRIEND_DELETE_FRIEND_NOT_FOUND:
+        lupus_error("Friend not found.");
+        break;
+    case TOX_ERR_FRIEND_DELETE_OK:
+        objectfriends_remove_friend(instance, friend_number);
+        save(instance);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 static void need_save_set_cb(LupusObjectSelf *instance)
 {
     g_mutex_lock(instance->NeedSave.mutex);
@@ -120,25 +207,6 @@ static void connection_status_cb(Tox *tox, Tox_Connection connection_status, gpo
     g_object_notify_by_pspec(object, obj_properties[PROP_CONNECTION]);
 }
 
-static gboolean objectfriend_remove_friend_cb(LupusObjectFriend *objectfriend, guint friend_number,
-                                              LupusObjectSelf *instance)
-{
-    Tox_Err_Friend_Delete tox_err_friend_delete = TOX_ERR_FRIEND_DELETE_OK;
-    tox_friend_delete(instance->tox, friend_number, &tox_err_friend_delete);
-    if (tox_err_friend_delete != TOX_ERR_FRIEND_DELETE_OK) {
-        lupus_error("Cannot delete friend.");
-        return FALSE;
-    }
-
-    save(instance);
-
-    g_hash_table_remove(instance->objectfriends, GUINT_TO_POINTER(friend_number));
-    g_object_unref(objectfriend);
-    g_object_notify_by_pspec(G_OBJECT(instance), obj_properties[PROP_OBJECTFRIENDS]);
-
-    return TRUE;
-}
-
 static void load_friends(LupusObjectSelf *instance)
 {
     gsize friend_list_size = tox_self_get_friend_list_size(instance->tox);
@@ -148,12 +216,7 @@ static void load_friends(LupusObjectSelf *instance)
 
     for (gsize i = 0; i < friend_list_size; ++i) {
         guint32 friend_number = friend_list[i];
-        LupusObjectFriend *objectfriend = lupus_objectfriend_new(instance->tox, friend_number);
-
-        gpointer key = GUINT_TO_POINTER(friend_number);
-        g_hash_table_insert(instance->objectfriends, key, objectfriend);
-
-        g_signal_connect(objectfriend, "remove-friend", G_CALLBACK(objectfriend_remove_friend_cb), instance);
+        objectfriends_add_friend(instance, friend_number);
     }
 }
 
@@ -412,16 +475,38 @@ static void friend_request_cb(Tox *tox, guint8 const *public_key, guint8 const *
     g_signal_emit(instance, signals[FRIEND_REQUEST], 0, public_key_hex, message_request, &accept);
 
     if (accept) {
-        /* TODO: handle errors <20-06-20, Ogromny> */
-        guint32 friend_number = tox_friend_add_norequest(tox, public_key, NULL);
-        LupusObjectFriend *objectfriend = lupus_objectfriend_new(instance->tox, friend_number);
-
-        save(instance);
-
-        g_hash_table_insert(instance->objectfriends, GUINT_TO_POINTER(friend_number), objectfriend);
-        g_signal_emit(instance, signals[FRIEND_ADDED], 0, friend_number);
-
-        g_signal_connect(objectfriend, "remove-friend", G_CALLBACK(objectfriend_remove_friend_cb), instance);
+        Tox_Err_Friend_Add tox_err_friend_add = TOX_ERR_FRIEND_ADD_OK;
+        guint32 friend_number = tox_friend_add_norequest(tox, public_key, &tox_err_friend_add);
+        switch (tox_err_friend_add) {
+        case TOX_ERR_FRIEND_ADD_ALREADY_SENT:
+            lupus_error("Request already sent.");
+            break;
+        case TOX_ERR_FRIEND_ADD_BAD_CHECKSUM:
+            lupus_error("Bad checksum.");
+            break;
+        case TOX_ERR_FRIEND_ADD_MALLOC:
+            lupus_error("Allocation for friend request failed.");
+            break;
+        case TOX_ERR_FRIEND_ADD_NO_MESSAGE:
+            lupus_error("No message provied.");
+            break;
+        case TOX_ERR_FRIEND_ADD_NULL:
+            lupus_error("Missing arguments, please open an issue at https://github.com/LupusApp/Lupus.");
+            break;
+        case TOX_ERR_FRIEND_ADD_OK:
+            objectfriends_add_friend(instance, friend_number);
+            save(instance);
+            break;
+        case TOX_ERR_FRIEND_ADD_OWN_KEY:
+            lupus_error("It's your own public key.");
+            break;
+        case TOX_ERR_FRIEND_ADD_SET_NEW_NOSPAM:
+            lupus_error("The friend is already here, but the nospam value is different.");
+            break;
+        case TOX_ERR_FRIEND_ADD_TOO_LONG:
+            lupus_error("Request message is too long.");
+            break;
+        }
     }
 
     g_free(message_request);
@@ -478,6 +563,8 @@ static void lupus_objectself_constructed(GObject *object)
     g_timeout_add(tox_iteration_interval(instance->tox), G_SOURCE_FUNC(iterate), instance);
 
     g_signal_connect(instance, "save", G_CALLBACK(need_save_set_cb), NULL);
+    g_signal_connect(instance, "add-friend", G_CALLBACK(add_friend_cb), NULL);
+    g_signal_connect(instance, "remove-friend", G_CALLBACK(remove_friend_cb), NULL);
 
     GObjectClass *parent_class = G_OBJECT_CLASS(lupus_objectself_parent_class);
     parent_class->constructed(object);
@@ -516,7 +603,13 @@ static void lupus_objectself_class_init(LupusObjectSelfClass *class)
                                            NULL, G_TYPE_BOOLEAN, 2, G_TYPE_STRING, G_TYPE_STRING);
     signals[FRIEND_ADDED] = g_signal_new("friend-added", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
                                          G_TYPE_NONE, 1, G_TYPE_UINT);
+    signals[FRIEND_REMOVED] = g_signal_new("friend-removed", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
+                                           NULL, G_TYPE_NONE, 1, G_TYPE_UINT);
     signals[SAVE] = g_signal_new("save", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+    signals[ADD_FRIEND] = g_signal_new("add-friend", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
+                                       G_TYPE_BOOLEAN, 2, G_TYPE_STRING, G_TYPE_STRING);
+    signals[REMOVE_FRIEND] = g_signal_new("remove-friend", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
+                                          NULL, G_TYPE_BOOLEAN, 1, G_TYPE_UINT);
 }
 
 static void lupus_objectself_init(LupusObjectSelf *instance) {}
