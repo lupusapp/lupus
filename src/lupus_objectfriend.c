@@ -23,6 +23,7 @@ typedef enum {
     PROP_FRIEND_NUMBER,
     PROP_NAME,
     PROP_STATUS_MESSAGE,
+    PROP_PUBLIC_KEY,
     N_PROPERTIES,
 } LupusObjectFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
@@ -108,6 +109,9 @@ static void lupus_objectfriend_get_property(GObject *object, guint property_id, 
     case PROP_STATUS_MESSAGE:
         g_value_set_string(value, instance->status_message);
         break;
+    case PROP_PUBLIC_KEY:
+        g_value_set_string(value, instance->public_key);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     }
@@ -133,9 +137,9 @@ static void lupus_objectfriend_constructed(GObject *object)
 
     guint8 public_key_bin[tox_public_key_size()];
     tox_friend_get_public_key(tox, instance->friend_number, public_key_bin, NULL);
-    gsize public_key_size = tox_public_key_size() * 2 + 1;
-    instance->public_key = g_malloc(public_key_size);
-    sodium_bin2hex(instance->public_key, public_key_size, public_key_bin, sizeof(public_key_bin));
+    gchar public_key_hex[tox_public_key_size() * 2 + 1];
+    sodium_bin2hex(public_key_hex, sizeof(public_key_hex), public_key_bin, sizeof(public_key_bin));
+    instance->public_key = g_ascii_strup(public_key_hex, -1);
 
     gsize name_size = tox_friend_get_name_size(tox, instance->friend_number, NULL);
     if (name_size) {
@@ -175,6 +179,7 @@ static void lupus_objectfriend_class_init(LupusObjectFriendClass *class)
         g_param_spec_uint("friend-number", NULL, NULL, 0, INT32_MAX, 0, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
     obj_properties[PROP_NAME] = g_param_spec_string("name", NULL, NULL, NULL, G_PARAM_READABLE);
     obj_properties[PROP_STATUS_MESSAGE] = g_param_spec_string("status-message", NULL, NULL, NULL, G_PARAM_READABLE);
+    obj_properties[PROP_PUBLIC_KEY] = g_param_spec_string("public-key", NULL, NULL, NULL, G_PARAM_READABLE);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 }

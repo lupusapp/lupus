@@ -1,5 +1,6 @@
 #include "../include/lupus_friend.h"
 #include "glibconfig.h"
+#include "include/lupus.h"
 #include "include/lupus_objectfriend.h"
 #include "include/lupus_objectself.h"
 #include "pango/pango-layout.h"
@@ -59,6 +60,28 @@ static gboolean button_press_event_cb(LupusFriend *instance, GdkEvent *event)
     return FALSE;
 }
 
+static void popover_public_key_cb(LupusFriend *instance)
+{
+    static GtkWidget *dialog;
+
+    if (!dialog) {
+        dialog = g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, "title", "Friend's public key", "resizable",
+                              FALSE, "border-width", 5, NULL);
+
+        gchar *public_key = NULL;
+        g_object_get(instance->objectfriend, "public-key", &public_key, NULL);
+        GtkWidget *label = g_object_new(GTK_TYPE_LABEL, "label", public_key, "selectable", TRUE, NULL);
+
+        GtkBox *box = GTK_BOX(gtk_bin_get_child(GTK_BIN(dialog)));
+        gtk_box_pack_start(box, label, TRUE, TRUE, 0);
+
+        gtk_widget_show_all(dialog);
+    }
+
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_hide(dialog);
+}
+
 static void popover_remove_friend_cb(LupusFriend *instance)
 {
     GtkDialog *dialog = GTK_DIALOG(g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, "border-width", 5, "title",
@@ -88,18 +111,27 @@ static void construct_popover(LupusFriend *instance)
 {
     instance->popover = GTK_MENU(gtk_menu_new());
 
-    GtkBox *box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
-    gtk_box_pack_start(box, gtk_image_new_from_icon_name("list-remove", GTK_ICON_SIZE_BUTTON), FALSE, TRUE, 0);
-    gtk_box_pack_start(box, gtk_label_new("Remove friend"), TRUE, TRUE, 0);
+    GtkBox *remove_friend_box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
+    gtk_box_pack_start(remove_friend_box, gtk_image_new_from_icon_name("list-remove", GTK_ICON_SIZE_BUTTON), FALSE,
+                       TRUE, 0);
+    gtk_box_pack_start(remove_friend_box, gtk_label_new("Remove friend"), TRUE, TRUE, 0);
+    GtkMenuItem *remove_friend_item = GTK_MENU_ITEM(gtk_menu_item_new());
+    gtk_container_add(GTK_CONTAINER(remove_friend_item), GTK_WIDGET(remove_friend_box));
 
-    GtkMenuItem *item = GTK_MENU_ITEM(gtk_menu_item_new());
-    gtk_container_add(GTK_CONTAINER(item), GTK_WIDGET(box));
+    GtkBox *public_key_box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
+    gtk_box_pack_start(public_key_box, gtk_image_new_from_resource(LUPUS_RESOURCES "/biometric.svg"), FALSE, TRUE, 0);
+    gtk_box_pack_start(public_key_box, gtk_label_new("Public key"), TRUE, TRUE, 0);
+    GtkMenuItem *public_key_item = GTK_MENU_ITEM(gtk_menu_item_new());
+    gtk_container_add(GTK_CONTAINER(public_key_item), GTK_WIDGET(public_key_box));
 
-    gtk_menu_shell_append(GTK_MENU_SHELL(instance->popover), GTK_WIDGET(item));
+    gtk_menu_shell_append(GTK_MENU_SHELL(instance->popover), GTK_WIDGET(remove_friend_item));
+    gtk_menu_shell_append(GTK_MENU_SHELL(instance->popover), gtk_separator_menu_item_new());
+    gtk_menu_shell_append(GTK_MENU_SHELL(instance->popover), GTK_WIDGET(public_key_item));
 
     gtk_widget_show_all(GTK_WIDGET(instance->popover));
 
-    g_signal_connect_swapped(item, "activate", G_CALLBACK(popover_remove_friend_cb), instance);
+    g_signal_connect_swapped(remove_friend_item, "activate", G_CALLBACK(popover_remove_friend_cb), instance);
+    g_signal_connect_swapped(public_key_item, "activate", G_CALLBACK(popover_public_key_cb), instance);
 }
 
 static void lupus_friend_set_property(GObject *object, guint property_id, GValue const *value, GParamSpec *pspec)
