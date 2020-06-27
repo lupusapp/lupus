@@ -112,10 +112,11 @@ static void objectfriends_remove_friend(LupusObjectSelf *instance, guint32 frien
     LupusObjectFriend *objectfriend = LUPUS_OBJECTFRIEND(g_hash_table_lookup(instance->objectfriends, key));
 
     g_hash_table_remove(instance->objectfriends, GUINT_TO_POINTER(friend_number));
-    g_object_unref(objectfriend);
 
     g_object_notify_by_pspec(G_OBJECT(instance), obj_properties[PROP_OBJECTFRIENDS]);
-    g_signal_emit(instance, signals[FRIEND_REMOVED], 0, friend_number);
+    g_signal_emit(instance, signals[FRIEND_REMOVED], 0, objectfriend);
+
+    g_object_unref(objectfriend);
 }
 
 static void objectfriends_add_friend(LupusObjectSelf *instance, guint32 friend_number)
@@ -126,7 +127,7 @@ static void objectfriends_add_friend(LupusObjectSelf *instance, guint32 friend_n
     g_hash_table_insert(instance->objectfriends, key, objectfriend);
 
     g_object_notify_by_pspec(G_OBJECT(instance), obj_properties[PROP_OBJECTFRIENDS]);
-    g_signal_emit(instance, signals[FRIEND_ADDED], 0, friend_number);
+    g_signal_emit(instance, signals[FRIEND_ADDED], 0, objectfriend);
 }
 
 static gboolean add_friend_cb(LupusObjectSelf *instance, gchar *address_hex, gchar *message)
@@ -602,9 +603,9 @@ static void lupus_objectself_class_init(LupusObjectSelfClass *class)
     signals[FRIEND_REQUEST] = g_signal_new("friend-request", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
                                            NULL, G_TYPE_BOOLEAN, 2, G_TYPE_STRING, G_TYPE_STRING);
     signals[FRIEND_ADDED] = g_signal_new("friend-added", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
-                                         G_TYPE_NONE, 1, G_TYPE_UINT);
+                                         G_TYPE_NONE, 1, LUPUS_TYPE_OBJECTFRIEND);
     signals[FRIEND_REMOVED] = g_signal_new("friend-removed", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
-                                           NULL, G_TYPE_NONE, 1, G_TYPE_UINT);
+                                           NULL, G_TYPE_NONE, 1, LUPUS_TYPE_OBJECTFRIEND);
     signals[SAVE] = g_signal_new("save", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 0);
     signals[ADD_FRIEND] = g_signal_new("add-friend", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
                                        G_TYPE_BOOLEAN, 2, G_TYPE_STRING, G_TYPE_STRING);

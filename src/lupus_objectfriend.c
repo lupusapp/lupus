@@ -1,6 +1,7 @@
 #include "../include/lupus_objectfriend.h"
 #include "../include/lupus_objectself.h"
 #include "glibconfig.h"
+#include <sodium/utils.h>
 #include <stdint.h>
 #include <tox/tox.h>
 
@@ -8,11 +9,11 @@ struct _LupusObjectFriend {
     GObject parent_instance;
 
     LupusObjectSelf *objectself;
-    Tox *tox;
     guint32 friend_number;
 
     gchar *name;
     gchar *status_message;
+    gchar *public_key;
 };
 
 G_DEFINE_TYPE(LupusObjectFriend, lupus_objectfriend, G_TYPE_OBJECT)
@@ -118,6 +119,7 @@ static void lupus_objectfriend_finalize(GObject *object)
 
     g_free(instance->name);
     g_free(instance->status_message);
+    g_free(instance->public_key);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_objectfriend_parent_class);
     object_class->finalize(object);
@@ -129,12 +131,18 @@ static void lupus_objectfriend_constructed(GObject *object)
     Tox *tox = NULL;
     g_object_get(instance->objectself, "tox", &tox, NULL);
 
+    guint8 public_key_bin[tox_public_key_size()];
+    tox_friend_get_public_key(tox, instance->friend_number, public_key_bin, NULL);
+    gsize public_key_size = tox_public_key_size() * 2 + 1;
+    instance->public_key = g_malloc(public_key_size);
+    sodium_bin2hex(instance->public_key, public_key_size, public_key_bin, sizeof(public_key_bin));
+
     gsize name_size = tox_friend_get_name_size(tox, instance->friend_number, NULL);
     if (name_size) {
         instance->name = g_malloc0(name_size + 1);
         tox_friend_get_name(tox, instance->friend_number, (guint8 *)instance->name, NULL);
     } else {
-        instance->name = NULL;
+        instance->name = g_ascii_strup(instance->public_key, -1);
     }
 
     gsize status_message_size = tox_friend_get_status_message_size(tox, instance->friend_number, NULL);

@@ -1,15 +1,14 @@
 #include "../include/lupus_friend.h"
+#include "glibconfig.h"
 #include "include/lupus_objectfriend.h"
 #include "include/lupus_objectself.h"
+#include "pango/pango-layout.h"
 #include <gtk/gtk.h>
 
 struct _LupusFriend {
     GtkEventBox parent_instance;
 
     LupusObjectFriend *objectfriend;
-    // We need to store this, because when `objectself` friend-removed event will be fired,
-    // objectfriend will already be unrefed
-    guint objectfriend_friend_number;
 
     GtkBox *hbox;
     GtkImage *avatar;
@@ -27,13 +26,6 @@ typedef enum {
 } LupusFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
-static void friend_removed_cb(LupusFriend *instance, guint friend_number)
-{
-    if (instance->objectfriend_friend_number == friend_number) {
-        gtk_widget_destroy(GTK_WIDGET(instance));
-    }
-}
-
 static void objectfriend_name_cb(gpointer user_data)
 {
     LupusFriend *instance = LUPUS_FRIEND(user_data);
@@ -42,6 +34,7 @@ static void objectfriend_name_cb(gpointer user_data)
     g_object_get(instance->objectfriend, "name", &name, NULL);
 
     gtk_label_set_label(instance->name, name);
+    gtk_label_set_ellipsize(instance->name, PANGO_ELLIPSIZE_END);
     gtk_widget_set_tooltip_text(GTK_WIDGET(instance->name), name);
 }
 
@@ -53,6 +46,7 @@ static void objectfriend_status_message_cb(gpointer user_data)
     g_object_get(instance->objectfriend, "status-message", &status_message, NULL);
 
     gtk_label_set_label(instance->status_message, status_message);
+    gtk_label_set_ellipsize(instance->status_message, PANGO_ELLIPSIZE_END);
     gtk_widget_set_tooltip_text(GTK_WIDGET(instance->status_message), status_message);
 }
 
@@ -125,14 +119,10 @@ static void lupus_friend_constructed(GObject *object)
 {
     LupusFriend *instance = LUPUS_FRIEND(object);
 
-    gchar *name, *status_message;
-    g_object_get(instance->objectfriend, "name", &name, "status-message", &status_message, NULL);
-    instance->name =
-        GTK_LABEL(g_object_new(GTK_TYPE_LABEL, "label", name, "halign", GTK_ALIGN_START, "wrap", TRUE, NULL));
-    instance->status_message =
-        GTK_LABEL(g_object_new(GTK_TYPE_LABEL, "label", status_message, "halign", GTK_ALIGN_START, "wrap", TRUE, NULL));
-    gtk_widget_set_tooltip_text(GTK_WIDGET(instance->name), name);
-    gtk_widget_set_tooltip_text(GTK_WIDGET(instance->status_message), status_message);
+    instance->name = GTK_LABEL(g_object_new(GTK_TYPE_LABEL, "halign", GTK_ALIGN_START, NULL));
+    instance->status_message = GTK_LABEL(g_object_new(GTK_TYPE_LABEL, "halign", GTK_ALIGN_START, NULL));
+    objectfriend_name_cb(instance);
+    objectfriend_status_message_cb(instance);
 
     instance->vbox = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0));
     gtk_box_pack_start(instance->vbox, GTK_WIDGET(instance->name), FALSE, TRUE, 0);
@@ -147,8 +137,6 @@ static void lupus_friend_constructed(GObject *object)
 
     construct_popover(instance);
 
-    g_object_get(instance->objectfriend, "friend-number", &(instance->objectfriend_friend_number), NULL);
-
     g_signal_connect_swapped(instance->objectfriend, "notify::name", G_CALLBACK(objectfriend_name_cb), instance);
     g_signal_connect_swapped(instance->objectfriend, "notify::status-message",
                              G_CALLBACK(objectfriend_status_message_cb), instance);
@@ -156,7 +144,6 @@ static void lupus_friend_constructed(GObject *object)
 
     LupusObjectSelf *objectself;
     g_object_get(instance->objectfriend, "objectself", &objectself, NULL);
-    g_signal_connect_swapped(objectself, "friend-removed", G_CALLBACK(friend_removed_cb), instance);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_friend_parent_class);
     object_class->constructed(object);

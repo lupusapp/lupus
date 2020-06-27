@@ -29,15 +29,36 @@ typedef enum {
 } LupusMainProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
-static void add_lupus_friend(LupusMain *instance, LupusObjectFriend *objectfriend)
+static void remove_lupusfriend(LupusMain *instance, LupusObjectFriend *objectfriend)
+{
+    GList *children = gtk_container_get_children(GTK_CONTAINER(instance->sidebox_friends_box));
+
+    for (GList *child = children; child; child = child->next) {
+        gpointer data = child->data;
+
+        if (!LUPUS_IS_FRIEND(data)) {
+            continue;
+        }
+        gtk_widget_destroy(GTK_WIDGET(data));
+
+        GList *next = child->next;
+        if (next && GTK_IS_SEPARATOR(next->data)) {
+            gtk_widget_destroy(GTK_WIDGET(next->data));
+        }
+
+        break;
+    }
+
+    g_list_free(children);
+}
+
+static void add_lupusfriend(LupusMain *instance, LupusObjectFriend *objectfriend)
 {
     LupusFriend *friend = lupus_friend_new(objectfriend);
     GtkWidget *separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
 
     gtk_box_pack_start(instance->sidebox_friends_box, GTK_WIDGET(friend), FALSE, TRUE, 0);
     gtk_box_pack_start(instance->sidebox_friends_box, separator, FALSE, TRUE, 0);
-
-    g_signal_connect_swapped(friend, "destroy", G_CALLBACK(gtk_widget_destroy), separator);
 
     gtk_widget_show_all(GTK_WIDGET(instance->sidebox_friends_box));
 }
@@ -63,7 +84,7 @@ static void construct_sidebox_friends(LupusMain *instance)
     gpointer value = NULL;
 
     while (g_hash_table_iter_next(&iter, NULL, &value)) {
-        add_lupus_friend(instance, LUPUS_OBJECTFRIEND(value));
+        add_lupusfriend(instance, LUPUS_OBJECTFRIEND(value));
     }
 }
 
@@ -201,16 +222,6 @@ static gboolean friend_request_infobar_destroy(GtkWidget *infobar_widget)
     return FALSE;
 }
 
-static void friend_added_cb(LupusMain *instance, guint32 friend_number)
-{
-    GHashTable *objectfriends;
-    g_object_get(instance->objectself, "objectfriends", &objectfriends, NULL);
-
-    gpointer key = GUINT_TO_POINTER(friend_number);
-    LupusObjectFriend *objectfriend = LUPUS_OBJECTFRIEND(g_hash_table_lookup(objectfriends, key));
-    add_lupus_friend(instance, objectfriend);
-}
-
 static gboolean friend_request_cb(LupusMain *instance, gchar *public_key_hex, gchar *request_message)
 {
     gchar *label_text =
@@ -297,7 +308,8 @@ static void lupus_main_constructed(GObject *object)
     gtk_widget_show_all(widget);
 
     g_signal_connect_swapped(instance->objectself, "friend-request", G_CALLBACK(friend_request_cb), instance);
-    g_signal_connect_swapped(instance->objectself, "friend-added", G_CALLBACK(friend_added_cb), instance);
+    g_signal_connect_swapped(instance->objectself, "friend-added", G_CALLBACK(add_lupusfriend), instance);
+    g_signal_connect_swapped(instance->objectself, "friend-removed", G_CALLBACK(remove_lupusfriend), instance);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_main_parent_class);
     object_class->constructed(object);
