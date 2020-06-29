@@ -5,6 +5,7 @@
 #include "include/lupus_objectself.h"
 #include "pango/pango-layout.h"
 #include <gtk/gtk.h>
+#include <tox/tox.h>
 
 struct _LupusFriend {
     GtkEventBox parent_instance;
@@ -37,6 +38,8 @@ static void objectfriend_name_cb(gpointer user_data)
     gtk_label_set_label(instance->name, name);
     gtk_label_set_ellipsize(instance->name, PANGO_ELLIPSIZE_END);
     gtk_widget_set_tooltip_text(GTK_WIDGET(instance->name), name);
+
+    g_free(name);
 }
 
 static void objectfriend_status_message_cb(gpointer user_data)
@@ -49,6 +52,8 @@ static void objectfriend_status_message_cb(gpointer user_data)
     gtk_label_set_label(instance->status_message, status_message);
     gtk_label_set_ellipsize(instance->status_message, PANGO_ELLIPSIZE_END);
     gtk_widget_set_tooltip_text(GTK_WIDGET(instance->status_message), status_message);
+
+    g_free(status_message);
 }
 
 static gboolean button_press_event_cb(LupusFriend *instance, GdkEvent *event)
@@ -71,6 +76,7 @@ static void popover_public_key_cb(LupusFriend *instance)
         gchar *public_key = NULL;
         g_object_get(instance->objectfriend, "public-key", &public_key, NULL);
         GtkWidget *label = g_object_new(GTK_TYPE_LABEL, "label", public_key, "selectable", TRUE, NULL);
+        g_free(public_key);
 
         GtkBox *box = GTK_BOX(gtk_bin_get_child(GTK_BIN(dialog)));
         gtk_box_pack_start(box, label, TRUE, TRUE, 0);
@@ -173,9 +179,6 @@ static void lupus_friend_constructed(GObject *object)
     g_signal_connect_swapped(instance->objectfriend, "notify::status-message",
                              G_CALLBACK(objectfriend_status_message_cb), instance);
     g_signal_connect(instance, "button-press-event", G_CALLBACK(button_press_event_cb), NULL);
-
-    LupusObjectSelf *objectself;
-    g_object_get(instance->objectfriend, "objectself", &objectself, NULL);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_friend_parent_class);
     object_class->constructed(object);

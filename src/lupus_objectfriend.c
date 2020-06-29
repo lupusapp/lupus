@@ -1,6 +1,7 @@
 #include "../include/lupus_objectfriend.h"
 #include "../include/lupus_objectself.h"
 #include "glibconfig.h"
+#include "include/lupus.h"
 #include <sodium/utils.h>
 #include <stdint.h>
 #include <tox/tox.h>
@@ -10,6 +11,7 @@ struct _LupusObjectFriend {
 
     LupusObjectSelf *objectself;
     guint32 friend_number;
+    gchar *avatar_hash;
 
     gchar *name;
     gchar *status_message;
@@ -24,9 +26,16 @@ typedef enum {
     PROP_NAME,
     PROP_STATUS_MESSAGE,
     PROP_PUBLIC_KEY,
+    PROP_AVATAR_HASH,
     N_PROPERTIES,
 } LupusObjectFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
+
+typedef enum {
+    REFRESH_AVATAR,
+    LAST_SIGNAL,
+} LupusObjectFriendSignal;
+static guint signals[LAST_SIGNAL];
 
 static LupusObjectFriend *get_instance_from_objectself(LupusObjectSelf *user_data, guint32 friend_number)
 {
@@ -76,6 +85,43 @@ static void status_message_cb(Tox *tox, guint32 friend_number, guint8 const *sta
     g_signal_emit_by_name(objectself, "save");
 }
 
+static void load_avatar_hash(LupusObjectFriend *instance)
+{
+    instance->avatar_hash = NULL;
+
+    gchar *avatar_directory = g_strconcat(LUPUS_TOX_DIR, "avatars/", NULL);
+    if (!g_file_test(avatar_directory, G_FILE_TEST_IS_DIR)) {
+        g_free(avatar_directory);
+        return;
+    }
+
+    gsize profile_avatar_filename_size = strlen(avatar_directory) + tox_public_key_size() * 2 + 4 + 1;
+    gchar profile_avatar_filename[profile_avatar_filename_size];
+    memset(profile_avatar_filename, 0, profile_avatar_filename_size);
+    g_strlcat(profile_avatar_filename, avatar_directory, profile_avatar_filename_size);
+    g_strlcat(profile_avatar_filename, instance->public_key, profile_avatar_filename_size);
+    g_strlcat(profile_avatar_filename, ".png", profile_avatar_filename_size);
+    g_free(avatar_directory);
+
+    if (!g_file_test(profile_avatar_filename, G_FILE_TEST_EXISTS)) {
+        return;
+    }
+
+    gchar *contents;
+    gsize length;
+    g_file_get_contents(profile_avatar_filename, &contents, &length, NULL);
+
+    guint8 avatar_hash_bin[tox_hash_length()];
+    tox_hash(avatar_hash_bin, (guint8 *)contents, length);
+    gchar avatar_hash_hex[tox_hash_length() * 2 + 1];
+    sodium_bin2hex(avatar_hash_hex, sizeof(avatar_hash_hex), avatar_hash_bin, sizeof(avatar_hash_bin));
+    instance->avatar_hash = g_ascii_strup(avatar_hash_hex, -1);
+
+    g_free(contents);
+
+    g_object_notify_by_pspec(instance, obj_properties[PROP_AVATAR_HASH]);
+}
+
 static void lupus_objectfriend_set_property(GObject *object, guint property_id, GValue const *value, GParamSpec *pspec)
 {
     LupusObjectFriend *instance = LUPUS_OBJECTFRIEND(object);
@@ -112,6 +158,9 @@ static void lupus_objectfriend_get_property(GObject *object, guint property_id, 
     case PROP_PUBLIC_KEY:
         g_value_set_string(value, instance->public_key);
         break;
+    case PROP_AVATAR_HASH:
+        g_value_set_string(value, instance->avatar_hash);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     }
@@ -124,6 +173,7 @@ static void lupus_objectfriend_finalize(GObject *object)
     g_free(instance->name);
     g_free(instance->status_message);
     g_free(instance->public_key);
+    g_free(instance->avatar_hash);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_objectfriend_parent_class);
     object_class->finalize(object);
@@ -157,6 +207,10 @@ static void lupus_objectfriend_constructed(GObject *object)
         instance->status_message = NULL;
     }
 
+    load_avatar_hash(instance);
+
+    g_signal_connect(instance, "refresh-avatar", G_CALLBACK(load_avatar_hash), NULL);
+
     tox_callback_friend_name(tox, name_cb);
     tox_callback_friend_status_message(tox, status_message_cb);
 
@@ -180,8 +234,12 @@ static void lupus_objectfriend_class_init(LupusObjectFriendClass *class)
     obj_properties[PROP_NAME] = g_param_spec_string("name", NULL, NULL, NULL, G_PARAM_READABLE);
     obj_properties[PROP_STATUS_MESSAGE] = g_param_spec_string("status-message", NULL, NULL, NULL, G_PARAM_READABLE);
     obj_properties[PROP_PUBLIC_KEY] = g_param_spec_string("public-key", NULL, NULL, NULL, G_PARAM_READABLE);
+    obj_properties[PROP_AVATAR_HASH] = g_param_spec_string("avatar-hash", NULL, NULL, NULL, G_PARAM_READABLE);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
+
+    signals[REFRESH_AVATAR] =
+        g_signal_new("refresh-avatar", LUPUS_TYPE_OBJECTFRIEND, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 }
 
 static void lupus_objectfriend_init(LupusObjectFriend *instance) {}

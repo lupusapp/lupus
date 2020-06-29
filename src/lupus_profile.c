@@ -2,6 +2,7 @@
 #include "../include/lupus_editablelabel.h"
 #include "include/lupus.h"
 #include "include/lupus_objectself.h"
+#include <string.h>
 #include <tox/tox.h>
 
 struct _LupusProfile {
@@ -163,7 +164,7 @@ static void popover_myid_activate_cb(LupusProfile *instance)
 {
     // Cannot make widgets static, because address can be changed due to nospam or pk
 
-    gchar *address;
+    gchar *address = NULL;
     g_object_get(instance->objectself, "address", &address, NULL);
 
     GtkWidget *dialog = g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, "title", "My ID", "resizable", FALSE,
@@ -171,6 +172,7 @@ static void popover_myid_activate_cb(LupusProfile *instance)
 
     GtkBox *box = GTK_BOX(gtk_bin_get_child(GTK_BIN(dialog)));
     GtkWidget *label = g_object_new(GTK_TYPE_LABEL, "label", address, "selectable", TRUE, NULL);
+    g_free(address);
     gtk_box_pack_start(box, label, TRUE, TRUE, 0);
 
     gtk_widget_show_all(dialog);
@@ -251,6 +253,8 @@ static void lupus_profile_constructed(GObject *object)
     g_object_get(instance->objectself, "name", &objectself_name, "status-message", &objectself_status_message, NULL);
     instance->name = lupus_editablelabel_new(objectself_name, tox_max_name_length());
     instance->status_message = lupus_editablelabel_new(objectself_status_message, tox_max_status_message_length());
+    g_free(objectself_name);
+    g_free(objectself_status_message);
 
     instance->vbox = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0));
     GtkWidget *name = GTK_WIDGET(instance->name);
