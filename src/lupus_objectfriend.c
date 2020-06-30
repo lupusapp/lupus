@@ -14,7 +14,10 @@ struct _LupusObjectFriend {
     guint32 friend_number;
     gchar *avatar_hash;
     GdkPixbuf *avatar_pixbuf;
+    gboolean avatar_sent;
 
+    Tox_Connection connection_status;
+    Tox_User_Status status;
     gchar *name;
     gchar *status_message;
     gchar *public_key;
@@ -30,6 +33,9 @@ typedef enum {
     PROP_PUBLIC_KEY,
     PROP_AVATAR_HASH,
     PROP_AVATAR_PIXBUF,
+    PROP_AVATAR_SENT,
+    PROP_CONNECTION_STATUS,
+    PROP_STATUS,
     N_PROPERTIES,
 } LupusObjectFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
@@ -49,6 +55,26 @@ static LupusObjectFriend *get_instance_from_objectself(LupusObjectSelf *user_dat
     gpointer key = GUINT_TO_POINTER(friend_number);
 
     return LUPUS_OBJECTFRIEND(g_hash_table_lookup(objectfriends, key));
+}
+
+static void connection_status_cb(Tox *tox, guint32 friend_number, TOX_CONNECTION connection_status, gpointer user_data)
+{
+    LupusObjectFriend *instance = get_instance_from_objectself(user_data, friend_number);
+
+    instance->connection_status = connection_status;
+
+    GObject *object = G_OBJECT(instance);
+    g_object_notify_by_pspec(object, obj_properties[PROP_CONNECTION_STATUS]);
+}
+
+static void status_cb(Tox *tox, guint32 friend_number, TOX_USER_STATUS status, gpointer user_data)
+{
+    LupusObjectFriend *instance = get_instance_from_objectself(user_data, friend_number);
+
+    instance->status = status;
+
+    GObject *object = G_OBJECT(instance);
+    g_object_notify_by_pspec(object, obj_properties[PROP_STATUS]);
 }
 
 static void name_cb(Tox *tox, guint32 friend_number, guint8 const *name, gsize length, gpointer user_data)
@@ -146,6 +172,9 @@ static void lupus_objectfriend_set_property(GObject *object, guint property_id, 
     case PROP_FRIEND_NUMBER:
         instance->friend_number = g_value_get_uint(value);
         break;
+    case PROP_AVATAR_SENT:
+        instance->avatar_sent = g_value_get_boolean(value);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     }
@@ -177,6 +206,15 @@ static void lupus_objectfriend_get_property(GObject *object, guint property_id, 
     case PROP_AVATAR_PIXBUF:
         g_value_set_pointer(value, instance->avatar_pixbuf);
         break;
+    case PROP_AVATAR_SENT:
+        g_value_set_boolean(value, instance->avatar_sent);
+        break;
+    case PROP_STATUS:
+        g_value_set_int(value, instance->status);
+        break;
+    case PROP_CONNECTION_STATUS:
+        g_value_set_int(value, instance->connection_status);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
     }
@@ -190,6 +228,7 @@ static void lupus_objectfriend_finalize(GObject *object)
     g_free(instance->status_message);
     g_free(instance->public_key);
     g_free(instance->avatar_hash);
+    g_object_unref(instance->avatar_pixbuf);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_objectfriend_parent_class);
     object_class->finalize(object);
@@ -226,8 +265,12 @@ static void lupus_objectfriend_constructed(GObject *object)
     instance->avatar_hash = NULL;
     load_avatar(instance);
 
+    instance->avatar_sent = FALSE;
+
     g_signal_connect(instance, "refresh-avatar", G_CALLBACK(load_avatar), NULL);
 
+    tox_callback_friend_connection_status(tox, connection_status_cb);
+    tox_callback_friend_status(tox, status_cb);
     tox_callback_friend_name(tox, name_cb);
     tox_callback_friend_status_message(tox, status_message_cb);
 
@@ -253,6 +296,12 @@ static void lupus_objectfriend_class_init(LupusObjectFriendClass *class)
     obj_properties[PROP_PUBLIC_KEY] = g_param_spec_string("public-key", NULL, NULL, NULL, G_PARAM_READABLE);
     obj_properties[PROP_AVATAR_HASH] = g_param_spec_string("avatar-hash", NULL, NULL, NULL, G_PARAM_READABLE);
     obj_properties[PROP_AVATAR_PIXBUF] = g_param_spec_pointer("avatar-pixbuf", NULL, NULL, G_PARAM_READABLE);
+    obj_properties[PROP_AVATAR_SENT] = g_param_spec_boolean("avatar-sent", NULL, NULL, FALSE, G_PARAM_READWRITE);
+    obj_properties[PROP_CONNECTION_STATUS] =
+        g_param_spec_int("connection-status", NULL, NULL, TOX_CONNECTION_NONE, TOX_CONNECTION_UDP, TOX_CONNECTION_NONE,
+                         G_PARAM_READABLE);
+    obj_properties[PROP_STATUS] = g_param_spec_int("status", NULL, NULL, TOX_USER_STATUS_NONE, TOX_USER_STATUS_BUSY,
+                                                   TOX_USER_STATUS_NONE, G_PARAM_READABLE);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 

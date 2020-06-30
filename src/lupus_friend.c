@@ -28,10 +28,8 @@ typedef enum {
 } LupusFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
-static void objectfriend_name_cb(gpointer user_data)
+static void objectfriend_name_cb(LupusFriend *instance)
 {
-    LupusFriend *instance = LUPUS_FRIEND(user_data);
-
     gchar *name;
     g_object_get(instance->objectfriend, "name", &name, NULL);
 
@@ -42,10 +40,8 @@ static void objectfriend_name_cb(gpointer user_data)
     g_free(name);
 }
 
-static void objectfriend_status_message_cb(gpointer user_data)
+static void objectfriend_status_message_cb(LupusFriend *instance)
 {
-    LupusFriend *instance = LUPUS_FRIEND(user_data);
-
     gchar *status_message;
     g_object_get(instance->objectfriend, "status-message", &status_message, NULL);
 
@@ -56,14 +52,50 @@ static void objectfriend_status_message_cb(gpointer user_data)
     g_free(status_message);
 }
 
-static void objectfriend_avatar_pixbuf_cb(gpointer user_data)
+static void objectfriend_avatar_pixbuf_cb(LupusFriend *instance)
 {
-    LupusFriend *instance = LUPUS_FRIEND(user_data);
-
     GdkPixbuf *pixbuf;
     g_object_get(instance->objectfriend, "avatar-pixbuf", &pixbuf, NULL);
 
     gtk_image_set_from_pixbuf(instance->avatar, pixbuf);
+}
+
+static void objectfriend_status_cb(LupusFriend *instance)
+{
+    Tox_User_Status status;
+    g_object_get(instance->objectfriend, "status", &status, NULL);
+    Tox_Connection connection_status;
+    g_object_get(instance->objectfriend, "connection-status", &connection_status, NULL);
+
+    if (connection_status == TOX_CONNECTION_NONE) {
+        return;
+    }
+
+    widget_remove_classes_with_prefix(instance->avatar, "profile--");
+    switch (status) {
+    case TOX_USER_STATUS_NONE:
+        widget_add_class(instance->avatar, "profile--none");
+        break;
+    case TOX_USER_STATUS_AWAY:
+        widget_add_class(instance->avatar, "profile--away");
+        break;
+    case TOX_USER_STATUS_BUSY:
+        widget_add_class(instance->avatar, "profile--busy");
+        break;
+    }
+}
+
+static void objectfriend_connection_status_cb(LupusFriend *instance)
+{
+    Tox_Connection connection_status = TOX_CONNECTION_NONE;
+    g_object_get(instance->objectfriend, "connection-status", &connection_status, NULL);
+
+    if (connection_status != TOX_CONNECTION_NONE) {
+        objectfriend_status_cb(instance);
+        return;
+    }
+
+    widget_remove_classes_with_prefix(instance->avatar, "profile--");
 }
 
 static gboolean button_press_event_cb(LupusFriend *instance, GdkEvent *event)
@@ -180,6 +212,7 @@ static void lupus_friend_constructed(GObject *object)
     GdkPixbuf *avatar_pixbuf;
     g_object_get(instance->objectfriend, "avatar-pixbuf", &avatar_pixbuf, NULL);
     instance->avatar = GTK_IMAGE(gtk_image_new_from_pixbuf(avatar_pixbuf));
+    widget_add_class(instance->avatar, "profile");
     gtk_box_pack_start(instance->hbox, GTK_WIDGET(instance->avatar), FALSE, TRUE, 0);
     gtk_box_pack_start(instance->hbox, GTK_WIDGET(instance->vbox), TRUE, TRUE, 0);
 
@@ -192,6 +225,9 @@ static void lupus_friend_constructed(GObject *object)
                              G_CALLBACK(objectfriend_status_message_cb), instance);
     g_signal_connect_swapped(instance->objectfriend, "notify::avatar-pixbuf", G_CALLBACK(objectfriend_avatar_pixbuf_cb),
                              instance);
+    g_signal_connect_swapped(instance->objectfriend, "notify::connection-status",
+                             G_CALLBACK(objectfriend_connection_status_cb), instance);
+    g_signal_connect_swapped(instance->objectfriend, "notify::status", G_CALLBACK(objectfriend_status_cb), instance);
     g_signal_connect(instance, "button-press-event", G_CALLBACK(button_press_event_cb), NULL);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_friend_parent_class);
