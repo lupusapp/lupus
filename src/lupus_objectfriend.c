@@ -2,6 +2,7 @@
 #include "../include/lupus_objectself.h"
 #include "glibconfig.h"
 #include "include/lupus.h"
+#include <gtk/gtk.h>
 #include <sodium/utils.h>
 #include <stdint.h>
 #include <tox/tox.h>
@@ -12,6 +13,7 @@ struct _LupusObjectFriend {
     LupusObjectSelf *objectself;
     guint32 friend_number;
     gchar *avatar_hash;
+    GdkPixbuf *avatar_pixbuf;
 
     gchar *name;
     gchar *status_message;
@@ -27,6 +29,7 @@ typedef enum {
     PROP_STATUS_MESSAGE,
     PROP_PUBLIC_KEY,
     PROP_AVATAR_HASH,
+    PROP_AVATAR_PIXBUF,
     N_PROPERTIES,
 } LupusObjectFriendProperty;
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
@@ -85,10 +88,8 @@ static void status_message_cb(Tox *tox, guint32 friend_number, guint8 const *sta
     g_signal_emit_by_name(objectself, "save");
 }
 
-static void load_avatar_hash(LupusObjectFriend *instance)
+static void load_avatar(LupusObjectFriend *instance)
 {
-    instance->avatar_hash = NULL;
-
     gchar *avatar_directory = g_strconcat(LUPUS_TOX_DIR, "avatars/", NULL);
     if (!g_file_test(avatar_directory, G_FILE_TEST_IS_DIR)) {
         g_free(avatar_directory);
@@ -107,6 +108,16 @@ static void load_avatar_hash(LupusObjectFriend *instance)
         return;
     }
 
+    GError *error = NULL;
+    instance->avatar_pixbuf =
+        gdk_pixbuf_new_from_file_at_size(profile_avatar_filename, AVATAR_FRIEND_SIZE, AVATAR_FRIEND_SIZE, &error);
+    if (error) {
+        lupus_error("Cannot load friend's avatar %s\n<b>%s</b>", profile_avatar_filename, error->message);
+        g_error_free(error);
+
+        return;
+    }
+
     gchar *contents;
     gsize length;
     g_file_get_contents(profile_avatar_filename, &contents, &length, NULL);
@@ -115,11 +126,13 @@ static void load_avatar_hash(LupusObjectFriend *instance)
     tox_hash(avatar_hash_bin, (guint8 *)contents, length);
     gchar avatar_hash_hex[tox_hash_length() * 2 + 1];
     sodium_bin2hex(avatar_hash_hex, sizeof(avatar_hash_hex), avatar_hash_bin, sizeof(avatar_hash_bin));
-    instance->avatar_hash = g_ascii_strup(avatar_hash_hex, -1);
+    instance->avatar_hash = g_strdup(avatar_hash_hex);
 
     g_free(contents);
 
-    g_object_notify_by_pspec(instance, obj_properties[PROP_AVATAR_HASH]);
+    GObject *object = G_OBJECT(instance);
+    g_object_notify_by_pspec(object, obj_properties[PROP_AVATAR_HASH]);
+    g_object_notify_by_pspec(object, obj_properties[PROP_AVATAR_PIXBUF]);
 }
 
 static void lupus_objectfriend_set_property(GObject *object, guint property_id, GValue const *value, GParamSpec *pspec)
@@ -160,6 +173,9 @@ static void lupus_objectfriend_get_property(GObject *object, guint property_id, 
         break;
     case PROP_AVATAR_HASH:
         g_value_set_string(value, instance->avatar_hash);
+        break;
+    case PROP_AVATAR_PIXBUF:
+        g_value_set_pointer(value, instance->avatar_pixbuf);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -207,9 +223,10 @@ static void lupus_objectfriend_constructed(GObject *object)
         instance->status_message = NULL;
     }
 
-    load_avatar_hash(instance);
+    instance->avatar_hash = NULL;
+    load_avatar(instance);
 
-    g_signal_connect(instance, "refresh-avatar", G_CALLBACK(load_avatar_hash), NULL);
+    g_signal_connect(instance, "refresh-avatar", G_CALLBACK(load_avatar), NULL);
 
     tox_callback_friend_name(tox, name_cb);
     tox_callback_friend_status_message(tox, status_message_cb);
@@ -235,6 +252,7 @@ static void lupus_objectfriend_class_init(LupusObjectFriendClass *class)
     obj_properties[PROP_STATUS_MESSAGE] = g_param_spec_string("status-message", NULL, NULL, NULL, G_PARAM_READABLE);
     obj_properties[PROP_PUBLIC_KEY] = g_param_spec_string("public-key", NULL, NULL, NULL, G_PARAM_READABLE);
     obj_properties[PROP_AVATAR_HASH] = g_param_spec_string("avatar-hash", NULL, NULL, NULL, G_PARAM_READABLE);
+    obj_properties[PROP_AVATAR_PIXBUF] = g_param_spec_pointer("avatar-pixbuf", NULL, NULL, G_PARAM_READABLE);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 

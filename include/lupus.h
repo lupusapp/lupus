@@ -7,6 +7,7 @@
 
 #define AVATAR_SIZE 48
 #define AVATAR_FRIEND_SIZE 36
+#define AVATAR_MAX_FILE_SIZE 65536
 
 #define widget_add_class(w, class_name)                                                                                \
     do {                                                                                                               \

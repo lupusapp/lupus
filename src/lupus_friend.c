@@ -56,6 +56,16 @@ static void objectfriend_status_message_cb(gpointer user_data)
     g_free(status_message);
 }
 
+static void objectfriend_avatar_pixbuf_cb(gpointer user_data)
+{
+    LupusFriend *instance = LUPUS_FRIEND(user_data);
+
+    GdkPixbuf *pixbuf;
+    g_object_get(instance->objectfriend, "avatar-pixbuf", &pixbuf, NULL);
+
+    gtk_image_set_from_pixbuf(instance->avatar, pixbuf);
+}
+
 static gboolean button_press_event_cb(LupusFriend *instance, GdkEvent *event)
 {
     if (event->type == GDK_BUTTON_PRESS && event->button.button == 3) {
@@ -167,7 +177,9 @@ static void lupus_friend_constructed(GObject *object)
     gtk_box_pack_start(instance->vbox, GTK_WIDGET(instance->status_message), TRUE, TRUE, 0);
 
     instance->hbox = GTK_BOX(g_object_new(GTK_TYPE_BOX, "orientation", GTK_ORIENTATION_HORIZONTAL, "spacing", 5, NULL));
-    instance->avatar = GTK_IMAGE(gtk_image_new_from_icon_name("utilities-terminal", GTK_ICON_SIZE_DND));
+    GdkPixbuf *avatar_pixbuf;
+    g_object_get(instance->objectfriend, "avatar-pixbuf", &avatar_pixbuf, NULL);
+    instance->avatar = GTK_IMAGE(gtk_image_new_from_pixbuf(avatar_pixbuf));
     gtk_box_pack_start(instance->hbox, GTK_WIDGET(instance->avatar), FALSE, TRUE, 0);
     gtk_box_pack_start(instance->hbox, GTK_WIDGET(instance->vbox), TRUE, TRUE, 0);
 
@@ -178,6 +190,8 @@ static void lupus_friend_constructed(GObject *object)
     g_signal_connect_swapped(instance->objectfriend, "notify::name", G_CALLBACK(objectfriend_name_cb), instance);
     g_signal_connect_swapped(instance->objectfriend, "notify::status-message",
                              G_CALLBACK(objectfriend_status_message_cb), instance);
+    g_signal_connect_swapped(instance->objectfriend, "notify::avatar-pixbuf", G_CALLBACK(objectfriend_avatar_pixbuf_cb),
+                             instance);
     g_signal_connect(instance, "button-press-event", G_CALLBACK(button_press_event_cb), NULL);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_friend_parent_class);

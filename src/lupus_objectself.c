@@ -11,6 +11,10 @@
 #include <tox/tox.h>
 #include <tox/toxencryptsave.h>
 
+/*! TODO: Remove all todo
+ *  \todo Remove all todo
+ */
+
 typedef struct {
     guint32 kind;
     guint64 data_size;
@@ -77,8 +81,6 @@ typedef enum {
     LAST_SIGNAL,
 } LupusObjectSelfSignal;
 static guint signals[LAST_SIGNAL];
-
-#define AVATAR_MAX_FILE_SIZE 65536
 
 gboolean save(LupusObjectSelf *instance)
 {
@@ -294,7 +296,7 @@ static void load_avatar(LupusObjectSelf *instance, gchar *filename)
     tox_hash(avatar_hash_bin, avatar_data, avatar_data_length);
     gchar avatar_hash_hex[tox_hash_length() * 2 + 1];
     sodium_bin2hex(avatar_hash_hex, sizeof(avatar_hash_hex), avatar_hash_bin, sizeof(avatar_hash_bin));
-    instance->avatar_hash = g_ascii_strup(avatar_hash_hex, -1);
+    instance->avatar_hash = g_strdup(avatar_hash_hex);
 
     GObject *object = G_OBJECT(instance);
     g_object_notify_by_pspec(object, obj_properties[PROP_AVATAR_PIXBUF]);
@@ -508,6 +510,9 @@ static void file_recv_control_cb(Tox *tox, guint32 friend_number, guint32 file_n
 static void file_recv_cb(Tox *tox, guint32 friend_number, guint32 file_number, guint32 kind, guint64 file_size,
                          guchar const *filename, gsize filename_length, gpointer user_data)
 {
+    puts("file_recv_cb");
+    fflush(stdout);
+
     if (kind != TOX_FILE_KIND_AVATAR) {
         puts("file_recv_cb: non AVATAR data isn't supported yet");
         fflush(stdout);
@@ -569,6 +574,9 @@ static void file_recv_cb(Tox *tox, guint32 friend_number, guint32 file_number, g
 static void file_recv_chunk_cb(Tox *tox, guint32 friend_number, guint32 file_number, guint64 position,
                                guint8 const *data, gsize length, gpointer user_data)
 {
+    puts("file_recv_chunk_cb");
+    fflush(stdout);
+
     LupusObjectSelf *instance = LUPUS_OBJECTSELF(user_data);
 
     FriendTransmissions *friend_transmissions =
@@ -595,6 +603,9 @@ static void file_recv_chunk_cb(Tox *tox, guint32 friend_number, guint32 file_num
         tox_hash(avatar_hash, transmission_details->data, transmission_details->data_size);
         gchar avatar_hash_hex[tox_hash_length() * 2 + 1];
         sodium_bin2hex(avatar_hash_hex, sizeof(avatar_hash_hex), avatar_hash, sizeof(avatar_hash));
+
+        printf("comparing avatars: (%s)/(%s)\n", avatar_hash_hex, objectfriend_avatar_hash);
+        fflush(stdout);
 
         if (g_strcmp0(objectfriend_avatar_hash, avatar_hash_hex)) {
             g_free(objectfriend_avatar_hash);
