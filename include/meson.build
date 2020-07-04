@@ -7,5 +7,7 @@ hdrs = files(
 	'lupus_editablelabel.h',
 	'lupus_profilechooser.h',
 	'lupus_friend.h',
-	'lupus_objectfriend.h'
+	'lupus_objectfriend.h',
+	'lupus_objecttransfers.h',
+	'toxidenticon.h'
 	)

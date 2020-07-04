@@ -8,5 +8,7 @@ srcs = files(
   'lupus_editablelabel.c',
   'lupus_profilechooser.c',
   'lupus_friend.c',
-  'lupus_objectfriend.c'
+  'lupus_objectfriend.c',
+  'lupus_objecttransfers.c',
+  'toxidenticon.c'
   )
