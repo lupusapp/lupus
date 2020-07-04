@@ -1,7 +1,7 @@
-#include "../include/lupus_objectfriend.h"
-#include "../include/lupus_objectself.h"
-#include "glibconfig.h"
+#include "include/lupus_objectfriend.h"
 #include "include/lupus.h"
+#include "include/lupus_objectself.h"
+#include "include/toxidenticon.h"
 #include <gtk/gtk.h>
 #include <sodium/utils.h>
 #include <stdint.h>
@@ -131,6 +131,16 @@ static void load_avatar(LupusObjectFriend *instance)
     g_free(avatar_directory);
 
     if (!g_file_test(profile_avatar_filename, G_FILE_TEST_EXISTS)) {
+        Tox *tox;
+        g_object_get(instance->objectself, "tox", &tox, NULL);
+
+        guint8 *public_key = g_malloc(tox_public_key_size());
+        tox_friend_get_public_key(tox, instance->friend_number, public_key, NULL);
+        load_tox_identicon(public_key, instance->public_key, AVATAR_FRIEND_SIZE);
+        g_free(public_key);
+
+        load_avatar(instance);
+
         return;
     }
 
