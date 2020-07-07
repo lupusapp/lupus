@@ -12,6 +12,7 @@
 #include <string.h>
 #include <tox/tox.h>
 #include <tox/toxencryptsave.h>
+#include <unistd.h>
 
 /*! TODO: Remove all todo
  *  \todo Remove all todo
@@ -35,6 +36,7 @@ struct _LupusObjectSelf {
     LupusObjectTransfers *objecttransfers;
     GHashTable /*<friend_number: guint32, ObjectFriend>*/ *objectfriends;
 
+    // Make an object
     struct NeedSave {
         GMutex *mutex;
         gboolean value;
@@ -44,8 +46,11 @@ struct _LupusObjectSelf {
     gchar *name;
     gchar *status_message;
     gchar *public_key;
+    // make an object
     GdkPixbuf *avatar_pixbuf;
     gchar *avatar_hash;
+    GByteArray *avatar_bytes; // cannot use avatar_pixbuf bytes, because it's not the actual data
+
     Tox_Connection connection;
     Tox_User_Status user_status;
     guint iterate_event_id;
@@ -148,8 +153,8 @@ static void objectfriend_connection_status_cb(LupusObjectFriend *objectfriend, G
     g_strlcat(avatar_filename, instance->public_key, avatar_filename_size);
     g_strlcat(avatar_filename, ".png", avatar_filename_size);
 
-    FileTransfer *ft = file_transfer_new(TOX_FILE_KIND_AVATAR, gdk_pixbuf_get_byte_length(instance->avatar_pixbuf),
-                                         g_strdup(avatar_filename));
+    FileTransfer *ft = file_transfer_new(TOX_FILE_KIND_AVATAR, instance->avatar_bytes->data,
+                                         instance->avatar_bytes->len, g_strdup(avatar_filename), FALSE);
 
     Tox_Err_File_Send tox_err_file_send;
     guint32 file_number = tox_file_send(instance->tox, friend_number, ft->kind, ft->data_size, NULL,
@@ -236,54 +241,63 @@ static gboolean add_friend_cb(LupusObjectSelf *instance, gchar *address_hex, gch
 static void objecttransfers_file_transfer_complete(LupusObjectSelf *instance, guint32 friend_number,
                                                    guint32 file_number, FileTransfer *ft)
 {
-    if (ft->kind == TOX_FILE_KIND_AVATAR) {
-        GHashTable *objectfriends;
-        g_object_get(instance, "objectfriends", &objectfriends, NULL);
+    if (ft->receive_mode) {
+        if (ft->kind == TOX_FILE_KIND_AVATAR) {
+            GHashTable *objectfriends;
+            g_object_get(instance, "objectfriends", &objectfriends, NULL);
 
-        gpointer key = GUINT_TO_POINTER(friend_number);
-        LupusObjectFriend *objectfriend = LUPUS_OBJECTFRIEND(g_hash_table_lookup(objectfriends, key));
-        gchar *objectfriend_avatar_hash;
-        g_object_get(objectfriend, "avatar-hash", &objectfriend_avatar_hash, NULL);
+            gpointer key = GUINT_TO_POINTER(friend_number);
+            LupusObjectFriend *objectfriend = LUPUS_OBJECTFRIEND(g_hash_table_lookup(objectfriends, key));
+            gchar *objectfriend_avatar_hash;
+            g_object_get(objectfriend, "avatar-hash", &objectfriend_avatar_hash, NULL);
 
-        guint8 avatar_hash[tox_hash_length()];
-        tox_hash(avatar_hash, ft->data, ft->data_size);
-        gchar avatar_hash_hex[tox_hash_length() * 2 + 1];
-        sodium_bin2hex(avatar_hash_hex, sizeof(avatar_hash_hex), avatar_hash, sizeof(avatar_hash));
+            guint8 avatar_hash[tox_hash_length()];
+            tox_hash(avatar_hash, ft->data, ft->data_size);
+            gchar avatar_hash_hex[tox_hash_length() * 2 + 1];
+            sodium_bin2hex(avatar_hash_hex, sizeof(avatar_hash_hex), avatar_hash, sizeof(avatar_hash));
 
-        if (g_strcmp0(objectfriend_avatar_hash, avatar_hash_hex)) {
-            gchar *avatar_directory = g_strconcat(LUPUS_TOX_DIR, "avatars/", NULL);
-            if (!g_file_test(avatar_directory, G_FILE_TEST_IS_DIR)) {
-                if (g_mkdir(avatar_directory, 755)) {
-                    lupus_error("Cannot create avatars directory\n<b>%s</b>", avatar_directory);
-                    g_free(avatar_directory);
+            if (g_strcmp0(objectfriend_avatar_hash, avatar_hash_hex)) {
+                gchar *avatar_directory = g_strconcat(LUPUS_TOX_DIR, "avatars/", NULL);
+                if (!g_file_test(avatar_directory, G_FILE_TEST_IS_DIR)) {
+                    if (g_mkdir(avatar_directory, 755)) {
+                        lupus_error("Cannot create avatars directory\n<b>%s</b>", avatar_directory);
+                        g_free(avatar_directory);
 
-                    return;
+                        return;
+                    }
                 }
+
+                gchar public_key[tox_public_key_size() * 2 + 1];
+                g_object_get(objectfriend, "public-key", &public_key, NULL);
+
+                gsize filename_length = strlen(avatar_directory) + tox_public_key_size() * 2 + 4 + 1;
+                gchar filename[filename_length];
+                memset(filename, 0, filename_length);
+                g_strlcat(filename, avatar_directory, filename_length);
+                g_strlcat(filename, public_key, filename_length);
+                g_strlcat(filename, ".png", filename_length);
+
+                g_free(avatar_directory);
+
+                GError *error = NULL;
+                g_file_set_contents(filename, (gchar *)ft->data, ft->data_size, &error);
+                if (error) {
+                    lupus_error("Cannot save friend avatar: %s", error->message);
+                    g_error_free(error);
+                }
+
+                g_signal_emit_by_name(objectfriend, "refresh-avatar", NULL);
             }
 
-            gchar public_key[tox_public_key_size() * 2 + 1];
-            g_object_get(objectfriend, "public-key", &public_key, NULL);
-
-            gsize filename_length = strlen(avatar_directory) + tox_public_key_size() * 2 + 4 + 1;
-            gchar filename[filename_length];
-            memset(filename, 0, filename_length);
-            g_strlcat(filename, avatar_directory, filename_length);
-            g_strlcat(filename, public_key, filename_length);
-            g_strlcat(filename, ".png", filename_length);
-
-            g_free(avatar_directory);
-
-            GError *error = NULL;
-            g_file_set_contents(filename, (gchar *)ft->data, ft->data_size, &error);
-            if (error) {
-                lupus_error("Cannot save friend avatar: %s", error->message);
-                g_error_free(error);
-            }
-
-            g_signal_emit_by_name(objectfriend, "refresh-avatar", NULL);
+            g_free(objectfriend_avatar_hash);
         }
+    } else {
+        if (ft->kind == TOX_FILE_KIND_AVATAR) {
+            LupusObjectFriend *objectfriend =
+                LUPUS_OBJECTFRIEND(g_hash_table_lookup(instance->objectfriends, GUINT_TO_POINTER(friend_number)));
 
-        g_free(objectfriend_avatar_hash);
+            g_object_set(objectfriend, "avatar-sent", TRUE, NULL);
+        }
     }
 
     g_signal_emit_by_name(instance->objecttransfers, "remove-file-transfer", friend_number, file_number);
@@ -409,6 +423,13 @@ static void load_avatar(LupusObjectSelf *instance, gchar *filename)
     sodium_bin2hex(avatar_hash_hex, sizeof(avatar_hash_hex), avatar_hash_bin, sizeof(avatar_hash_bin));
     instance->avatar_hash = g_strdup(avatar_hash_hex);
 
+    gchar *contents;
+    gsize contents_length;
+    g_file_get_contents(profile_avatar_filename, &contents, &contents_length, NULL);
+    g_byte_array_remove_range(instance->avatar_bytes, 0, instance->avatar_bytes->len);
+    g_byte_array_append(instance->avatar_bytes, (guint8 *)contents, contents_length);
+    g_free(contents);
+
     GObject *object = G_OBJECT(instance);
     g_object_notify_by_pspec(object, obj_properties[PROP_AVATAR_PIXBUF]);
     g_object_notify_by_pspec(object, obj_properties[PROP_AVATAR_HASH]);
@@ -525,6 +546,7 @@ static void lupus_objectself_finalize(GObject *object)
         g_object_unref(instance->avatar_pixbuf);
     }
     g_free(instance->avatar_hash);
+    g_byte_array_free(instance->avatar_bytes, TRUE);
     g_free(instance->address);
 
     tox_kill(instance->tox);
@@ -588,16 +610,13 @@ static gchar *get_address(LupusObjectSelf *instance)
 static void file_recv_control_cb(Tox *tox, guint32 friend_number, guint32 file_number, TOX_FILE_CONTROL control,
                                  gpointer user_data)
 {
-    puts("file_recv_control_cb");
+    printf("file_recv_control: %d:%d %d\n", friend_number, file_number, control);
     fflush(stdout);
 }
 
 static void file_recv_cb(Tox *tox, guint32 friend_number, guint32 file_number, guint32 kind, guint64 file_size,
                          guchar const *filename, gsize filename_length, gpointer user_data)
 {
-    puts("file_recv_cb");
-    fflush(stdout);
-
     if (kind != TOX_FILE_KIND_AVATAR) {
         puts("file_recv_cb: non AVATAR data isn't supported yet");
         fflush(stdout);
@@ -606,7 +625,7 @@ static void file_recv_cb(Tox *tox, guint32 friend_number, guint32 file_number, g
 
     LupusObjectSelf *instance = LUPUS_OBJECTSELF(user_data);
 
-    FileTransfer *ft = file_transfer_new(kind, file_size, g_strndup((gchar *)filename, filename_length));
+    FileTransfer *ft = file_transfer_new(kind, NULL, file_size, g_strndup((gchar *)filename, filename_length), TRUE);
     g_signal_emit_by_name(instance->objecttransfers, "create-file-transfer", friend_number, file_number, ft);
 
     Tox_Err_File_Control tox_err_file_control;
@@ -649,6 +668,9 @@ static void file_recv_chunk_cb(Tox *tox, guint32 friend_number, guint32 file_num
 static void file_chunk_request_cb(Tox *tox, guint32 friend_number, guint32 file_number, guint64 position, gsize length,
                                   gpointer user_data)
 {
+    LupusObjectSelf *instance = LUPUS_OBJECTSELF(user_data);
+
+    g_signal_emit_by_name(instance->objecttransfers, "send-chunk", friend_number, file_number, position, length);
 }
 
 static void friend_request_cb(Tox *tox, guint8 const *public_key, guint8 const *message, gsize length,
@@ -731,6 +753,7 @@ static void lupus_objectself_constructed(GObject *object)
 
     instance->avatar_hash = NULL;
     instance->avatar_pixbuf = NULL;
+    instance->avatar_bytes = g_byte_array_new();
     load_avatar(instance, NULL);
 
     instance->connection = TOX_CONNECTION_NONE;

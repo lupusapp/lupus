@@ -1,8 +1,13 @@
 #include "include/lupus_objecttransfers.h"
 #include "glibconfig.h"
 #include "include/lupus_objectself.h"
+#include <stdio.h>
 #include <string.h>
 #include <tox/tox.h>
+
+/*! TODO: handle all error and check for size (prevent overflow).
+ *  \todo handle all error and check for size (prevent overflow).
+ */
 
 typedef GHashTable /*<friend_number, FriendTransfers>*/ Transfers;
 typedef GHashTableIter TransfersIter;
@@ -30,6 +35,7 @@ typedef enum {
     REMOVE_FILE_TRANSFER,   // instance, friend_number, file_number
     WRITE_CHUNK,            // instance, friend_number, file_number, position, data, length
     FILE_TRANSFER_COMPLETE, // instance, friend_number, file_number, *ft
+    SEND_CHUNK,             // instance, friend_number, file_number, position, length
     LAST_SIGNAL,
 } LupusObjectTransfersSignal;
 static guint signals[LAST_SIGNAL];
@@ -41,14 +47,38 @@ static void file_transfer_free(FileTransfer *file_transfer)
     g_free(file_transfer);
 }
 
-FileTransfer *file_transfer_new(enum TOX_FILE_KIND kind, gsize data_size, gchar *filename)
+FileTransfer *file_transfer_new(enum TOX_FILE_KIND kind, guint8 *data, gsize data_size, gchar *filename,
+                                gboolean receive_mode)
 {
     FileTransfer *ft = g_malloc0(sizeof(FileTransfer));
     ft->kind = kind;
     ft->data = g_malloc0(data_size);
+    if (data) {
+        memcpy(ft->data, data, data_size);
+    }
     ft->data_size = data_size;
     ft->filename = filename;
+    ft->receive_mode = receive_mode;
     return ft;
+}
+
+static void send_chunk(LupusObjectTransfers *instance, guint32 friend_number, guint32 file_number, guint64 position,
+                       gsize length)
+{
+    FriendTransfers *friend_transfers = g_hash_table_lookup(instance->transfers, GUINT_TO_POINTER(friend_number));
+    FileTransfer *ft = g_hash_table_lookup(friend_transfers, GUINT_TO_POINTER(file_number));
+
+    Tox *tox;
+    g_object_get(instance->objectself, "tox", &tox, NULL);
+
+    if (length) {
+        tox_file_send_chunk(tox, friend_number, file_number, position, ft->data + position, length, NULL);
+        return;
+    }
+
+    tox_file_send_chunk(tox, friend_number, file_number, 0, NULL, 0, NULL);
+
+    g_signal_emit(instance, signals[FILE_TRANSFER_COMPLETE], 0, friend_number, file_number, ft);
 }
 
 static void write_chunk(LupusObjectTransfers *instance, guint32 friend_number, guint32 file_number, guint64 position,
@@ -57,10 +87,14 @@ static void write_chunk(LupusObjectTransfers *instance, guint32 friend_number, g
     FriendTransfers *friend_transfers = g_hash_table_lookup(instance->transfers, GUINT_TO_POINTER(friend_number));
     FileTransfer *ft = g_hash_table_lookup(friend_transfers, GUINT_TO_POINTER(file_number));
 
-    if (length || position != ft->data_size) {
+    if (length) {
         memcpy(ft->data + position, data, length);
         return;
     }
+
+    Tox *tox;
+    g_object_get(instance->objectself, "tox", &tox, NULL);
+    tox_file_send_chunk(tox, friend_number, file_number, 0, NULL, 0, NULL);
 
     g_signal_emit(instance, signals[FILE_TRANSFER_COMPLETE], 0, friend_number, file_number, ft);
 }
@@ -159,6 +193,7 @@ static void lupus_objecttransfers_constructed(GObject *object)
     g_signal_connect(instance, "create-file-transfer", G_CALLBACK(create_file_transfer), NULL);
     g_signal_connect(instance, "remove-file-transfer", G_CALLBACK(remove_file_transfer), NULL);
     g_signal_connect(instance, "write-chunk", G_CALLBACK(write_chunk), NULL);
+    g_signal_connect(instance, "send-chunk", G_CALLBACK(send_chunk), NULL);
 
     GObjectClass *object_class = G_OBJECT_CLASS(lupus_objecttransfers_parent_class);
     object_class->constructed(object);
@@ -189,6 +224,8 @@ static void lupus_objecttransfers_class_init(LupusObjectTransfersClass *class)
     signals[FILE_TRANSFER_COMPLETE] =
         g_signal_new("file-transfer-complete", LUPUS_TYPE_OBJECTTRANSFERS, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
                      G_TYPE_NONE, 3, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_POINTER);
+    signals[SEND_CHUNK] = g_signal_new("send-chunk", LUPUS_TYPE_OBJECTTRANSFERS, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
+                                       G_TYPE_NONE, 4, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT64, G_TYPE_UINT);
 }
 
 static void lupus_objecttransfers_init(LupusObjectTransfers *instance) {}
