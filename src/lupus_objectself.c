@@ -73,7 +73,6 @@ typedef enum {
 static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
 
 typedef enum {
-    SAVE,
     FRIEND_REQUEST, // (gchar *public_key, gchar *message) -> gboolean
     FRIEND_ADDED,   // (guint32 friend_number)
     FRIEND_REMOVED, // (guint32 friend_number)
@@ -757,7 +756,6 @@ static void lupus_objectself_class_init(LupusObjectSelfClass *class)
                                          G_TYPE_NONE, 1, LUPUS_TYPE_OBJECTFRIEND);
     signals[FRIEND_REMOVED] = g_signal_new("friend-removed", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
                                            NULL, G_TYPE_NONE, 1, LUPUS_TYPE_OBJECTFRIEND);
-    signals[SAVE] = g_signal_new("save", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 0);
     signals[ADD_FRIEND] = g_signal_new("add-friend", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
                                        G_TYPE_BOOLEAN, 2, G_TYPE_STRING, G_TYPE_STRING);
     signals[REMOVE_FRIEND] = g_signal_new("remove-friend", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
