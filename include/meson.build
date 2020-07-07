@@ -9,5 +9,6 @@ hdrs = files(
 	'lupus_friend.h',
 	'lupus_objectfriend.h',
 	'lupus_objecttransfers.h',
-	'toxidenticon.h'
+	'toxidenticon.h',
+	'lupus_objectsaver.h'
 	)

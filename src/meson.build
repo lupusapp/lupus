@@ -10,5 +10,6 @@ srcs = files(
   'lupus_friend.c',
   'lupus_objectfriend.c',
   'lupus_objecttransfers.c',
-  'toxidenticon.c'
+  'toxidenticon.c',
+  'lupus_objectsaver.c'
   )
