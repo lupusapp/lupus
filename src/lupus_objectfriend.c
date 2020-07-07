@@ -1,5 +1,6 @@
 #include "include/lupus_objectfriend.h"
 #include "include/lupus.h"
+#include "include/lupus_objectsaver.h"
 #include "include/lupus_objectself.h"
 #include "include/toxidenticon.h"
 #include <gtk/gtk.h>
@@ -92,7 +93,10 @@ static void name_cb(Tox *tox, guint32 friend_number, guint8 const *name, gsize l
     instance->name = new_name;
 
     g_object_notify_by_pspec(G_OBJECT(instance), obj_properties[PROP_NAME]);
-    g_signal_emit_by_name(objectself, "save");
+
+    LupusObjectSaver *objectsaver;
+    g_object_get(instance->objectself, "objectsaver", &objectsaver, NULL);
+    g_object_set(objectsaver, "set", TRUE, NULL);
 }
 
 static void status_message_cb(Tox *tox, guint32 friend_number, guint8 const *status_message, gsize length,
@@ -111,7 +115,10 @@ static void status_message_cb(Tox *tox, guint32 friend_number, guint8 const *sta
     instance->status_message = new_status_message;
 
     g_object_notify_by_pspec(G_OBJECT(instance), obj_properties[PROP_STATUS_MESSAGE]);
-    g_signal_emit_by_name(objectself, "save");
+
+    LupusObjectSaver *objectsaver;
+    g_object_get(instance->objectself, "objectsaver", &objectsaver, NULL);
+    g_object_set(objectsaver, "set", TRUE, NULL);
 }
 
 static void load_avatar(LupusObjectFriend *instance)

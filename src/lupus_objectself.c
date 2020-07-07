@@ -2,6 +2,7 @@
 #include "glibconfig.h"
 #include "include/lupus.h"
 #include "include/lupus_objectfriend.h"
+#include "include/lupus_objectsaver.h"
 #include "include/lupus_objecttransfers.h"
 #include "include/toxidenticon.h"
 #include <glib/gstdio.h>
@@ -35,13 +36,7 @@ struct _LupusObjectSelf {
 
     LupusObjectTransfers *objecttransfers;
     GHashTable /*<friend_number: guint32, ObjectFriend>*/ *objectfriends;
-
-    // Make an object
-    struct NeedSave {
-        GMutex *mutex;
-        gboolean value;
-        guint event_source_id;
-    } NeedSave;
+    LupusObjectSaver *objectsaver;
 
     gchar *name;
     gchar *status_message;
@@ -87,42 +82,6 @@ typedef enum {
     LAST_SIGNAL,
 } LupusObjectSelfSignal;
 static guint signals[LAST_SIGNAL];
-
-gboolean save(LupusObjectSelf *instance)
-{
-    gsize savedata_size = tox_get_savedata_size(instance->tox);
-    guint8 *savedata = g_malloc(savedata_size);
-    tox_get_savedata(instance->tox, savedata);
-
-    /* if password is set and is not empty */
-    if (instance->profile_password && *instance->profile_password) {
-        guint8 *tmp = g_malloc(savedata_size + tox_pass_encryption_extra_length());
-
-        if (!tox_pass_encrypt(savedata, savedata_size, (guint8 *)instance->profile_password,
-                              strlen(instance->profile_password), tmp, NULL)) {
-            lupus_error("Cannot encrypt profile.");
-            g_free(tmp);
-            g_free(savedata);
-            return FALSE;
-        }
-
-        g_free(savedata);
-        savedata = tmp;
-        savedata_size += TOX_PASS_ENCRYPTION_EXTRA_LENGTH;
-    }
-
-    GError *error = NULL;
-    g_file_set_contents(instance->profile_filename, (gchar *)savedata, savedata_size, &error);
-    if (error) {
-        lupus_error("Cannot save profile: %s", error->message);
-        g_error_free(error);
-        g_free(savedata);
-        return FALSE;
-    }
-
-    g_free(savedata);
-    return TRUE;
-}
 
 static void objectfriends_remove_friend(LupusObjectSelf *instance, guint32 friend_number)
 {
@@ -222,7 +181,7 @@ static gboolean add_friend_cb(LupusObjectSelf *instance, gchar *address_hex, gch
         break;
     case TOX_ERR_FRIEND_ADD_OK:
         objectfriends_add_friend(instance, friend_number);
-        save(instance);
+        g_signal_emit_by_name(instance->objectsaver, "set", TRUE);
         return TRUE;
     case TOX_ERR_FRIEND_ADD_OWN_KEY:
         lupus_error("It's your own public key.");
@@ -314,18 +273,11 @@ static gboolean remove_friend_cb(LupusObjectSelf *instance, guint friend_number)
         break;
     case TOX_ERR_FRIEND_DELETE_OK:
         objectfriends_remove_friend(instance, friend_number);
-        save(instance);
+        g_signal_emit_by_name(instance->objectsaver, "set", TRUE);
         return TRUE;
     }
 
     return FALSE;
-}
-
-static void need_save_set_cb(LupusObjectSelf *instance)
-{
-    g_mutex_lock(instance->NeedSave.mutex);
-    instance->NeedSave.value = TRUE;
-    g_mutex_unlock(instance->NeedSave.mutex);
 }
 
 static void connection_status_cb(Tox *tox, Tox_Connection connection_status, gpointer user_data)
@@ -435,20 +387,6 @@ static void load_avatar(LupusObjectSelf *instance, gchar *filename)
     g_object_notify_by_pspec(object, obj_properties[PROP_AVATAR_HASH]);
 }
 
-static gboolean need_save_check_cb(LupusObjectSelf *instance)
-{
-    g_mutex_lock(instance->NeedSave.mutex);
-
-    if (instance->NeedSave.value) {
-        save(instance);
-        instance->NeedSave.value = FALSE;
-    }
-
-    g_mutex_unlock(instance->NeedSave.mutex);
-
-    return TRUE;
-}
-
 static void lupus_objectself_get_property(GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
 {
     LupusObjectSelf *instance = LUPUS_OBJECTSELF(object);
@@ -514,14 +452,14 @@ static void lupus_objectself_set_property(GObject *object, guint property_id, GV
         g_free(instance->name);
         instance->name = g_value_dup_string(value);
         tox_self_set_name(instance->tox, (guint8 *)instance->name, strlen(instance->name), NULL);
-        save(instance);
+        g_signal_emit_by_name(instance->objectsaver, "set", TRUE);
         break;
     case PROP_STATUS_MESSAGE:
         g_free(instance->status_message);
         instance->status_message = g_value_dup_string(value);
         tox_self_set_status_message(instance->tox, (guint8 *)instance->status_message, strlen(instance->status_message),
                                     NULL);
-        save(instance);
+        g_signal_emit_by_name(instance->objectsaver, "set", TRUE);
         break;
     case PROP_AVATAR_FILENAME:
         load_avatar(instance, (gchar *)g_value_get_string(value));
@@ -553,12 +491,9 @@ static void lupus_objectself_finalize(GObject *object)
     g_free(instance->profile_filename);
     g_free(instance->profile_password);
 
+    g_object_unref(instance->objecttransfers);
     g_hash_table_destroy(instance->objectfriends);
-
-    g_source_remove(instance->NeedSave.event_source_id);
-    g_mutex_unlock(instance->NeedSave.mutex);
-    g_mutex_clear(instance->NeedSave.mutex);
-    g_free(instance->NeedSave.mutex);
+    g_object_unref(instance->objectsaver);
 
     GObjectClass *parent_class = G_OBJECT_CLASS(lupus_objectself_parent_class);
     parent_class->finalize(object);
@@ -707,7 +642,7 @@ static void friend_request_cb(Tox *tox, guint8 const *public_key, guint8 const *
             break;
         case TOX_ERR_FRIEND_ADD_OK:
             objectfriends_add_friend(instance, friend_number);
-            save(instance);
+            g_signal_emit_by_name(instance->objectsaver, "set", TRUE);
             break;
         case TOX_ERR_FRIEND_ADD_OWN_KEY:
             lupus_error("It's your own public key.");
@@ -766,10 +701,7 @@ static void lupus_objectself_constructed(GObject *object)
     instance->objectfriends = g_hash_table_new(NULL, NULL);
     load_friends(instance);
 
-    instance->NeedSave.mutex = g_malloc(sizeof(GMutex));
-    g_mutex_init(instance->NeedSave.mutex);
-    instance->NeedSave.value = FALSE;
-    instance->NeedSave.event_source_id = g_timeout_add(5000, G_SOURCE_FUNC(need_save_check_cb), instance);
+    instance->objectsaver = lupus_objectsaver_new(instance);
 
     tox_callback_self_connection_status(instance->tox, connection_status_cb);
     tox_callback_friend_request(instance->tox, friend_request_cb);
@@ -781,7 +713,6 @@ static void lupus_objectself_constructed(GObject *object)
     bootstrap(instance->tox);
     g_timeout_add(tox_iteration_interval(instance->tox), G_SOURCE_FUNC(iterate), instance);
 
-    g_signal_connect(instance, "save", G_CALLBACK(need_save_set_cb), NULL);
     g_signal_connect(instance, "add-friend", G_CALLBACK(add_friend_cb), NULL);
     g_signal_connect(instance, "remove-friend", G_CALLBACK(remove_friend_cb), NULL);
     g_signal_connect_swapped(instance->objecttransfers, "file-transfer-complete",
