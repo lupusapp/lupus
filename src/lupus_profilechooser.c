@@ -6,10 +6,10 @@
 #include <tox/tox.h>
 #include <tox/toxencryptsave.h>
 
-#define DEFAULT_NAME "Lupus's user"
+#define DEFAULT_NAME           "Lupus's user"
 #define DEFAULT_STATUS_MESSAGE "Lupus's rocks !"
-#define PROFILE_HEIGHT 50
-#define PASSWORD_DIALOG_WIDTH 250
+#define PROFILE_HEIGHT         50
+#define PASSWORD_DIALOG_WIDTH  250
 #define PASSWORD_DIALOG_MARGIN 20
 
 struct _LupusProfileChooser {
@@ -22,6 +22,10 @@ struct _LupusProfileChooser {
 };
 
 G_DEFINE_TYPE(LupusProfileChooser, lupus_profilechooser, GTK_TYPE_APPLICATION_WINDOW)
+
+#define t_n lupus_profilechooser
+#define TN  LupusProfileChooser
+#define T_N LUPUS_PROFILECHOOSER
 
 static gchar *ask_password(void)
 {
@@ -51,7 +55,7 @@ destroy:
     return password;
 }
 
-static void login_cb(GtkButton *button, LupusProfileChooser *instance)
+static void login_cb(GtkButton *button, INSTANCE)
 {
     gchar *filename = g_strconcat(LUPUS_TOX_DIR, gtk_button_get_label(button), ".tox", NULL);
 
@@ -148,7 +152,7 @@ gboolean tox_save(Tox *tox, gchar *filename, gchar const *password)
     return TRUE;
 }
 
-static void register_cb(LupusProfileChooser *instance)
+static void register_cb(INSTANCE)
 {
     gchar *filename = g_strconcat(LUPUS_TOX_DIR, gtk_entry_get_text(instance->register_name), ".tox", NULL);
 
@@ -174,7 +178,7 @@ free:
     g_free(filename);
 }
 
-static void list_profiles(LupusProfileChooser *instance)
+static void list_profiles(INSTANCE)
 {
     GError *error = NULL;
     GDir *dir = g_dir_open(LUPUS_TOX_DIR, 0, &error);
@@ -224,14 +228,14 @@ static void list_profiles(LupusProfileChooser *instance)
     g_ptr_array_free(profiles, TRUE);
 }
 
-static void stack_change_cb(LupusProfileChooser *instance)
+static void stack_change_cb(INSTANCE)
 {
     if (g_strcmp0(gtk_stack_get_visible_child_name(instance->stack), "login") == 0) {
         list_profiles(instance);
     }
 }
 
-static void lupus_profilechooser_class_init(LupusProfileChooserClass *class)
+class_init()
 {
     GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
@@ -243,12 +247,12 @@ static void lupus_profilechooser_class_init(LupusProfileChooserClass *class)
     gtk_widget_class_bind_template_child(widget_class, LupusProfileChooser, register_button);
 }
 
-static void lupus_profilechooser_init(LupusProfileChooser *instance)
+init()
 {
     gtk_widget_init_template(GTK_WIDGET(instance));
 
-    g_signal_connect_swapped(instance->register_button, "clicked", G_CALLBACK(register_cb), instance);
-    g_signal_connect_swapped(instance->stack, "notify::visible-child-name", G_CALLBACK(stack_change_cb), instance);
+    connect_swapped(instance->register_button, "clicked", register_cb, instance);
+    connect_swapped(instance->stack, "notify::visible-child-name", stack_change_cb, instance);
 
     list_profiles(instance);
 

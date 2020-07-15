@@ -23,13 +23,13 @@ struct _LupusMain {
 
 G_DEFINE_TYPE(LupusMain, lupus_main, GTK_TYPE_APPLICATION_WINDOW)
 
-typedef enum {
-    PROP_OBJECTSELF = 1,
-    N_PROPERTIES,
-} LupusMainProperty;
-static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
+#define t_n lupus_main
+#define TN  LupusMain
+#define T_N LUPUS_MAIN
 
-static void remove_lupusfriend(LupusMain *instance, LupusObjectFriend *objectfriend)
+declare_properties(PROP_OBJECTSELF);
+
+static void remove_lupusfriend(INSTANCE, LupusObjectFriend *objectfriend)
 {
     GList *children = gtk_container_get_children(GTK_CONTAINER(instance->sidebox_friends_box));
 
@@ -39,6 +39,11 @@ static void remove_lupusfriend(LupusMain *instance, LupusObjectFriend *objectfri
         if (!LUPUS_IS_FRIEND(data)) {
             continue;
         }
+
+        if (data != objectfriend) {
+            continue;
+        }
+
         gtk_widget_destroy(GTK_WIDGET(data));
 
         GList *next = child->next;
@@ -52,29 +57,28 @@ static void remove_lupusfriend(LupusMain *instance, LupusObjectFriend *objectfri
     g_list_free(children);
 }
 
-static void add_lupusfriend(LupusMain *instance, LupusObjectFriend *objectfriend)
+static void add_lupusfriend(INSTANCE, LupusObjectFriend *objectfriend)
 {
-    LupusFriend *friend = lupus_friend_new(objectfriend);
+    GtkWidget *friend = GTK_WIDGET(lupus_friend_new(objectfriend));
     GtkWidget *separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
 
-    gtk_box_pack_start(instance->sidebox_friends_box, GTK_WIDGET(friend), FALSE, TRUE, 0);
+    gtk_box_pack_start(instance->sidebox_friends_box, friend, FALSE, TRUE, 0);
     gtk_box_pack_start(instance->sidebox_friends_box, separator, FALSE, TRUE, 0);
 
     gtk_widget_show_all(GTK_WIDGET(instance->sidebox_friends_box));
 }
 
-static void construct_sidebox_friends(LupusMain *instance)
+static void construct_sidebox_friends(INSTANCE)
 {
-    GtkWidget *sidebox_friends_scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-    instance->sidebox_friends_scrolled_window = GTK_SCROLLED_WINDOW(sidebox_friends_scrolled_window);
-    GtkWidget *sidebox_friends_box =
-        g_object_new(GTK_TYPE_BOX, "orientation", GTK_ORIENTATION_VERTICAL, "border-width", 5, "spacing", 5, NULL);
-    instance->sidebox_friends_box = GTK_BOX(sidebox_friends_box);
-    gtk_container_add(GTK_CONTAINER(sidebox_friends_scrolled_window), sidebox_friends_box);
-    gtk_box_pack_start(instance->sidebox, sidebox_friends_scrolled_window, TRUE, TRUE, 0);
+    instance->sidebox_friends_scrolled_window = GTK_SCROLLED_WINDOW(gtk_scrolled_window_new(NULL, NULL));
+    instance->sidebox_friends_box = GTK_BOX(
+        g_object_new(GTK_TYPE_BOX, "orientation", GTK_ORIENTATION_VERTICAL, "border-width", 5, "spacing", 5, NULL));
 
-    GHashTable *objectfriends;
-    g_object_get(instance->objectself, "objectfriends", &objectfriends, NULL);
+    gtk_container_add(GTK_CONTAINER(instance->sidebox_friends_scrolled_window),
+                      GTK_WIDGET(instance->sidebox_friends_box));
+    gtk_box_pack_start(instance->sidebox, GTK_WIDGET(instance->sidebox_friends_scrolled_window), TRUE, TRUE, 0);
+
+    object_get_prop(instance->objectself, "objectfriends", objectfriends, GHashTable *);
     if (!objectfriends) {
         return;
     }
@@ -88,7 +92,7 @@ static void construct_sidebox_friends(LupusMain *instance)
     }
 }
 
-static void sidebox_actionbar_about_activate_cb(LupusMain *instance)
+static void sidebox_actionbar_about_activate_cb(void)
 {
     static GtkAboutDialog *about_dialog;
 
@@ -111,12 +115,12 @@ static void sidebox_actionbar_about_activate_cb(LupusMain *instance)
     gtk_widget_hide(GTK_WIDGET(about_dialog));
 }
 
-static void sidebox_actionbar_button_add_friend_clicked_cb(LupusMain *instance)
+static void sidebox_actionbar_button_add_friend_clicked_cb(INSTANCE)
 {
-#define DEFAULT_MESSAGE "Hi, please add me to your friends :D!"
     static GtkDialog *dialog;
     static GtkEntry *address_hex;
     static GtkEntry *message;
+    static gchar const *default_message = "Hi, please add me to your friends :D!";
 
     if (!dialog) {
         dialog = GTK_DIALOG(g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, "title", "Add friend", "border-width",
@@ -129,7 +133,8 @@ static void sidebox_actionbar_button_add_friend_clicked_cb(LupusMain *instance)
 
         message = GTK_ENTRY(gtk_entry_new());
         gtk_entry_set_max_length(message, tox_max_friend_request_length());
-        gtk_entry_set_placeholder_text(message, DEFAULT_MESSAGE);
+        gtk_entry_set_placeholder_text(message, "Request message");
+        gtk_entry_set_text(message, default_message);
 
         GtkBox *box = GTK_BOX(gtk_container_get_children(GTK_CONTAINER(dialog))->data);
         gtk_box_set_spacing(box, 5);
@@ -154,19 +159,18 @@ static void sidebox_actionbar_button_add_friend_clicked_cb(LupusMain *instance)
 
         gboolean success = FALSE;
         gchar const *request_address_hex = gtk_entry_get_text(address_hex);
-        gchar const *request_message =
-            (gtk_entry_get_text_length(message)) ? gtk_entry_get_text(message) : DEFAULT_MESSAGE;
-        g_signal_emit_by_name(instance->objectself, "add-friend", request_address_hex, request_message, &success);
+        gchar const *request_message = gtk_entry_get_text(message);
+
+        emit_by_name(instance->objectself, "add-friend", request_address_hex, request_message, &success);
     }
 
 end:
     gtk_widget_hide(GTK_WIDGET(dialog));
     gtk_entry_set_text(address_hex, "");
-    gtk_entry_set_text(message, "");
-#undef DEFAULT_MESSAGE
+    gtk_entry_set_text(message, default_message);
 }
 
-static void construct_sidebox_actionbar(LupusMain *instance)
+static void construct_sidebox_actionbar(INSTANCE)
 {
     instance->sidebox_actionbar = GTK_ACTION_BAR(gtk_action_bar_new());
 
@@ -195,9 +199,8 @@ static void construct_sidebox_actionbar(LupusMain *instance)
 
     gtk_box_pack_end(instance->sidebox_friends_box, GTK_WIDGET(instance->sidebox_actionbar), FALSE, TRUE, 0);
 
-    g_signal_connect_swapped(popover_about, "activate", G_CALLBACK(sidebox_actionbar_about_activate_cb), instance);
-    g_signal_connect_swapped(button_add_friend, "clicked", G_CALLBACK(sidebox_actionbar_button_add_friend_clicked_cb),
-                             instance);
+    connect_swapped(popover_about, "activate", sidebox_actionbar_about_activate_cb, instance);
+    connect_swapped(button_add_friend, "clicked", sidebox_actionbar_button_add_friend_clicked_cb, instance);
 }
 
 typedef struct {
@@ -222,18 +225,17 @@ static gboolean friend_request_infobar_destroy(GtkWidget *infobar_widget)
     return FALSE;
 }
 
-static gboolean friend_request_cb(LupusMain *instance, gchar *public_key_hex, gchar *request_message)
+static gboolean friend_request_cb(INSTANCE, gchar *public_key_hex, gchar *request_message)
 {
-    gchar *label_text =
-        g_strdup_printf("<sup><b>Friend request</b> from <i>%s</i></sup>\n%s", public_key_hex, request_message);
+    gchar *label_preformat_text = "<sup><b>Friend request</b> from <i>%s</i></sup>\n%s";
+    gchar label_text[strlen(label_preformat_text) + strlen(public_key_hex) + strlen(request_message) + 1];
+    g_snprintf(label_text, sizeof(label_text), label_preformat_text, public_key_hex, request_message);
 
     GtkLabel *label = GTK_LABEL(gtk_label_new(label_text));
     gtk_label_set_use_markup(label, TRUE);
     gtk_label_set_selectable(label, TRUE);
     gtk_label_set_line_wrap_mode(label, PANGO_WRAP_WORD_CHAR);
     gtk_label_set_line_wrap(label, TRUE);
-
-    g_free(label_text);
 
     GtkInfoBar *infobar =
         GTK_INFO_BAR(gtk_info_bar_new_with_buttons("Accept", GTK_RESPONSE_ACCEPT, "Reject", GTK_RESPONSE_REJECT, NULL));
@@ -251,78 +253,48 @@ static gboolean friend_request_cb(LupusMain *instance, gchar *public_key_hex, gc
     gtk_info_bar_set_revealed(infobar, TRUE);
 
     FriendRequestRunInfo runinfo = {FALSE, g_main_loop_new(NULL, FALSE)};
-    gulong response_handler =
-        g_signal_connect(infobar, "response", G_CALLBACK(friend_request_infobar_response_cb), &runinfo);
+    gulong response_handler = connect(infobar, "response", friend_request_infobar_response_cb, &runinfo);
 
     g_main_loop_run(runinfo.main_loop);
     g_main_loop_unref(runinfo.main_loop);
 
-    g_signal_handler_disconnect(infobar, response_handler);
+    disconnect(infobar, response_handler);
 
     g_timeout_add(2000, G_SOURCE_FUNC(friend_request_infobar_destroy), infobar);
 
     return runinfo.accept;
 }
 
-static void lupus_main_get_property(GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
-{
-    LupusMain *instance = LUPUS_MAIN(object);
+get_property_header()
+case PROP_OBJECTSELF:
+    g_value_set_pointer(value, instance->objectself);
+    break;
+get_property_footer()
 
-    switch ((LupusMainProperty)property_id) {
-    case PROP_OBJECTSELF:
-        g_value_set_pointer(value, instance->objectself);
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-    }
-}
+set_property_header()
+case PROP_OBJECTSELF:
+    instance->objectself = g_value_get_pointer(value);
+    break;
+set_property_footer()
 
-static void lupus_main_set_property(GObject *object, guint property_id, GValue const *value, GParamSpec *pspec)
-{
-    LupusMain *instance = LUPUS_MAIN(object);
-
-    switch ((LupusMainProperty)property_id) {
-    case PROP_OBJECTSELF:
-        instance->objectself = g_value_get_pointer(value);
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-    }
-}
-
-static void lupus_main_constructed(GObject *object)
-{
-    LupusMain *instance = LUPUS_MAIN(object);
-
+constructed_header()
     instance->profile = lupus_profile_new(instance->objectself);
-    GtkWidget *profile = GTK_WIDGET(instance->profile);
-    GtkWidget *separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
-    gtk_box_pack_start(instance->sidebox, profile, FALSE, TRUE, 0);
-    gtk_box_pack_start(instance->sidebox, separator, FALSE, TRUE, 0);
+    gtk_box_pack_start(instance->sidebox, GTK_WIDGET(instance->profile), FALSE, TRUE, 0);
+    gtk_box_pack_start(instance->sidebox, gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, TRUE, 0);
 
     construct_sidebox_friends(instance);
-
     construct_sidebox_actionbar(instance);
 
-    GtkWidget *widget = GTK_WIDGET(instance);
-    gtk_widget_show_all(widget);
+    gtk_widget_show_all(GTK_WIDGET(instance));
 
-    g_signal_connect_swapped(instance->objectself, "friend-request", G_CALLBACK(friend_request_cb), instance);
-    g_signal_connect_swapped(instance->objectself, "friend-added", G_CALLBACK(add_lupusfriend), instance);
-    g_signal_connect_swapped(instance->objectself, "friend-removed", G_CALLBACK(remove_lupusfriend), instance);
+    connect_swapped(instance->objectself, "friend-request", friend_request_cb, instance);
+    connect_swapped(instance->objectself, "friend-added", add_lupusfriend, instance);
+    connect_swapped(instance->objectself, "friend-removed", remove_lupusfriend, instance);
+constructed_footer()
 
-    GObjectClass *object_class = G_OBJECT_CLASS(lupus_main_parent_class);
-    object_class->constructed(object);
-}
+init() { gtk_widget_init_template(GTK_WIDGET(instance)); }
 
-static void lupus_main_init(LupusMain *instance)
-{
-    GtkWidget *widget = GTK_WIDGET(instance);
-
-    gtk_widget_init_template(widget);
-}
-
-static void lupus_main_class_init(LupusMainClass *class)
+class_init()
 {
     GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
@@ -335,8 +307,7 @@ static void lupus_main_class_init(LupusMainClass *class)
     object_class->set_property = lupus_main_set_property;
     object_class->get_property = lupus_main_get_property;
 
-    obj_properties[PROP_OBJECTSELF] =
-        g_param_spec_pointer("objectself", NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+    define_property(PROP_OBJECTSELF, pointer, "objectself", G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 }

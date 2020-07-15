@@ -4,6 +4,10 @@ IndentWidth: 4
 BreakBeforeBraces: Linux
 AllowShortIfStatementsOnASingleLine: Never
 ColumnLimit: 120
+AlignEscapedNewlines: Left
+MacroBlockBegin: "^[gs]et_property_header|finalize_header|constructed_header"
+MacroBlockEnd: "^[gs]et_property_footer|finalize_footer|constructed_footer"
+AlignConsecutiveMacros: true
 
 #Language:      Cpp
 ##BasedOnStyle:  LLVM
@@ -11,8 +15,6 @@ ColumnLimit: 120
 #AlignAfterOpenBracket: Align
 #AlignConsecutiveAssignments: true
 #AlignConsecutiveDeclarations: true
-#AlignConsecutiveMacros: true
-#AlignEscapedNewlines: Right
 #AlignOperands: true
 #AlignTrailingComments: true
 #AllowAllArgumentsOnNextLine: true

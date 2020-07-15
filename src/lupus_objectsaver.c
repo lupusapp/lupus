@@ -20,19 +20,14 @@ struct _LupusObjectSaver {
 
 G_DEFINE_TYPE(LupusObjectSaver, lupus_objectsaver, G_TYPE_OBJECT)
 
-typedef enum {
-    PROP_OBJECTSELF = 1,
-    N_PROPERTIES,
-} LupusObjectSaverProperty;
-static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
+#define t_n lupus_objectsaver
+#define TN  LupusObjectSaver
+#define T_N LUPUS_OBJECTSAVER
 
-typedef enum {
-    SET, // gboolean
-    LAST_SIGNAL,
-} LupusObjectSaverSignal;
-static guint signals[LAST_SIGNAL];
+declare_properties(PROP_OBJECTSELF);
+declare_signals(SET /* gboolean */);
 
-gboolean save(LupusObjectSaver *instance)
+gboolean save(INSTANCE)
 {
     gsize savedata_size = tox_get_savedata_size(instance->tox);
     guint8 *savedata = g_malloc(savedata_size);
@@ -68,14 +63,14 @@ gboolean save(LupusObjectSaver *instance)
     return TRUE;
 }
 
-static void set(LupusObjectSaver *instance, gboolean value)
+static void set(INSTANCE, gboolean value)
 {
     g_mutex_lock(&instance->mutex);
     instance->needed = value;
     g_mutex_unlock(&instance->mutex);
 }
 
-static gboolean check(LupusObjectSaver *instance)
+static gboolean check(INSTANCE)
 {
     g_mutex_lock(&instance->mutex);
 
@@ -89,38 +84,22 @@ static gboolean check(LupusObjectSaver *instance)
     return TRUE;
 }
 
-static void lupus_objectsaver_set_property(GObject *object, guint property_id, GValue const *value, GParamSpec *pspec)
-{
-    LupusObjectSaver *instance = LUPUS_OBJECTSAVER(object);
+set_property_header()
+case PROP_OBJECTSELF:
+    instance->objectself = g_value_get_pointer(value);
+    break;
+set_property_footer()
 
-    switch ((LupusObjectSaverProperty)property_id) {
-    case PROP_OBJECTSELF:
-        instance->objectself = g_value_get_pointer(value);
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-    }
-}
-
-static void lupus_objectsaver_finalize(GObject *object)
-{
-    LupusObjectSaver *instance = LUPUS_OBJECTSAVER(object);
-
+finalize_header()
     g_free(instance->filename);
     g_free(instance->password);
 
     g_source_remove(instance->event_source_id);
     g_mutex_unlock(&instance->mutex);
     g_mutex_clear(&instance->mutex);
+finalize_footer()
 
-    GObjectClass *parent_class = G_OBJECT_CLASS(lupus_objectsaver_parent_class);
-    parent_class->finalize(object);
-}
-
-static void lupus_objectsaver_constructed(GObject *object)
-{
-    LupusObjectSaver *instance = LUPUS_OBJECTSAVER(object);
-
+constructed_header()
     g_object_get(instance->objectself, "tox", &instance->tox, "profile-filename", &instance->filename,
                  "profile-password", &instance->password, NULL);
 
@@ -128,13 +107,10 @@ static void lupus_objectsaver_constructed(GObject *object)
     instance->needed = FALSE;
     instance->event_source_id = g_timeout_add(5000, G_SOURCE_FUNC(check), instance);
 
-    g_signal_connect(instance, "set", G_CALLBACK(set), NULL);
+    connect(instance, "set", set, NULL);
+constructed_footer()
 
-    GObjectClass *parent_class = G_OBJECT_CLASS(lupus_objectsaver_parent_class);
-    parent_class->constructed(object);
-}
-
-static void lupus_objectsaver_class_init(LupusObjectSaverClass *class)
+class_init()
 {
     GObjectClass *object_class = G_OBJECT_CLASS(class);
 
@@ -142,16 +118,14 @@ static void lupus_objectsaver_class_init(LupusObjectSaverClass *class)
     object_class->finalize = lupus_objectsaver_finalize;
     object_class->set_property = lupus_objectsaver_set_property;
 
-    obj_properties[PROP_OBJECTSELF] =
-        g_param_spec_pointer("objectself", NULL, NULL, G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY);
+    define_property(PROP_OBJECTSELF, pointer, "objectself", G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 
-    signals[SET] = g_signal_new("set", LUPUS_TYPE_OBJECTSAVER, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 1,
-                                G_TYPE_BOOLEAN);
+    define_signal(SET, "set", LUPUS_TYPE_OBJECTSAVER, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 }
 
-static void lupus_objectsaver_init(LupusObjectSaver *instance) {}
+init() {}
 
 LupusObjectSaver *lupus_objectsaver_new(LupusObjectSelf *objectself)
 {

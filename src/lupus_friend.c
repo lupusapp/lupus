@@ -22,13 +22,13 @@ struct _LupusFriend {
 
 G_DEFINE_TYPE(LupusFriend, lupus_friend, GTK_TYPE_EVENT_BOX)
 
-typedef enum {
-    PROP_OBJECTFRIEND = 1,
-    N_PROPERTIES,
-} LupusFriendProperty;
-static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
+#define t_n lupus_friend
+#define TN  LupusFriend
+#define T_N LUPUS_FRIEND
 
-static void objectfriend_name_cb(LupusFriend *instance)
+declare_properties(PROP_OBJECTFRIEND);
+
+static void objectfriend_name_cb(INSTANCE)
 {
     gchar *name;
     g_object_get(instance->objectfriend, "name", &name, NULL);
@@ -40,7 +40,7 @@ static void objectfriend_name_cb(LupusFriend *instance)
     g_free(name);
 }
 
-static void objectfriend_status_message_cb(LupusFriend *instance)
+static void objectfriend_status_message_cb(INSTANCE)
 {
     gchar *status_message;
     g_object_get(instance->objectfriend, "status-message", &status_message, NULL);
@@ -52,7 +52,7 @@ static void objectfriend_status_message_cb(LupusFriend *instance)
     g_free(status_message);
 }
 
-static void objectfriend_avatar_pixbuf_cb(LupusFriend *instance)
+static void objectfriend_avatar_pixbuf_cb(INSTANCE)
 {
     GdkPixbuf *pixbuf;
     g_object_get(instance->objectfriend, "avatar-pixbuf", &pixbuf, NULL);
@@ -60,7 +60,7 @@ static void objectfriend_avatar_pixbuf_cb(LupusFriend *instance)
     gtk_image_set_from_pixbuf(instance->avatar, pixbuf);
 }
 
-static void objectfriend_status_cb(LupusFriend *instance)
+static void objectfriend_status_cb(INSTANCE)
 {
     Tox_User_Status status;
     g_object_get(instance->objectfriend, "status", &status, NULL);
@@ -85,7 +85,7 @@ static void objectfriend_status_cb(LupusFriend *instance)
     }
 }
 
-static void objectfriend_connection_status_cb(LupusFriend *instance)
+static void objectfriend_connection_status_cb(INSTANCE)
 {
     Tox_Connection connection_status = TOX_CONNECTION_NONE;
     g_object_get(instance->objectfriend, "connection-status", &connection_status, NULL);
@@ -98,7 +98,7 @@ static void objectfriend_connection_status_cb(LupusFriend *instance)
     widget_remove_classes_with_prefix(instance->avatar, "profile--");
 }
 
-static gboolean button_press_event_cb(LupusFriend *instance, GdkEvent *event)
+static gboolean button_press_event_cb(INSTANCE, GdkEvent *event)
 {
     if (event->type == GDK_BUTTON_PRESS && event->button.button == 3) {
         gtk_menu_popup_at_pointer(instance->popover, event);
@@ -107,7 +107,7 @@ static gboolean button_press_event_cb(LupusFriend *instance, GdkEvent *event)
     return FALSE;
 }
 
-static void popover_public_key_cb(LupusFriend *instance)
+static void popover_public_key_cb(INSTANCE)
 {
     static GtkWidget *dialog;
 
@@ -130,7 +130,7 @@ static void popover_public_key_cb(LupusFriend *instance)
     gtk_widget_hide(dialog);
 }
 
-static void popover_remove_friend_cb(LupusFriend *instance)
+static void popover_remove_friend_cb(INSTANCE)
 {
     GtkDialog *dialog = GTK_DIALOG(g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, "border-width", 5, "title",
                                                 "Are you sure ?", "resizable", FALSE, NULL));
@@ -149,13 +149,13 @@ static void popover_remove_friend_cb(LupusFriend *instance)
         g_object_get(instance->objectfriend, "objectself", &objectself, NULL);
 
         gboolean success;
-        g_signal_emit_by_name(objectself, "remove-friend", friend_number, &success);
+        emit_by_name(objectself, "remove-friend", friend_number, &success);
     }
 
     gtk_widget_destroy(GTK_WIDGET(dialog));
 }
 
-static void construct_popover(LupusFriend *instance)
+static void construct_popover(INSTANCE)
 {
     instance->popover = GTK_MENU(gtk_menu_new());
 
@@ -178,41 +178,31 @@ static void construct_popover(LupusFriend *instance)
 
     gtk_widget_show_all(GTK_WIDGET(instance->popover));
 
-    g_signal_connect_swapped(remove_friend_item, "activate", G_CALLBACK(popover_remove_friend_cb), instance);
-    g_signal_connect_swapped(public_key_item, "activate", G_CALLBACK(popover_public_key_cb), instance);
+    connect_swapped(remove_friend_item, "activate", popover_remove_friend_cb, instance);
+    connect_swapped(public_key_item, "activate", popover_public_key_cb, instance);
 }
 
-static void lupus_friend_set_property(GObject *object, guint property_id, GValue const *value, GParamSpec *pspec)
-{
-    LupusFriend *instance = LUPUS_FRIEND(object);
+set_property_header()
+case PROP_OBJECTFRIEND:
+    instance->objectfriend = g_value_get_pointer(value);
+    break;
+set_property_footer()
 
-    switch ((LupusFriendProperty)property_id) {
-    case PROP_OBJECTFRIEND:
-        instance->objectfriend = g_value_get_pointer(value);
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-    }
-}
-
-static void lupus_friend_constructed(GObject *object)
-{
-    LupusFriend *instance = LUPUS_FRIEND(object);
-
+constructed_header()
     instance->name = GTK_LABEL(g_object_new(GTK_TYPE_LABEL, "halign", GTK_ALIGN_START, NULL));
-    instance->status_message = GTK_LABEL(g_object_new(GTK_TYPE_LABEL, "halign", GTK_ALIGN_START, NULL));
     objectfriend_name_cb(instance);
+    instance->status_message = GTK_LABEL(g_object_new(GTK_TYPE_LABEL, "halign", GTK_ALIGN_START, NULL));
     objectfriend_status_message_cb(instance);
 
     instance->vbox = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 0));
     gtk_box_pack_start(instance->vbox, GTK_WIDGET(instance->name), FALSE, TRUE, 0);
     gtk_box_pack_start(instance->vbox, GTK_WIDGET(instance->status_message), TRUE, TRUE, 0);
 
-    instance->hbox = GTK_BOX(g_object_new(GTK_TYPE_BOX, "orientation", GTK_ORIENTATION_HORIZONTAL, "spacing", 5, NULL));
-    GdkPixbuf *avatar_pixbuf;
-    g_object_get(instance->objectfriend, "avatar-pixbuf", &avatar_pixbuf, NULL);
+    object_get_prop(instance->objectfriend, "avatar-pixbuf", avatar_pixbuf, GdkPixbuf *);
     instance->avatar = GTK_IMAGE(gtk_image_new_from_pixbuf(avatar_pixbuf));
     widget_add_class(instance->avatar, "profile");
+
+    instance->hbox = GTK_BOX(g_object_new(GTK_TYPE_BOX, "orientation", GTK_ORIENTATION_HORIZONTAL, "spacing", 5, NULL));
     gtk_box_pack_start(instance->hbox, GTK_WIDGET(instance->avatar), FALSE, TRUE, 0);
     gtk_box_pack_start(instance->hbox, GTK_WIDGET(instance->vbox), TRUE, TRUE, 0);
 
@@ -220,34 +210,27 @@ static void lupus_friend_constructed(GObject *object)
 
     construct_popover(instance);
 
-    g_signal_connect_swapped(instance->objectfriend, "notify::name", G_CALLBACK(objectfriend_name_cb), instance);
-    g_signal_connect_swapped(instance->objectfriend, "notify::status-message",
-                             G_CALLBACK(objectfriend_status_message_cb), instance);
-    g_signal_connect_swapped(instance->objectfriend, "notify::avatar-pixbuf", G_CALLBACK(objectfriend_avatar_pixbuf_cb),
-                             instance);
-    g_signal_connect_swapped(instance->objectfriend, "notify::connection-status",
-                             G_CALLBACK(objectfriend_connection_status_cb), instance);
-    g_signal_connect_swapped(instance->objectfriend, "notify::status", G_CALLBACK(objectfriend_status_cb), instance);
-    g_signal_connect(instance, "button-press-event", G_CALLBACK(button_press_event_cb), NULL);
+    connect_swapped(instance->objectfriend, "notify::name", objectfriend_name_cb, instance);
+    connect_swapped(instance->objectfriend, "notify::status-message", objectfriend_status_message_cb, instance);
+    connect_swapped(instance->objectfriend, "notify::avatar-pixbuf", objectfriend_avatar_pixbuf_cb, instance);
+    connect_swapped(instance->objectfriend, "notify::connection-status", objectfriend_connection_status_cb, instance);
+    connect_swapped(instance->objectfriend, "notify::status", objectfriend_status_cb, instance);
+    connect(instance, "button-press-event", button_press_event_cb, NULL);
+constructed_footer()
 
-    GObjectClass *object_class = G_OBJECT_CLASS(lupus_friend_parent_class);
-    object_class->constructed(object);
-}
-
-static void lupus_friend_class_init(LupusFriendClass *class)
+class_init()
 {
     GObjectClass *object_class = G_OBJECT_CLASS(class);
 
     object_class->constructed = lupus_friend_constructed;
     object_class->set_property = lupus_friend_set_property;
 
-    obj_properties[PROP_OBJECTFRIEND] =
-        g_param_spec_pointer("objectfriend", NULL, NULL, G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY);
+    define_property(PROP_OBJECTFRIEND, pointer, "objectfriend", G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 }
 
-static void lupus_friend_init(LupusFriend *instance) {}
+init() {}
 
 LupusFriend *lupus_friend_new(LupusObjectFriend *objectfriend)
 {

@@ -1,4 +1,5 @@
 #include "../include/lupus_editablelabel.h"
+#include "include/lupus.h"
 
 struct _LupusEditableLabel {
     GtkEventBox parent_instance;
@@ -13,24 +14,22 @@ struct _LupusEditableLabel {
 
 G_DEFINE_TYPE(LupusEditableLabel, lupus_editablelabel, GTK_TYPE_EVENT_BOX)
 
+#define t_n lupus_editablelabel
+#define TN  LupusEditableLabel
+#define T_N LUPUS_EDITABLELABEL
+
 #define MIN_LENGTH 1U << 0U
 #define MAX_LENGTH 1U << 12U
 
-typedef enum { PROP_VALUE = 1, PROP_MAX_LENGTH, N_PROPERTIES } LupusEditableLabelProperty;
-static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
+declare_properties(PROP_VALUE, PROP_MAX_LENGTH);
+declare_signals(SUBMIT);
 
-typedef enum {
-    SUBMIT,
-    LAST_SIGNAL,
-} LupusEditableLabelSignal;
-static guint signals[LAST_SIGNAL];
-
-static void clicked_cb(LupusEditableLabel *instance)
+static void clicked_cb(INSTANCE)
 {
     gchar const *label = gtk_label_get_text(instance->label);
     gchar const *entry = gtk_entry_get_text(instance->entry);
 
-    if (g_strcmp0(label, entry) != 0) {
+    if (g_strcmp0(label, entry)) {
         gboolean result = FALSE;
         g_signal_emit(instance, signals[SUBMIT], 0, entry, &result);
 
@@ -45,35 +44,22 @@ static void clicked_cb(LupusEditableLabel *instance)
     gtk_popover_popdown(instance->popover);
 }
 
-static void lupus_editablelabel_set_property(GObject *object, guint property_id, GValue const *value, GParamSpec *pspec)
-{
-    LupusEditableLabel *instance = LUPUS_EDITABLELABEL(object);
+set_property_header()
+case PROP_VALUE:
+    instance->value = g_value_dup_string(value);
+    gtk_label_set_text(instance->label, instance->value);
+    gtk_entry_set_text(instance->entry, instance->value);
+    break;
+case PROP_MAX_LENGTH:
+    gtk_entry_set_max_length(instance->entry, g_value_get_uint(value));
+    break;
+set_property_footer()
 
-    switch (property_id) {
-    case PROP_VALUE:
-        instance->value = g_value_dup_string(value);
-        gtk_label_set_text(instance->label, instance->value);
-        gtk_entry_set_text(instance->entry, instance->value);
-        break;
-    case PROP_MAX_LENGTH:
-        gtk_entry_set_max_length(instance->entry, g_value_get_uint(value));
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(instance, property_id, pspec);
-    }
-}
-
-static void lupus_editablelabel_finalize(GObject *object)
-{
-    LupusEditableLabel *instance = LUPUS_EDITABLELABEL(object);
-
+finalize_header()
     g_free(instance->value);
+finalize_footer()
 
-    GObjectClass *object_class = G_OBJECT_CLASS(lupus_editablelabel_parent_class); // NOLINT
-    object_class->finalize(object);
-}
-
-static void lupus_editablelabel_class_init(LupusEditableLabelClass *class)
+class_init()
 {
     GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
     GObjectClass *object_class = G_OBJECT_CLASS(class); // NOLINT
@@ -87,23 +73,20 @@ static void lupus_editablelabel_class_init(LupusEditableLabelClass *class)
     object_class->set_property = lupus_editablelabel_set_property;
     object_class->finalize = lupus_editablelabel_finalize;
 
-    gint param = G_PARAM_WRITABLE;
-    obj_properties[PROP_VALUE] = g_param_spec_string("value", "Value", "Label value", "", param);
-    obj_properties[PROP_MAX_LENGTH] = g_param_spec_uint("max-length", "Max Length", "Label maximum length.", MIN_LENGTH,
-                                                        MAX_LENGTH, MIN_LENGTH, param);
+    define_property(PROP_VALUE, string, "value", NULL, G_PARAM_WRITABLE);
+    define_property(PROP_MAX_LENGTH, uint, "max-length", MIN_LENGTH, MAX_LENGTH, MIN_LENGTH, G_PARAM_WRITABLE);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 
-    signals[SUBMIT] = g_signal_new("submit", LUPUS_TYPE_EDITABLELABEL, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
-                                   G_TYPE_BOOLEAN, 1, G_TYPE_STRING); // NOLINT
+    define_signal(SUBMIT, "submit", LUPUS_TYPE_EDITABLELABEL, G_TYPE_BOOLEAN, 1, G_TYPE_STRING);
 }
 
-static void lupus_editablelabel_init(LupusEditableLabel *instance)
+init()
 {
     gtk_widget_init_template(GTK_WIDGET(instance));
 
-    g_signal_connect_swapped(instance, "button-release-event", G_CALLBACK(gtk_popover_popup), instance->popover);
-    g_signal_connect_swapped(instance->submit, "clicked", G_CALLBACK(clicked_cb), instance);
+    connect_swapped(instance, "button-release-event", gtk_popover_popup, instance->popover);
+    connect_swapped(instance->submit, "clicked", clicked_cb, instance);
 }
 
 LupusEditableLabel *lupus_editablelabel_new(gchar *value, guint max_length)

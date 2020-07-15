@@ -54,57 +54,42 @@ struct _LupusObjectSelf {
 
 G_DEFINE_TYPE(LupusObjectSelf, lupus_objectself, G_TYPE_OBJECT)
 
-typedef enum {
-    PROP_TOX = 1,
-    PROP_PROFILE_FILENAME,
-    PROP_PROFILE_PASSWORD,
-    PROP_NAME,
-    PROP_STATUS_MESSAGE,
-    PROP_PUBLIC_KEY,
-    PROP_AVATAR_FILENAME,
-    PROP_AVATAR_PIXBUF,
-    PROP_AVATAR_HASH,
-    PROP_CONNECTION,
-    PROP_USER_STATUS,
-    PROP_ADDRESS,
-    PROP_OBJECTFRIENDS,
-    N_PROPERTIES,
-} LupusObjectSelfProperty;
-static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
+#define t_n lupus_objectself
+#define TN  LupusObjectSelf
+#define T_N LUPUS_OBJECTSELF
 
-typedef enum {
-    FRIEND_REQUEST, // (gchar *public_key, gchar *message) -> gboolean
-    FRIEND_ADDED,   // (guint32 friend_number)
-    FRIEND_REMOVED, // (guint32 friend_number)
-    ADD_FRIEND,     // (gchar *address_hex, gchar *message) -> gboolean
-    REMOVE_FRIEND,  // (guint32 friend_number) -> gboolean
-    LAST_SIGNAL,
-} LupusObjectSelfSignal;
-static guint signals[LAST_SIGNAL];
+declare_properties(PROP_TOX, PROP_PROFILE_FILENAME, PROP_PROFILE_PASSWORD, PROP_NAME, PROP_STATUS_MESSAGE,
+                   PROP_PUBLIC_KEY, PROP_AVATAR_FILENAME, PROP_AVATAR_PIXBUF, PROP_AVATAR_HASH, PROP_CONNECTION,
+                   PROP_USER_STATUS, PROP_ADDRESS, PROP_OBJECTFRIENDS, PROP_OBJECTSAVER);
 
-static void objectfriends_remove_friend(LupusObjectSelf *instance, guint32 friend_number)
+declare_signals(FRIEND_REQUEST, // (gchar *public_key, gchar *message) -> gboolean
+                FRIEND_ADDED,   // (guint32 friend_number)
+                FRIEND_REMOVED, // (guint32 friend_number)
+                ADD_FRIEND,     // (gchar *address_hex, gchar *message) -> gboolean
+                REMOVE_FRIEND   // (guint32 friend_number) -> gboolean
+);
+
+static void objectfriends_remove_friend(INSTANCE, guint32 friend_number)
 {
     gconstpointer key = GUINT_TO_POINTER(friend_number);
     LupusObjectFriend *objectfriend = LUPUS_OBJECTFRIEND(g_hash_table_lookup(instance->objectfriends, key));
 
     g_hash_table_remove(instance->objectfriends, GUINT_TO_POINTER(friend_number));
-
     g_object_notify_by_pspec(G_OBJECT(instance), obj_properties[PROP_OBJECTFRIENDS]);
-    g_signal_emit(instance, signals[FRIEND_REMOVED], 0, objectfriend);
+
+    emit_by_pspec(instance, FRIEND_REMOVED, objectfriend);
 
     g_object_unref(objectfriend);
 }
 
-static void objectfriend_connection_status_cb(LupusObjectFriend *objectfriend, GParamSpec *pspec,
-                                              LupusObjectSelf *instance)
+static void objectfriend_connection_status_cb(LupusObjectFriend *objectfriend, GParamSpec *pspec, INSTANCE)
 {
-    gboolean avatar_sent;
-    guint32 friend_number;
-    g_object_get(objectfriend, "avatar-sent", &avatar_sent, "friend-number", &friend_number, NULL);
-
+    object_get_prop(objectfriend, "avatar-sent", avatar_sent, gboolean);
     if (avatar_sent) {
         return;
     }
+
+    object_get_prop(objectfriend, "friend-number", friend_number, guint32);
 
     gsize avatar_filename_size = tox_public_key_size() * 2 + 4 + 1;
     gchar avatar_filename[avatar_filename_size];
@@ -136,24 +121,22 @@ static void objectfriend_connection_status_cb(LupusObjectFriend *objectfriend, G
         return;
     }
 
-    g_signal_emit_by_name(instance->objecttransfers, "create-file-transfer", friend_number, file_number, ft);
+    emit_by_name(instance->objecttransfers, "create-file-transfer", friend_number, file_number, ft);
 }
 
-static void objectfriends_add_friend(LupusObjectSelf *instance, guint32 friend_number)
+static void objectfriends_add_friend(INSTANCE, guint32 friend_number)
 {
     LupusObjectFriend *objectfriend = lupus_objectfriend_new(instance, friend_number);
 
-    gpointer key = GUINT_TO_POINTER(friend_number);
-    g_hash_table_insert(instance->objectfriends, key, objectfriend);
+    g_hash_table_insert(instance->objectfriends, GUINT_TO_POINTER(friend_number), objectfriend);
+    notify(instance, PROP_OBJECTFRIENDS);
 
-    g_signal_connect(objectfriend, "notify::connection-status", G_CALLBACK(objectfriend_connection_status_cb),
-                     instance);
+    emit_by_pspec(instance, FRIEND_ADDED, objectfriend);
 
-    g_object_notify_by_pspec(G_OBJECT(instance), obj_properties[PROP_OBJECTFRIENDS]);
-    g_signal_emit(instance, signals[FRIEND_ADDED], 0, objectfriend);
+    connect(objectfriend, "notify::connection-status", objectfriend_connection_status_cb, instance);
 }
 
-static gboolean add_friend_cb(LupusObjectSelf *instance, gchar *address_hex, gchar *message)
+static gboolean add_friend_cb(INSTANCE, gchar *address_hex, gchar *message)
 {
     guint8 address[tox_address_size()];
     sodium_hex2bin(address, sizeof(address), address_hex, tox_address_size() * 2, NULL, 0, NULL);
@@ -180,7 +163,7 @@ static gboolean add_friend_cb(LupusObjectSelf *instance, gchar *address_hex, gch
         break;
     case TOX_ERR_FRIEND_ADD_OK:
         objectfriends_add_friend(instance, friend_number);
-        g_signal_emit_by_name(instance->objectsaver, "set", TRUE);
+        emit_by_name(instance->objectsaver, "set", TRUE);
         return TRUE;
     case TOX_ERR_FRIEND_ADD_OWN_KEY:
         lupus_error("It's your own public key.");
@@ -196,8 +179,8 @@ static gboolean add_friend_cb(LupusObjectSelf *instance, gchar *address_hex, gch
     return FALSE;
 }
 
-static void objecttransfers_file_transfer_complete(LupusObjectSelf *instance, guint32 friend_number,
-                                                   guint32 file_number, FileTransfer *ft)
+static void objecttransfers_file_transfer_complete(INSTANCE, guint32 friend_number, guint32 file_number,
+                                                   FileTransfer *ft)
 {
     if (ft->receive_mode) {
         if (ft->kind == TOX_FILE_KIND_AVATAR) {
@@ -244,7 +227,7 @@ static void objecttransfers_file_transfer_complete(LupusObjectSelf *instance, gu
                     g_error_free(error);
                 }
 
-                g_signal_emit_by_name(objectfriend, "refresh-avatar", NULL);
+                emit_by_name(objectfriend, "refresh-avatar", NULL);
             }
 
             g_free(objectfriend_avatar_hash);
@@ -258,10 +241,10 @@ static void objecttransfers_file_transfer_complete(LupusObjectSelf *instance, gu
         }
     }
 
-    g_signal_emit_by_name(instance->objecttransfers, "remove-file-transfer", friend_number, file_number);
+    emit_by_name(instance->objecttransfers, "remove-file-transfer", friend_number, file_number);
 }
 
-static gboolean remove_friend_cb(LupusObjectSelf *instance, guint friend_number)
+static gboolean remove_friend_cb(INSTANCE, guint friend_number)
 {
     Tox_Err_Friend_Delete tox_err_friend_delete;
     tox_friend_delete(instance->tox, friend_number, &tox_err_friend_delete);
@@ -272,7 +255,7 @@ static gboolean remove_friend_cb(LupusObjectSelf *instance, guint friend_number)
         break;
     case TOX_ERR_FRIEND_DELETE_OK:
         objectfriends_remove_friend(instance, friend_number);
-        g_signal_emit_by_name(instance->objectsaver, "set", TRUE);
+        emit_by_name(instance->objectsaver, "set", TRUE);
         return TRUE;
     }
 
@@ -281,7 +264,7 @@ static gboolean remove_friend_cb(LupusObjectSelf *instance, guint friend_number)
 
 static void connection_status_cb(Tox *tox, Tox_Connection connection_status, gpointer user_data)
 {
-    LupusObjectSelf *instance = LUPUS_OBJECTSELF(user_data);
+    INSTANCE = LUPUS_OBJECTSELF(user_data);
 
     instance->connection = connection_status;
 
@@ -289,7 +272,7 @@ static void connection_status_cb(Tox *tox, Tox_Connection connection_status, gpo
     g_object_notify_by_pspec(object, obj_properties[PROP_CONNECTION]);
 }
 
-static void load_friends(LupusObjectSelf *instance)
+static void load_friends(INSTANCE)
 {
     gsize friend_list_size = tox_self_get_friend_list_size(instance->tox);
     guint32 friend_list[friend_list_size];
@@ -302,7 +285,7 @@ static void load_friends(LupusObjectSelf *instance)
     }
 }
 
-static void load_avatar(LupusObjectSelf *instance, gchar *filename)
+static void load_avatar(INSTANCE, gchar *filename)
 {
     gchar *avatar_directory = g_strconcat(LUPUS_TOX_DIR, "avatars/", NULL);
     if (!g_file_test(avatar_directory, G_FILE_TEST_IS_DIR)) {
@@ -386,95 +369,84 @@ static void load_avatar(LupusObjectSelf *instance, gchar *filename)
     g_object_notify_by_pspec(object, obj_properties[PROP_AVATAR_HASH]);
 }
 
-static void lupus_objectself_get_property(GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
-{
-    LupusObjectSelf *instance = LUPUS_OBJECTSELF(object);
+get_property_header()
+case PROP_TOX:
+    g_assert(instance->tox);
+    g_value_set_pointer(value, instance->tox);
+    break;
+case PROP_PROFILE_FILENAME:
+    g_value_set_string(value, instance->profile_filename);
+    break;
+case PROP_PROFILE_PASSWORD:
+    g_value_set_string(value, instance->profile_password);
+    break;
+case PROP_NAME:
+    g_value_set_string(value, instance->name);
+    break;
+case PROP_STATUS_MESSAGE:
+    g_value_set_string(value, instance->status_message);
+    break;
+case PROP_PUBLIC_KEY:
+    g_value_set_string(value, instance->public_key);
+    break;
+case PROP_AVATAR_PIXBUF:
+    g_value_set_pointer(value, instance->avatar_pixbuf);
+    break;
+case PROP_AVATAR_HASH:
+    g_value_set_string(value, instance->avatar_hash);
+    break;
+case PROP_CONNECTION:
+    g_value_set_int(value, instance->connection);
+    break;
+case PROP_USER_STATUS:
+    g_value_set_int(value, instance->user_status);
+    break;
+case PROP_ADDRESS:
+    g_value_set_string(value, instance->address);
+    break;
+case PROP_OBJECTFRIENDS:
+    g_value_set_pointer(value, instance->objectfriends);
+    break;
+case PROP_OBJECTSAVER:
+    g_value_set_pointer(value, instance->objectsaver);
+    break;
+get_property_footer()
 
-    switch ((LupusObjectSelfProperty)property_id) {
-    case PROP_TOX:
-        g_assert(instance->tox);
-        g_value_set_pointer(value, instance->tox);
-        break;
-    case PROP_PROFILE_FILENAME:
-        g_value_set_string(value, instance->profile_filename);
-        break;
-    case PROP_PROFILE_PASSWORD:
-        g_value_set_string(value, instance->profile_password);
-        break;
-    case PROP_NAME:
-        g_value_set_string(value, instance->name);
-        break;
-    case PROP_STATUS_MESSAGE:
-        g_value_set_string(value, instance->status_message);
-        break;
-    case PROP_PUBLIC_KEY:
-        g_value_set_string(value, instance->public_key);
-        break;
-    case PROP_AVATAR_PIXBUF:
-        g_value_set_pointer(value, instance->avatar_pixbuf);
-        break;
-    case PROP_AVATAR_HASH:
-        g_value_set_string(value, instance->avatar_hash);
-        break;
-    case PROP_CONNECTION:
-        g_value_set_int(value, instance->connection);
-        break;
-    case PROP_USER_STATUS:
-        g_value_set_int(value, instance->user_status);
-        break;
-    case PROP_ADDRESS:
-        g_value_set_string(value, instance->address);
-        break;
-    case PROP_OBJECTFRIENDS:
-        g_value_set_pointer(value, instance->objectfriends);
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-    }
-}
-
-static void lupus_objectself_set_property(GObject *object, guint property_id, GValue const *value, GParamSpec *pspec)
-{
-    LupusObjectSelf *instance = LUPUS_OBJECTSELF(object);
-
-    switch ((LupusObjectSelfProperty)property_id) {
-    case PROP_TOX:
-        instance->tox = g_value_get_pointer(value);
-        break;
-    case PROP_PROFILE_FILENAME:
-        instance->profile_filename = g_value_dup_string(value);
-        break;
-    case PROP_PROFILE_PASSWORD:
-        instance->profile_password = g_value_dup_string(value);
-        break;
-    case PROP_NAME:
-        g_free(instance->name);
-        instance->name = g_value_dup_string(value);
-        tox_self_set_name(instance->tox, (guint8 *)instance->name, strlen(instance->name), NULL);
-        g_signal_emit_by_name(instance->objectsaver, "set", TRUE);
-        break;
-    case PROP_STATUS_MESSAGE:
-        g_free(instance->status_message);
-        instance->status_message = g_value_dup_string(value);
-        tox_self_set_status_message(instance->tox, (guint8 *)instance->status_message, strlen(instance->status_message),
-                                    NULL);
-        g_signal_emit_by_name(instance->objectsaver, "set", TRUE);
-        break;
-    case PROP_AVATAR_FILENAME:
-        load_avatar(instance, (gchar *)g_value_get_string(value));
-        break;
-    case PROP_USER_STATUS:
-        instance->user_status = (Tox_User_Status)g_value_get_int(value);
-        tox_self_set_status(instance->tox, instance->user_status);
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-    }
-}
+set_property_header()
+case PROP_TOX:
+    instance->tox = g_value_get_pointer(value);
+    break;
+case PROP_PROFILE_FILENAME:
+    instance->profile_filename = g_value_dup_string(value);
+    break;
+case PROP_PROFILE_PASSWORD:
+    instance->profile_password = g_value_dup_string(value);
+    break;
+case PROP_NAME:
+    g_free(instance->name);
+    instance->name = g_value_dup_string(value);
+    tox_self_set_name(instance->tox, (guint8 *)instance->name, strlen(instance->name), NULL);
+    emit_by_name(instance->objectsaver, "set", TRUE);
+    break;
+case PROP_STATUS_MESSAGE:
+    g_free(instance->status_message);
+    instance->status_message = g_value_dup_string(value);
+    tox_self_set_status_message(instance->tox, (guint8 *)instance->status_message, strlen(instance->status_message),
+                                NULL);
+    emit_by_name(instance->objectsaver, "set", TRUE);
+    break;
+case PROP_AVATAR_FILENAME:
+    load_avatar(instance, (gchar *)g_value_get_string(value));
+    break;
+case PROP_USER_STATUS:
+    instance->user_status = (Tox_User_Status)g_value_get_int(value);
+    tox_self_set_status(instance->tox, instance->user_status);
+    break;
+set_property_footer()
 
 static void lupus_objectself_finalize(GObject *object)
 {
-    LupusObjectSelf *instance = LUPUS_OBJECTSELF(object);
+    INSTANCE = LUPUS_OBJECTSELF(object);
 
     g_free(instance->name);
     g_free(instance->status_message);
@@ -498,7 +470,7 @@ static void lupus_objectself_finalize(GObject *object)
     parent_class->finalize(object);
 }
 
-static gboolean iterate(LupusObjectSelf *instance)
+static gboolean iterate(INSTANCE)
 {
     tox_iterate(instance->tox, instance);
     return TRUE;
@@ -530,7 +502,7 @@ static void bootstrap(Tox *tox)
     }
 }
 
-static gchar *get_address(LupusObjectSelf *instance)
+static gchar *get_address(INSTANCE)
 {
     guint8 bin[TOX_ADDRESS_SIZE];
     tox_self_get_address(instance->tox, bin);
@@ -557,10 +529,10 @@ static void file_recv_cb(Tox *tox, guint32 friend_number, guint32 file_number, g
         return;
     }
 
-    LupusObjectSelf *instance = LUPUS_OBJECTSELF(user_data);
+    INSTANCE = LUPUS_OBJECTSELF(user_data);
 
     FileTransfer *ft = file_transfer_new(kind, NULL, file_size, g_strndup((gchar *)filename, filename_length), TRUE);
-    g_signal_emit_by_name(instance->objecttransfers, "create-file-transfer", friend_number, file_number, ft);
+    emit_by_name(instance->objecttransfers, "create-file-transfer", friend_number, file_number, ft);
 
     Tox_Err_File_Control tox_err_file_control;
     tox_file_control(tox, friend_number, file_number, TOX_FILE_CONTROL_RESUME, &tox_err_file_control);
@@ -594,23 +566,23 @@ static void file_recv_cb(Tox *tox, guint32 friend_number, guint32 file_number, g
 static void file_recv_chunk_cb(Tox *tox, guint32 friend_number, guint32 file_number, guint64 position,
                                guint8 const *data, gsize length, gpointer user_data)
 {
-    LupusObjectSelf *instance = LUPUS_OBJECTSELF(user_data);
+    INSTANCE = LUPUS_OBJECTSELF(user_data);
 
-    g_signal_emit_by_name(instance->objecttransfers, "write-chunk", friend_number, file_number, position, data, length);
+    emit_by_name(instance->objecttransfers, "write-chunk", friend_number, file_number, position, data, length);
 }
 
 static void file_chunk_request_cb(Tox *tox, guint32 friend_number, guint32 file_number, guint64 position, gsize length,
                                   gpointer user_data)
 {
-    LupusObjectSelf *instance = LUPUS_OBJECTSELF(user_data);
+    INSTANCE = LUPUS_OBJECTSELF(user_data);
 
-    g_signal_emit_by_name(instance->objecttransfers, "send-chunk", friend_number, file_number, position, length);
+    emit_by_name(instance->objecttransfers, "send-chunk", friend_number, file_number, position, length);
 }
 
 static void friend_request_cb(Tox *tox, guint8 const *public_key, guint8 const *message, gsize length,
                               gpointer user_data)
 {
-    LupusObjectSelf *instance = LUPUS_OBJECTSELF(user_data);
+    INSTANCE = LUPUS_OBJECTSELF(user_data);
 
     gsize public_key_size = tox_public_key_size();
     gchar *message_request = g_strndup((gchar *)message, length);
@@ -618,7 +590,7 @@ static void friend_request_cb(Tox *tox, guint8 const *public_key, guint8 const *
     sodium_bin2hex(public_key_hex, public_key_size * 2 + 1, public_key, public_key_size);
 
     gboolean accept = FALSE;
-    g_signal_emit(instance, signals[FRIEND_REQUEST], 0, public_key_hex, message_request, &accept);
+    emit_by_pspec(instance, FRIEND_REQUEST, public_key_hex, message_request, &accept);
 
     if (accept) {
         Tox_Err_Friend_Add tox_err_friend_add = TOX_ERR_FRIEND_ADD_OK;
@@ -659,10 +631,7 @@ static void friend_request_cb(Tox *tox, guint8 const *public_key, guint8 const *
     g_free(public_key_hex);
 }
 
-static void lupus_objectself_constructed(GObject *object)
-{
-    LupusObjectSelf *instance = LUPUS_OBJECTSELF(object);
-
+constructed_header()
     gsize name_size = tox_self_get_name_size(instance->tox);
     if (name_size) {
         instance->name = g_malloc0(name_size + 1);
@@ -712,16 +681,13 @@ static void lupus_objectself_constructed(GObject *object)
     bootstrap(instance->tox);
     g_timeout_add(tox_iteration_interval(instance->tox), G_SOURCE_FUNC(iterate), instance);
 
-    g_signal_connect(instance, "add-friend", G_CALLBACK(add_friend_cb), NULL);
-    g_signal_connect(instance, "remove-friend", G_CALLBACK(remove_friend_cb), NULL);
-    g_signal_connect_swapped(instance->objecttransfers, "file-transfer-complete",
-                             G_CALLBACK(objecttransfers_file_transfer_complete), instance);
+    connect(instance, "add-friend", add_friend_cb, NULL);
+    connect(instance, "remove-friend", remove_friend_cb, NULL);
+    connect_swapped(instance->objecttransfers, "file-transfer-complete", objecttransfers_file_transfer_complete,
+                    instance);
+constructed_footer()
 
-    GObjectClass *parent_class = G_OBJECT_CLASS(lupus_objectself_parent_class);
-    parent_class->constructed(object);
-}
-
-static void lupus_objectself_class_init(LupusObjectSelfClass *class)
+class_init()
 {
     GObjectClass *object_class = G_OBJECT_CLASS(class);
 
@@ -730,39 +696,36 @@ static void lupus_objectself_class_init(LupusObjectSelfClass *class)
     object_class->set_property = lupus_objectself_set_property;
     object_class->get_property = lupus_objectself_get_property;
 
-    obj_properties[PROP_TOX] = g_param_spec_pointer("tox", NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
-    obj_properties[PROP_PROFILE_FILENAME] =
-        g_param_spec_string("profile-filename", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
-    obj_properties[PROP_PROFILE_PASSWORD] =
-        g_param_spec_string("profile-password", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
-    obj_properties[PROP_NAME] = g_param_spec_string("name", NULL, NULL, NULL, G_PARAM_READWRITE);
-    obj_properties[PROP_STATUS_MESSAGE] = g_param_spec_string("status-message", NULL, NULL, NULL, G_PARAM_READWRITE);
-    obj_properties[PROP_PUBLIC_KEY] = g_param_spec_string("public-key", NULL, NULL, NULL, G_PARAM_READABLE);
-    obj_properties[PROP_AVATAR_FILENAME] = g_param_spec_string("avatar-filename", NULL, NULL, NULL, G_PARAM_WRITABLE);
-    obj_properties[PROP_AVATAR_PIXBUF] = g_param_spec_pointer("avatar-pixbuf", NULL, NULL, G_PARAM_READABLE);
-    obj_properties[PROP_AVATAR_HASH] = g_param_spec_string("avatar-hash", NULL, NULL, NULL, G_PARAM_READABLE);
-    obj_properties[PROP_CONNECTION] = g_param_spec_int("connection", NULL, NULL, TOX_CONNECTION_NONE,
-                                                       TOX_CONNECTION_UDP, TOX_CONNECTION_NONE, G_PARAM_READABLE);
-    obj_properties[PROP_USER_STATUS] = g_param_spec_int("user-status", NULL, NULL, TOX_USER_STATUS_NONE,
-                                                        TOX_USER_STATUS_BUSY, TOX_USER_STATUS_NONE, G_PARAM_READWRITE);
-    obj_properties[PROP_ADDRESS] = g_param_spec_string("address", NULL, NULL, NULL, G_PARAM_READABLE);
-    obj_properties[PROP_OBJECTFRIENDS] = g_param_spec_pointer("objectfriends", NULL, NULL, G_PARAM_READABLE);
+    define_property(PROP_TOX, pointer, "tox", G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+    define_property(PROP_PROFILE_FILENAME, string, "profile-filename", NULL,
+                    G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+    define_property(PROP_PROFILE_PASSWORD, string, "profile-password", NULL,
+                    G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+    define_property(PROP_NAME, string, "name", NULL, G_PARAM_READWRITE);
+    define_property(PROP_STATUS_MESSAGE, string, "status-message", NULL, G_PARAM_READWRITE);
+    define_property(PROP_PUBLIC_KEY, string, "public-key", NULL, G_PARAM_READABLE);
+    define_property(PROP_AVATAR_FILENAME, string, "avatar-filename", NULL, G_PARAM_WRITABLE);
+    define_property(PROP_AVATAR_PIXBUF, pointer, "avatar-pixbuf", G_PARAM_READABLE);
+    define_property(PROP_AVATAR_HASH, string, "avatar-hash", NULL, G_PARAM_READABLE);
+    define_property(PROP_CONNECTION, int, "connection", TOX_CONNECTION_NONE, TOX_CONNECTION_UDP, TOX_CONNECTION_NONE,
+                    G_PARAM_READABLE);
+    define_property(PROP_USER_STATUS, int, "user-status", TOX_USER_STATUS_NONE, TOX_USER_STATUS_BUSY,
+                    TOX_USER_STATUS_NONE, G_PARAM_READWRITE);
+    define_property(PROP_ADDRESS, string, "address", NULL, G_PARAM_READABLE);
+    define_property(PROP_OBJECTFRIENDS, pointer, "objectfriends", G_PARAM_READABLE);
+    define_property(PROP_OBJECTSAVER, pointer, "objectsaver", G_PARAM_READABLE);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 
-    signals[FRIEND_REQUEST] = g_signal_new("friend-request", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
-                                           NULL, G_TYPE_BOOLEAN, 2, G_TYPE_STRING, G_TYPE_STRING);
-    signals[FRIEND_ADDED] = g_signal_new("friend-added", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
-                                         G_TYPE_NONE, 1, LUPUS_TYPE_OBJECTFRIEND);
-    signals[FRIEND_REMOVED] = g_signal_new("friend-removed", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
-                                           NULL, G_TYPE_NONE, 1, LUPUS_TYPE_OBJECTFRIEND);
-    signals[ADD_FRIEND] = g_signal_new("add-friend", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
-                                       G_TYPE_BOOLEAN, 2, G_TYPE_STRING, G_TYPE_STRING);
-    signals[REMOVE_FRIEND] = g_signal_new("remove-friend", LUPUS_TYPE_OBJECTSELF, G_SIGNAL_RUN_LAST, 0, NULL, NULL,
-                                          NULL, G_TYPE_BOOLEAN, 1, G_TYPE_UINT);
+    define_signal(FRIEND_REQUEST, "friend-request", LUPUS_TYPE_OBJECTSELF, G_TYPE_BOOLEAN, 2, G_TYPE_STRING,
+                  G_TYPE_STRING);
+    define_signal(FRIEND_ADDED, "friend-added", LUPUS_TYPE_OBJECTSELF, G_TYPE_NONE, 1, LUPUS_TYPE_OBJECTFRIEND);
+    define_signal(FRIEND_REMOVED, "friend-removed", LUPUS_TYPE_OBJECTSELF, G_TYPE_NONE, 1, LUPUS_TYPE_OBJECTFRIEND);
+    define_signal(ADD_FRIEND, "add-friend", LUPUS_TYPE_OBJECTSELF, G_TYPE_BOOLEAN, 2, G_TYPE_STRING, G_TYPE_STRING);
+    define_signal(REMOVE_FRIEND, "remove-friend", LUPUS_TYPE_OBJECTSELF, G_TYPE_BOOLEAN, 1, G_TYPE_UINT);
 }
 
-static void lupus_objectself_init(LupusObjectSelf *instance) {}
+init() {}
 
 LupusObjectSelf *lupus_objectself_new(Tox *tox, gchar *profile_filename, gchar *profile_password)
 {

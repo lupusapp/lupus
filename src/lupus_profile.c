@@ -20,20 +20,18 @@ struct _LupusProfile {
 
 G_DEFINE_TYPE(LupusProfile, lupus_profile, GTK_TYPE_BOX)
 
-typedef enum {
-    PROP_OBJECTSELF = 1,
-    N_PROPERTIES,
-} LupusProfileProperty;
-static GParamSpec *obj_properties[N_PROPERTIES] = {NULL};
+#define t_n lupus_profile
+#define TN  LupusProfile
+#define T_N LUPUS_PROFILE
+
+declare_properties(PROP_OBJECTSELF);
 
 #define AVATAR_PREVIEW_SIZE 128
 
-static void objectself_user_status_cb(LupusProfile *instance)
+static void objectself_user_status_cb(INSTANCE)
 {
-    Tox_User_Status status;
-    g_object_get(instance->objectself, "user-status", &status, NULL);
-    Tox_Connection connection;
-    g_object_get(instance->objectself, "connection", &connection, NULL);
+    object_get_prop(instance->objectself, "user-status", status, Tox_User_Status);
+    object_get_prop(instance->objectself, "connection", connection, Tox_Connection);
 
     if (connection == TOX_CONNECTION_NONE) {
         return;
@@ -53,10 +51,9 @@ static void objectself_user_status_cb(LupusProfile *instance)
     }
 }
 
-static void objectself_connection_cb(LupusProfile *instance)
+static void objectself_connection_cb(INSTANCE)
 {
-    Tox_Connection connection = TOX_CONNECTION_NONE;
-    g_object_get(instance->objectself, "connection", &connection, NULL);
+    object_get_prop(instance->objectself, "connection", connection, Tox_Connection);
 
     if (connection != TOX_CONNECTION_NONE) {
         objectself_user_status_cb(instance);
@@ -66,23 +63,21 @@ static void objectself_connection_cb(LupusProfile *instance)
     widget_remove_classes_with_prefix(instance->avatar, "profile--");
 }
 
-static void objectself_avatar_pixbuf_cb(LupusProfile *instance)
+static void objectself_avatar_pixbuf_cb(INSTANCE)
 {
-    GdkPixbuf *avatar_pixbuf;
-    g_object_get(instance->objectself, "avatar-pixbuf", &avatar_pixbuf, NULL);
-
+    object_get_prop(instance->objectself, "avatar-pixbuf", avatar_pixbuf, GdkPixbuf *);
     gtk_image_set_from_pixbuf(instance->avatar, avatar_pixbuf);
 }
 
-static gboolean name_submitted_cb(LupusProfile *instance, gchar *name)
+static gboolean name_submitted_cb(INSTANCE, gchar *name)
 {
-    g_object_set(instance->objectself, "name", name, NULL);
+    object_set_prop(instance->objectself, "name", name);
     return TRUE;
 }
 
-static gboolean status_message_submitted_cb(LupusProfile *instance, gchar *status_message)
+static gboolean status_message_submitted_cb(INSTANCE, gchar *status_message)
 {
-    g_object_set(instance->objectself, "status-message", status_message, NULL);
+    object_set_prop(instance->objectself, "status-message", status_message);
     return TRUE;
 }
 
@@ -104,7 +99,7 @@ static void update_preview_cb(GtkFileChooser *file_chooser, GtkImage *preview)
     gtk_file_chooser_set_preview_widget_active(file_chooser, !!pixbuf);
 }
 
-static gboolean avatar_button_press_event_cb(LupusProfile *instance, GdkEvent *event)
+static gboolean avatar_button_press_event_cb(INSTANCE, GdkEvent *event)
 {
     if (event->type != GDK_BUTTON_PRESS) {
         return false;
@@ -127,12 +122,11 @@ static gboolean avatar_button_press_event_cb(LupusProfile *instance, GdkEvent *e
             GtkWidget *preview = gtk_image_new();
             gtk_file_chooser_set_preview_widget(file_chooser, preview);
 
-            g_signal_connect(file_chooser, "update-preview", G_CALLBACK(update_preview_cb), preview);
+            connect(file_chooser, "update-preview", update_preview_cb, preview);
         }
 
         if (gtk_dialog_run(GTK_DIALOG(file_chooser)) == GTK_RESPONSE_ACCEPT) {
-            gchar *filename = gtk_file_chooser_get_filename(file_chooser);
-            g_object_set(instance->objectself, "avatar-filename", filename, NULL);
+            object_set_prop(instance->objectself, "avatar-filename", gtk_file_chooser_get_filename(file_chooser));
         }
 
         gtk_widget_hide(GTK_WIDGET(file_chooser));
@@ -143,7 +137,7 @@ static gboolean avatar_button_press_event_cb(LupusProfile *instance, GdkEvent *e
     return FALSE;
 }
 
-static void popover_status_activate_cb(GtkMenuItem *item, LupusProfile *instance)
+static void popover_status_activate_cb(GtkMenuItem *item, INSTANCE)
 {
     GtkWidget *box = gtk_bin_get_child(GTK_BIN(item));
     GList *children = gtk_container_get_children(GTK_CONTAINER(box));
@@ -157,15 +151,13 @@ static void popover_status_activate_cb(GtkMenuItem *item, LupusProfile *instance
         status = TOX_USER_STATUS_BUSY;
     }
 
-    g_object_set(instance->objectself, "user-status", status, NULL);
+    object_set_prop(instance->objectself, "user-status", status);
 }
 
-static void popover_myid_activate_cb(LupusProfile *instance)
+static void popover_myid_activate_cb(INSTANCE)
 {
     // Cannot make widgets static, because address can be changed due to nospam or pk
-
-    gchar *address = NULL;
-    g_object_get(instance->objectself, "address", &address, NULL);
+    object_get_prop(instance->objectself, "address", address, gchar *);
 
     GtkWidget *dialog = g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, "title", "My ID", "resizable", FALSE,
                                      "border-width", 5, NULL);
@@ -180,7 +172,7 @@ static void popover_myid_activate_cb(LupusProfile *instance)
     gtk_widget_hide(dialog);
 }
 
-static void construct_popover(LupusProfile *instance)
+static void construct_popover(INSTANCE)
 {
     instance->popover = GTK_MENU(gtk_menu_new());
 
@@ -208,9 +200,9 @@ static void construct_popover(LupusProfile *instance)
         if (i == (j - 1)) {
             gtk_menu_shell_append(GTK_MENU_SHELL(instance->popover), gtk_separator_menu_item_new());
 
-            g_signal_connect_swapped(item, "activate", G_CALLBACK(popover_myid_activate_cb), instance);
+            connect_swapped(item, "activate", popover_myid_activate_cb, instance);
         } else {
-            g_signal_connect(item, "activate", G_CALLBACK(popover_status_activate_cb), instance);
+            connect(item, "activate", popover_status_activate_cb, instance);
         }
 
         gtk_menu_shell_append(GTK_MENU_SHELL(instance->popover), item);
@@ -219,38 +211,21 @@ static void construct_popover(LupusProfile *instance)
     gtk_widget_show_all(GTK_WIDGET(instance->popover));
 }
 
-static void lupus_profile_get_property(GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
-{
-    LupusProfile *instance = LUPUS_PROFILE(object);
+get_property_header()
+case PROP_OBJECTSELF:
+    g_value_set_pointer(value, instance->objectself);
+    break;
+get_property_footer()
 
-    switch ((LupusProfileProperty)property_id) {
-    case PROP_OBJECTSELF:
-        g_value_set_pointer(value, instance->objectself);
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-    }
-}
+set_property_header()
+case PROP_OBJECTSELF:
+    instance->objectself = g_value_get_pointer(value);
+    break;
+set_property_footer()
 
-static void lupus_profile_set_property(GObject *object, guint property_id, GValue const *value, GParamSpec *pspec)
-{
-    LupusProfile *instance = LUPUS_PROFILE(object);
-
-    switch ((LupusProfileProperty)property_id) {
-    case PROP_OBJECTSELF:
-        instance->objectself = g_value_get_pointer(value);
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-    }
-}
-
-static void lupus_profile_constructed(GObject *object)
-{
-    LupusProfile *instance = LUPUS_PROFILE(object);
-
-    gchar *objectself_name, *objectself_status_message;
-    g_object_get(instance->objectself, "name", &objectself_name, "status-message", &objectself_status_message, NULL);
+constructed_header()
+    object_get_prop(instance->objectself, "name", objectself_name, gchar *);
+    object_get_prop(instance->objectself, "status-message", objectself_status_message, gchar *);
     instance->name = lupus_editablelabel_new(objectself_name, tox_max_name_length());
     instance->status_message = lupus_editablelabel_new(objectself_status_message, tox_max_status_message_length());
     g_free(objectself_name);
@@ -264,8 +239,7 @@ static void lupus_profile_constructed(GObject *object)
     gtk_box_pack_end(instance->vbox, separator, FALSE, TRUE, 0);
     gtk_box_pack_end(instance->vbox, name, FALSE, TRUE, 0);
 
-    GdkPixbuf *objectself_avatar_pixbuf;
-    g_object_get(instance->objectself, "avatar-pixbuf", &objectself_avatar_pixbuf, NULL);
+    object_get_prop(instance->objectself, "avatar-pixbuf", objectself_avatar_pixbuf, GdkPixbuf *);
     if (!objectself_avatar_pixbuf) {
         // TODO: write default avatar ?
         objectself_avatar_pixbuf =
@@ -288,22 +262,15 @@ static void lupus_profile_constructed(GObject *object)
 
     construct_popover(instance);
 
-    g_signal_connect_swapped(instance->name, "submit", G_CALLBACK(name_submitted_cb), instance);
-    g_signal_connect_swapped(instance->status_message, "submit", G_CALLBACK(status_message_submitted_cb), instance);
-    g_signal_connect_swapped(instance->avatar_event_box, "button-press-event", G_CALLBACK(avatar_button_press_event_cb),
-                             instance);
-    g_signal_connect_swapped(instance->objectself, "notify::avatar-pixbuf", G_CALLBACK(objectself_avatar_pixbuf_cb),
-                             instance);
-    g_signal_connect_swapped(instance->objectself, "notify::connection", G_CALLBACK(objectself_connection_cb),
-                             instance);
-    g_signal_connect_swapped(instance->objectself, "notify::user-status", G_CALLBACK(objectself_user_status_cb),
-                             instance);
+    connect_swapped(instance->name, "submit", name_submitted_cb, instance);
+    connect_swapped(instance->status_message, "submit", status_message_submitted_cb, instance);
+    connect_swapped(instance->avatar_event_box, "button-press-event", avatar_button_press_event_cb, instance);
+    connect_swapped(instance->objectself, "notify::avatar-pixbuf", objectself_avatar_pixbuf_cb, instance);
+    connect_swapped(instance->objectself, "notify::connection", objectself_connection_cb, instance);
+    connect_swapped(instance->objectself, "notify::user-status", objectself_user_status_cb, instance);
+constructed_footer()
 
-    GObjectClass *object_class = G_OBJECT_CLASS(lupus_profile_parent_class);
-    object_class->constructed(object);
-}
-
-static void lupus_profile_class_init(LupusProfileClass *class)
+class_init()
 {
     GObjectClass *object_class = G_OBJECT_CLASS(class);
 
@@ -311,13 +278,12 @@ static void lupus_profile_class_init(LupusProfileClass *class)
     object_class->set_property = lupus_profile_set_property;
     object_class->get_property = lupus_profile_get_property;
 
-    obj_properties[PROP_OBJECTSELF] =
-        g_param_spec_pointer("objectself", NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+    define_property(PROP_OBJECTSELF, pointer, "objectself", G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 }
 
-static void lupus_profile_init(LupusProfile *instance) {}
+init() {}
 
 LupusProfile *lupus_profile_new(LupusObjectSelf *objectself)
 {
