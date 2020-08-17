@@ -6,29 +6,22 @@ ninja_required_version = 1.5.1
 
 # Rules for compiling.
 
-rule c_COMPILER
- command = ccache cc $ARGS -MD -MQ $out -MF '$DEPFILE' -o $out -c $in
+rule cpp_COMPILER
+ command = ccache c++ $ARGS -MD -MQ $out -MF '$DEPFILE' -o $out -c $in
  deps = gcc
  depfile = $DEPFILE
- description = Compiling C object $out
+ description = Compiling C++ object $out
 
 # Rules for linking.
 
-rule c_LINKER
- command = cc $ARGS -o $out $in $LINK_ARGS
+rule cpp_LINKER
+ command = c++ $ARGS -o $out $in $LINK_ARGS
  description = Linking target $out
 
 # Other rules
 
 rule CUSTOM_COMMAND
  command = $COMMAND
- description = $DESC
- restat = 1
-
-rule CUSTOM_COMMAND_DEP
- command = $COMMAND
- deps = gcc
- depfile = $DEPFILE
  description = $DESC
  restat = 1
 
@@ -43,69 +36,24 @@ build PHONY: phony
 
 # Build rules for targets
 
-build resources.c: CUSTOM_COMMAND_DEP /home/ogromny/Code/C/Lupus/res/lupus.gresource.xml
- DEPFILE = resources.c.d
- COMMAND = glib-compile-resources /home/ogromny/Code/C/Lupus/res/lupus.gresource.xml --sourcedir /home/ogromny/Code/C/Lupus/res/ --sourcedir ../ --internal --generate --target resources.c --dependency-file resources.c.d
- description = Generating$ resources_c$ with$ a$ custom$ command
+build Lupus@exe/main.cpp.o: cpp_COMPILER ../main.cpp
+ DEPFILE = Lupus@exe/main.cpp.o.d
+ ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtkmm-3.0 -I/usr/lib64/gtkmm-3.0/include -I/usr/include/atkmm-1.6 -I/usr/include/atk-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/glibmm-2.4 -I/usr/lib64/glibmm-2.4/include -I/usr/include/sigc++-2.0 -I/usr/lib64/sigc++-2.0/include -I/usr/include/giomm-2.4 -I/usr/lib64/giomm-2.4/include -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/pangomm-1.4 -I/usr/lib64/pangomm-1.4/include -I/usr/include/cairomm-1.0 -I/usr/lib64/cairomm-1.0/include -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/pango-1.0 -I/usr/include/fribidi -I/usr/include/harfbuzz -I/usr/include/gtk-3.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/gio-unix-2.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/gtk-3.0/unix-print -I/usr/include/gdkmm-3.0 -I/usr/lib64/gdkmm-3.0/include -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wpedantic -std=c++17 -g -pthread
 
-build resources.h: CUSTOM_COMMAND /home/ogromny/Code/C/Lupus/res/lupus.gresource.xml
- COMMAND = glib-compile-resources /home/ogromny/Code/C/Lupus/res/lupus.gresource.xml --sourcedir /home/ogromny/Code/C/Lupus/res/ --sourcedir ../ --internal --generate --target resources.h
- description = Generating$ resources_h$ with$ a$ custom$ command
+build Lupus@exe/src_Lupus.cpp.o: cpp_COMPILER ../src/Lupus.cpp
+ DEPFILE = Lupus@exe/src_Lupus.cpp.o.d
+ ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtkmm-3.0 -I/usr/lib64/gtkmm-3.0/include -I/usr/include/atkmm-1.6 -I/usr/include/atk-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/glibmm-2.4 -I/usr/lib64/glibmm-2.4/include -I/usr/include/sigc++-2.0 -I/usr/lib64/sigc++-2.0/include -I/usr/include/giomm-2.4 -I/usr/lib64/giomm-2.4/include -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/pangomm-1.4 -I/usr/lib64/pangomm-1.4/include -I/usr/include/cairomm-1.0 -I/usr/lib64/cairomm-1.0/include -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/pango-1.0 -I/usr/include/fribidi -I/usr/include/harfbuzz -I/usr/include/gtk-3.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/gio-unix-2.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/gtk-3.0/unix-print -I/usr/include/gdkmm-3.0 -I/usr/lib64/gdkmm-3.0/include -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wpedantic -std=c++17 -g -pthread
 
-build Lupus@exe/meson-generated_.._resources.c.o: c_COMPILER resources.c | resources.h
- DEPFILE = Lupus@exe/meson-generated_.._resources.c.o.d
- ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
+build Lupus@exe/src_ToxSelf.cpp.o: cpp_COMPILER ../src/ToxSelf.cpp
+ DEPFILE = Lupus@exe/src_ToxSelf.cpp.o.d
+ ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtkmm-3.0 -I/usr/lib64/gtkmm-3.0/include -I/usr/include/atkmm-1.6 -I/usr/include/atk-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/glibmm-2.4 -I/usr/lib64/glibmm-2.4/include -I/usr/include/sigc++-2.0 -I/usr/lib64/sigc++-2.0/include -I/usr/include/giomm-2.4 -I/usr/lib64/giomm-2.4/include -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/pangomm-1.4 -I/usr/lib64/pangomm-1.4/include -I/usr/include/cairomm-1.0 -I/usr/lib64/cairomm-1.0/include -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/pango-1.0 -I/usr/include/fribidi -I/usr/include/harfbuzz -I/usr/include/gtk-3.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/gio-unix-2.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/gtk-3.0/unix-print -I/usr/include/gdkmm-3.0 -I/usr/lib64/gdkmm-3.0/include -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wpedantic -std=c++17 -g -pthread
 
-build Lupus@exe/main.c.o: c_COMPILER ../main.c || resources.h
- DEPFILE = Lupus@exe/main.c.o.d
- ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
+build Lupus@exe/src_LupusProfileChooser.cpp.o: cpp_COMPILER ../src/LupusProfileChooser.cpp
+ DEPFILE = Lupus@exe/src_LupusProfileChooser.cpp.o.d
+ ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtkmm-3.0 -I/usr/lib64/gtkmm-3.0/include -I/usr/include/atkmm-1.6 -I/usr/include/atk-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/glibmm-2.4 -I/usr/lib64/glibmm-2.4/include -I/usr/include/sigc++-2.0 -I/usr/lib64/sigc++-2.0/include -I/usr/include/giomm-2.4 -I/usr/lib64/giomm-2.4/include -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/pangomm-1.4 -I/usr/lib64/pangomm-1.4/include -I/usr/include/cairomm-1.0 -I/usr/lib64/cairomm-1.0/include -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/pango-1.0 -I/usr/include/fribidi -I/usr/include/harfbuzz -I/usr/include/gtk-3.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/gio-unix-2.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/gtk-3.0/unix-print -I/usr/include/gdkmm-3.0 -I/usr/lib64/gdkmm-3.0/include -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wpedantic -std=c++17 -g -pthread
 
-build Lupus@exe/src_lupus_main.c.o: c_COMPILER ../src/lupus_main.c || resources.h
- DEPFILE = Lupus@exe/src_lupus_main.c.o.d
- ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
-
-build Lupus@exe/src_lupus_profile.c.o: c_COMPILER ../src/lupus_profile.c || resources.h
- DEPFILE = Lupus@exe/src_lupus_profile.c.o.d
- ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
-
-build Lupus@exe/src_lupus_objectself.c.o: c_COMPILER ../src/lupus_objectself.c || resources.h
- DEPFILE = Lupus@exe/src_lupus_objectself.c.o.d
- ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
-
-build Lupus@exe/src_lupus_application.c.o: c_COMPILER ../src/lupus_application.c || resources.h
- DEPFILE = Lupus@exe/src_lupus_application.c.o.d
- ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
-
-build Lupus@exe/src_lupus_editablelabel.c.o: c_COMPILER ../src/lupus_editablelabel.c || resources.h
- DEPFILE = Lupus@exe/src_lupus_editablelabel.c.o.d
- ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
-
-build Lupus@exe/src_lupus_profilechooser.c.o: c_COMPILER ../src/lupus_profilechooser.c || resources.h
- DEPFILE = Lupus@exe/src_lupus_profilechooser.c.o.d
- ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
-
-build Lupus@exe/src_lupus_friend.c.o: c_COMPILER ../src/lupus_friend.c || resources.h
- DEPFILE = Lupus@exe/src_lupus_friend.c.o.d
- ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
-
-build Lupus@exe/src_lupus_objectfriend.c.o: c_COMPILER ../src/lupus_objectfriend.c || resources.h
- DEPFILE = Lupus@exe/src_lupus_objectfriend.c.o.d
- ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
-
-build Lupus@exe/src_lupus_objecttransfers.c.o: c_COMPILER ../src/lupus_objecttransfers.c || resources.h
- DEPFILE = Lupus@exe/src_lupus_objecttransfers.c.o.d
- ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
-
-build Lupus@exe/src_toxidenticon.c.o: c_COMPILER ../src/toxidenticon.c || resources.h
- DEPFILE = Lupus@exe/src_toxidenticon.c.o.d
- ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
-
-build Lupus@exe/src_lupus_objectsaver.c.o: c_COMPILER ../src/lupus_objectsaver.c || resources.h
- DEPFILE = Lupus@exe/src_lupus_objectsaver.c.o.d
- ARGS = -ILupus@exe -I. -I.. -I/usr/include/gtk-3.0 -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
-
-build Lupus: c_LINKER Lupus@exe/meson-generated_.._resources.c.o Lupus@exe/main.c.o Lupus@exe/src_lupus_main.c.o Lupus@exe/src_lupus_profile.c.o Lupus@exe/src_lupus_objectself.c.o Lupus@exe/src_lupus_application.c.o Lupus@exe/src_lupus_editablelabel.c.o Lupus@exe/src_lupus_profilechooser.c.o Lupus@exe/src_lupus_friend.c.o Lupus@exe/src_lupus_objectfriend.c.o Lupus@exe/src_lupus_objecttransfers.c.o Lupus@exe/src_toxidenticon.c.o Lupus@exe/src_lupus_objectsaver.c.o | /usr/lib64/libgtk-3.so /usr/lib64/libgdk-3.so /usr/lib64/libpangocairo-1.0.so /usr/lib64/libpango-1.0.so /usr/lib64/libatk-1.0.so /usr/lib64/libcairo-gobject.so /usr/lib64/libcairo.so /usr/lib64/libgdk_pixbuf-2.0.so /usr/lib64/libgio-2.0.so /usr/lib64/libgobject-2.0.so /usr/lib64/libglib-2.0.so /usr/lib64/libsodium.so /usr/lib64/libtoxcore.so
- LINK_ARGS = -Wl,--as-needed -Wl,--no-undefined -Wl,--start-group /usr/lib64/libgtk-3.so /usr/lib64/libgdk-3.so /usr/lib64/libpangocairo-1.0.so /usr/lib64/libpango-1.0.so /usr/lib64/libatk-1.0.so /usr/lib64/libcairo-gobject.so /usr/lib64/libcairo.so /usr/lib64/libgdk_pixbuf-2.0.so /usr/lib64/libgio-2.0.so /usr/lib64/libgobject-2.0.so /usr/lib64/libglib-2.0.so /usr/lib64/libsodium.so /usr/lib64/libtoxcore.so -Wl,--end-group
+build Lupus: cpp_LINKER Lupus@exe/main.cpp.o Lupus@exe/src_Lupus.cpp.o Lupus@exe/src_ToxSelf.cpp.o Lupus@exe/src_LupusProfileChooser.cpp.o | /usr/lib64/libgtkmm-3.0.so /usr/lib64/libatkmm-1.6.so /usr/lib64/libgdkmm-3.0.so /usr/lib64/libgiomm-2.4.so /usr/lib64/libpangomm-1.4.so /usr/lib64/libglibmm-2.4.so /usr/lib64/libgtk-3.so /usr/lib64/libgdk-3.so /usr/lib64/libpangocairo-1.0.so /usr/lib64/libpango-1.0.so /usr/lib64/libatk-1.0.so /usr/lib64/libcairo-gobject.so /usr/lib64/libgio-2.0.so /usr/lib64/libcairomm-1.0.so /usr/lib64/libcairo.so /usr/lib64/libsigc-2.0.so /usr/lib64/libgdk_pixbuf-2.0.so /usr/lib64/libgobject-2.0.so /usr/lib64/libglib-2.0.so /usr/lib64/libsodium.so /usr/lib64/libtoxcore.so
+ LINK_ARGS = -Wl,--as-needed -Wl,--no-undefined -Wl,--start-group /usr/lib64/libgtkmm-3.0.so /usr/lib64/libatkmm-1.6.so /usr/lib64/libgdkmm-3.0.so /usr/lib64/libgiomm-2.4.so /usr/lib64/libpangomm-1.4.so /usr/lib64/libglibmm-2.4.so /usr/lib64/libgtk-3.so /usr/lib64/libgdk-3.so /usr/lib64/libpangocairo-1.0.so /usr/lib64/libpango-1.0.so /usr/lib64/libatk-1.0.so /usr/lib64/libcairo-gobject.so /usr/lib64/libgio-2.0.so /usr/lib64/libcairomm-1.0.so /usr/lib64/libcairo.so /usr/lib64/libsigc-2.0.so /usr/lib64/libgdk_pixbuf-2.0.so /usr/lib64/libgobject-2.0.so /usr/lib64/libglib-2.0.so /usr/lib64/libsodium.so /usr/lib64/libtoxcore.so -Wl,--end-group
 
 # Test rules
 
@@ -153,6 +101,12 @@ build meson-clang-format: CUSTOM_COMMAND PHONY
 
 build clang-format: phony meson-clang-format
 
+build meson-ctags: CUSTOM_COMMAND PHONY
+ COMMAND = /usr/lib/python-exec/python3.7/meson --internal tags ctags /home/ogromny/Code/C/Lupus
+ pool = console
+
+build ctags: phony meson-ctags
+
 build meson-uninstall: CUSTOM_COMMAND PHONY
  COMMAND = /usr/lib/python-exec/python3.7/meson --internal uninstall
  pool = console
@@ -163,13 +117,7 @@ build all: phony Lupus
 
 build clean: phony meson-clean
 
-build meson-clean-ctlist: CUSTOM_COMMAND PHONY
- COMMAND = /usr/lib/python-exec/python3.7/meson --internal cleantrees /home/ogromny/Code/C/Lupus/build/meson-private/cleantrees.dat
- description = Cleaning$ custom$ target$ directories
-
-build clean-ctlist: phony meson-clean-ctlist
-
-build meson-clean: CUSTOM_COMMAND PHONY | clean-ctlist
+build meson-clean: CUSTOM_COMMAND PHONY
  COMMAND = /usr/bin/ninja -t clean
  description = Cleaning
 

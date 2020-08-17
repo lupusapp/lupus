@@ -1,13 +1,15 @@
 ---
+Language: Cpp
 BasedOnStyle: LLVM
 IndentWidth: 4
 BreakBeforeBraces: Linux
 AllowShortIfStatementsOnASingleLine: Never
-ColumnLimit: 120
+ColumnLimit: 100
 AlignEscapedNewlines: Left
 MacroBlockBegin: "^[gs]et_property_header|finalize_header|constructed_header"
 MacroBlockEnd: "^[gs]et_property_footer|finalize_footer|constructed_footer"
 AlignConsecutiveMacros: true
+AccessModifierOffset: -4
 
 #Language:      Cpp
 ##BasedOnStyle:  LLVM

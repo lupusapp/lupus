@@ -76,7 +76,8 @@ static void login_cb(GtkButton *button, INSTANCE)
         }
 
         guint8 *tmp = g_malloc(savedata_size - TOX_PASS_ENCRYPTION_EXTRA_LENGTH);
-        if (!tox_pass_decrypt((guint8 *)savedata, savedata_size, (guint8 *)password, strlen(password), tmp, NULL)) {
+        if (!tox_pass_decrypt((guint8 *)savedata, savedata_size, (guint8 *)password,
+                              strlen(password), tmp, NULL)) {
             lupus_error("Cannot decrypt profile.");
             g_free(tmp);
             goto free;
@@ -125,7 +126,8 @@ gboolean tox_save(Tox *tox, gchar *filename, gchar const *password)
     if (password && *password) {
         guint8 *tmp = g_malloc(savedata_size + TOX_PASS_ENCRYPTION_EXTRA_LENGTH);
 
-        if (!tox_pass_encrypt(savedata, savedata_size, (guint8 *)password, strlen(password), tmp, NULL)) {
+        if (!tox_pass_encrypt(savedata, savedata_size, (guint8 *)password, strlen(password), tmp,
+                              NULL)) {
             lupus_error("Cannot encrypt profile.");
             g_free(tmp);
             g_free(savedata);
@@ -154,7 +156,8 @@ gboolean tox_save(Tox *tox, gchar *filename, gchar const *password)
 
 static void register_cb(INSTANCE)
 {
-    gchar *filename = g_strconcat(LUPUS_TOX_DIR, gtk_entry_get_text(instance->register_name), ".tox", NULL);
+    gchar *filename =
+        g_strconcat(LUPUS_TOX_DIR, gtk_entry_get_text(instance->register_name), ".tox", NULL);
 
     if (g_file_test(filename, G_FILE_TEST_EXISTS)) {
         lupus_error("Profile \"%s\" already exists.", filename);
@@ -169,7 +172,8 @@ static void register_cb(INSTANCE)
 
     // not a problem if name or status fail
     tox_self_set_name(tox, (guint8 *)DEFAULT_NAME, strlen(DEFAULT_NAME), NULL);
-    tox_self_set_status_message(tox, (guint8 *)DEFAULT_STATUS_MESSAGE, strlen(DEFAULT_STATUS_MESSAGE), NULL);
+    tox_self_set_status_message(tox, (guint8 *)DEFAULT_STATUS_MESSAGE,
+                                strlen(DEFAULT_STATUS_MESSAGE), NULL);
 
     tox_save(tox, filename, gtk_entry_get_text(instance->register_pass));
     tox_kill(tox);
