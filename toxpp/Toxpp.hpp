@@ -1,0 +1,4 @@
+namespace Toxpp
+{
+class IdentIcon;
+}

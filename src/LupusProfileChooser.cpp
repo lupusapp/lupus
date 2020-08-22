@@ -1,7 +1,12 @@
 #include "include/LupusProfileChooser.hpp"
+#include "glibmm/refptr.h"
 #include "include/Lupus.hpp"
+#include "include/LupusMain.hpp"
 #include "include/ToxSelf.hpp"
+#include "include/lupus_main.h"
+#include "sigc++/adaptors/bind.h"
 #include "sigc++/functors/mem_fun.h"
+#include "sigc++/functors/ptr_fun.h"
 #include <filesystem>
 #include <gtkmm/button.h>
 #include <gtkmm/dialog.h>
@@ -9,6 +14,8 @@
 #include <gtkmm/headerbar.h>
 #include <gtkmm/stack.h>
 #include <gtkmm/stackswitcher.h>
+#include <iostream>
+#include <memory>
 
 /*
  * TODO: contextual menu
@@ -21,20 +28,20 @@ using Lupus::ProfileChooser;
 
 ProfileChooser::ProfileChooser(void) : Gtk::ApplicationWindow()
 {
-    auto loginBox{Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL)};
+    auto *loginBox{Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL)};
 
-    auto regisName{Gtk::make_managed<Gtk::Entry>()};
+    auto *regisName{Gtk::make_managed<Gtk::Entry>()};
     regisName->set_placeholder_text("Profile name");
-    auto regisPass{Gtk::make_managed<Gtk::Entry>()};
+    auto *regisPass{Gtk::make_managed<Gtk::Entry>()};
     regisPass->set_placeholder_text("Profile password");
-    auto regisSubm{Gtk::make_managed<Gtk::Button>("Create profile")};
-    auto regisBox{Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL, 5)};
+    auto *regisSubm{Gtk::make_managed<Gtk::Button>("Create profile")};
+    auto *regisBox{Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL, 5)};
     regisBox->property_margin().set_value(20);
     regisBox->pack_start(*regisName, false, true);
     regisBox->pack_start(*regisPass, false, true);
     regisBox->pack_start(*regisSubm, false, true);
 
-    auto stack{Gtk::make_managed<Gtk::Stack>()};
+    auto *stack{Gtk::make_managed<Gtk::Stack>()};
     stack->set_transition_type(Gtk::STACK_TRANSITION_TYPE_CROSSFADE);
     stack->set_transition_duration(200);
     stack->set_vhomogeneous(false);
@@ -43,10 +50,10 @@ ProfileChooser::ProfileChooser(void) : Gtk::ApplicationWindow()
     stack->add(*regisBox, "Register", "Register");
     add(*stack);
 
-    auto stackSwitcher{Gtk::make_managed<Gtk::StackSwitcher>()};
+    auto *stackSwitcher{Gtk::make_managed<Gtk::StackSwitcher>()};
     stackSwitcher->set_stack(*stack);
 
-    auto headerBar{Gtk::make_managed<Gtk::HeaderBar>()};
+    auto *headerBar{Gtk::make_managed<Gtk::HeaderBar>()};
     headerBar->set_title("Lupus Profile Chooser");
     headerBar->set_show_close_button(true);
     headerBar->pack_start(*stackSwitcher);
@@ -78,7 +85,7 @@ void ProfileChooser::listProfiles(Gtk::Box &loginBox)
             continue;
         }
 
-        auto button{Gtk::make_managed<Gtk::Button>(filePath.stem().string())};
+        auto *button{Gtk::make_managed<Gtk::Button>(filePath.stem().string())};
         button->set_focus_on_click(false);
         button->set_size_request(0, 50);
         button->set_relief(Gtk::RELIEF_NONE);
@@ -118,7 +125,15 @@ void ProfileChooser::login(std::string const &profileFilename)
     }
 
     try {
-        ToxSelf self{profileFilename, password};
+        auto application{this->get_application()};
+        application->remove_window(*this);
+
+        auto *main{new Lupus::Main{new ToxSelf{profileFilename, password}}};
+        main->signal_hide().connect([=] { delete main; });
+        application->add_window(*main);
+        main->present();
+
+        this->~ProfileChooser();
     } catch (std::runtime_error &e) {
         messageBox(*this, e.what());
     }

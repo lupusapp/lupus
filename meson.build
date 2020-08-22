@@ -6,6 +6,7 @@ toxcore = dependency('toxcore', required: true)
 
 subdir('src')
 subdir('include')
+subdir('toxpp')
 
 executable(
   meson.project_name(),
@@ -13,10 +14,12 @@ executable(
     'main.cpp',
     srcs,
     hdrs,
+    toxpp,
     ],
   dependencies: [
     gtk,
     libsodium,
     toxcore
-    ]
+    ],
+  cpp_args: ['-Wall', '-Werror', '-pedantic']
   )

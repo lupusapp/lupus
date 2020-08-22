@@ -1,5 +1,8 @@
 hdrs = files(
   'Lupus.hpp',
   'ToxSelf.hpp',
-  'LupusProfileChooser.hpp'
+  'LupusMain.hpp',
+  'LupusProfileChooser.hpp',
+  'LupusEditableEntry.hpp',
+  'LupusProfile.hpp'
   )

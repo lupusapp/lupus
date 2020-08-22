@@ -1,0 +1,15 @@
+[submodule "color"]
+	path = color
+	url = https://github.com/dmilos/color.git
+[submodule "toxpp/color"]
+	path = toxpp/color
+	url = https://github.com/dmilos/color.git
+[submodule "toxpp/digestpp"]
+	path = toxpp/digestpp
+	url = https://github.com/kerukuro/digestpp.git
+[submodule "toxpp/pngwriter"]
+	path = toxpp/pngwriter
+	url = https://github.com/pngwriter/pngwriter.git
+[submodule "toxpp/lodepng"]
+	path = toxpp/lodepng
+	url = https://github.com/lvandeve/lodepng.git

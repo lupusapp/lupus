@@ -1,4 +1,4 @@
-Build started at 2020-08-15T20:56:43.418512
+Build started at 2020-08-20T14:39:56.988653
 Main binary: /usr/bin/python3.7
 Build Options: -Dbackend=ninja
 Python system: Linux
@@ -35,8 +35,8 @@ Build targets in project: 1
 
 Found ninja-1.9.0.git.kitware.dyndep-1.jobserver-1 at /usr/bin/ninja
 Running compile:
-Working directory:  /tmp/tmp99zfkcp2
-Command line:  ccache c++ /tmp/tmp99zfkcp2/testfile.cpp -o /tmp/tmp99zfkcp2/output.obj -pipe -D_FILE_OFFSET_BITS=64 -c -std=c++17 
+Working directory:  /tmp/tmpapdwh0zv
+Command line:  ccache c++ /tmp/tmpapdwh0zv/testfile.cpp -o /tmp/tmpapdwh0zv/output.obj -pipe -D_FILE_OFFSET_BITS=64 -c -std=c++17 
 
 Code:
  int i = static_cast<int>(0);
@@ -46,8 +46,8 @@ Compiler stderr:
  
 Compiler accepts -std=c++17: YES
 Running compile:
-Working directory:  /home/ogromny/Code/C/Lupus/build/meson-private/tmpkkyi6gdi
-Command line:  ccache c++ /home/ogromny/Code/C/Lupus/build/meson-private/tmpkkyi6gdi/testfile.cpp -o /home/ogromny/Code/C/Lupus/build/meson-private/tmpkkyi6gdi/output.obj -pipe -c -D_FILE_OFFSET_BITS=64 -O0 -fpermissive --print-search-dirs 
+Working directory:  /home/ogromny/Code/C/Lupus/build/meson-private/tmp9e2_52tl
+Command line:  ccache c++ /home/ogromny/Code/C/Lupus/build/meson-private/tmp9e2_52tl/testfile.cpp -o /home/ogromny/Code/C/Lupus/build/meson-private/tmp9e2_52tl/output.obj -pipe -c -D_FILE_OFFSET_BITS=64 -O0 -fpermissive --print-search-dirs 
 
 Code:
  
