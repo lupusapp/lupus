@@ -53,12 +53,15 @@ public:
             auto const &entryText{entry->get_text()};
 
             if (labelText == entryText) {
-                return;
+                goto end;
             }
 
             if (_signalSubmit.emit(entryText)) {
                 bold ? label->set_markup("<b>" + entryText + "</b>") : label->set_text(entryText);
             }
+
+        end:
+            popover->popdown();
         });
 
         add(*label);

@@ -4,9 +4,11 @@
 #include "gtkmm/enums.h"
 #include "gtkmm/eventbox.h"
 #include "gtkmm/object.h"
+#include "gtkmm/window.h"
 #include "include/Lupus.hpp"
 #include "include/LupusEditableEntry.hpp"
 #include "toxpp/Self.hpp"
+#include <exception>
 
 namespace Lupus
 {
@@ -32,6 +34,27 @@ public:
 
         add(*box);
         set_size_request(Lupus::profileBoxWidth);
+
+        name->signalSubmit().connect([=](std::string name) -> bool {
+            try {
+                toxppSelf->name(name);
+                return true;
+            } catch (std::exception &e) {
+                messageBox(dynamic_cast<Gtk::Window *>(get_parent()), std::string{e.what()});
+                return false;
+            }
+        });
+
+        statusMessage->signalSubmit().connect([=](std::string statusMessage) -> bool {
+            try {
+                toxppSelf->statusMessage(statusMessage);
+                return true;
+            } catch (std::exception &e) {
+                messageBox(dynamic_cast<Gtk::Window *>(get_parent()), std::string{e.what()});
+                return false;
+            }
+        });
+
         show_all();
     }
 
