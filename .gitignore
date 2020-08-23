@@ -113,5 +113,5 @@ Lupus
 Lupus.cbp
 
 .clangd/
-./build/
+.build/
 build/
