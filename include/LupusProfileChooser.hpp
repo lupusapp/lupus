@@ -3,6 +3,7 @@
 
 #include "include/Lupus.hpp"
 #include "include/LupusMain.hpp"
+#include "toxpp/Self.hpp"
 #include "toxpp/Toxpp.hpp"
 #include <exception>
 #include <filesystem>
@@ -11,6 +12,7 @@
 #include <gtkmm/entry.h>
 #include <gtkmm/stack.h>
 #include <gtkmm/stackswitcher.h>
+#include <memory>
 
 /*
  * TODO: contextual menu
@@ -99,13 +101,13 @@ private:
         loginBox.show_all();
     }
 
-    void login(std::string const &profileFilename)
+    void login(std::string const &filename)
     {
         std::optional<std::string> password{std::nullopt};
 
         bool isEncrypted;
         try {
-            isEncrypted = Toxpp::Self::isEncrypted(profileFilename);
+            isEncrypted = Toxpp::Self::isEncrypted(filename);
         } catch (std::exception &e) {
             messageBox(*this, e.what());
         }
@@ -134,7 +136,8 @@ private:
         }
 
         try {
-            auto *main{new Lupus::Main{new Toxpp::Self{profileFilename, password}}};
+            auto toxppSelf{std::make_shared<Toxpp::Self>(filename, password)};
+            auto *main{new Lupus::Main{toxppSelf}};
             main->signal_hide().connect([=] { delete main; });
 
             auto application{this->get_application()};

@@ -9,6 +9,7 @@
 #include "include/LupusEditableEntry.hpp"
 #include "toxpp/Self.hpp"
 #include <exception>
+#include <memory>
 
 namespace Lupus
 {
@@ -19,7 +20,7 @@ class Lupus::Profile final : public Gtk::EventBox
 {
 public:
     Profile(void) = delete;
-    Profile(Toxpp::Self *toxppSelf)
+    Profile(std::shared_ptr<Toxpp::Self> &toxppSelf)
         : toxppSelf{toxppSelf}, name{Gtk::make_managed<Lupus::EditableEntry>(
                                     toxppSelf->name(), toxppSelf->nameMaxSize)},
           statusMessage{Gtk::make_managed<Lupus::EditableEntry>(toxppSelf->statusMessage(),
@@ -59,7 +60,7 @@ public:
     }
 
 private:
-    Toxpp::Self *toxppSelf;
+    std::shared_ptr<Toxpp::Self> toxppSelf;
     Lupus::EditableEntry *name;
     Lupus::EditableEntry *statusMessage;
 };

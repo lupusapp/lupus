@@ -16,7 +16,7 @@ class Lupus::Main final : public Gtk::ApplicationWindow
 {
 public:
     Main(void) = delete;
-    Main(Toxpp::Self *toxppSelf) : toxppSelf{toxppSelf}
+    Main(std::shared_ptr<Toxpp::Self> &toxppSelf) : toxppSelf{toxppSelf}
     {
         auto *headerBar{Gtk::make_managed<Gtk::HeaderBar>()};
         headerBar->pack_start(*Gtk::make_managed<Lupus::Profile>(toxppSelf));
@@ -27,12 +27,10 @@ public:
     ~Main(void)
     {
         toxppSelf->save(); // TODO: save here ?
-        delete toxppSelf;
     }
 
 private:
-    // TODO: shared_ptr ?
-    Toxpp::Self *toxppSelf;
+    std::shared_ptr<Toxpp::Self> toxppSelf;
 };
 
 #endif
