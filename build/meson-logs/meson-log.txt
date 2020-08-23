@@ -1,9 +1,9 @@
-Build started at 2020-08-20T14:39:56.988653
+Build started at 2020-08-23T22:20:08.264119
 Main binary: /usr/bin/python3.7
-Build Options: -Dbackend=ninja
+Build Options: 
 Python system: Linux
 The Meson build system
-Version: 0.54.3
+Version: 0.55.1
 Source dir: /home/ogromny/Code/C/Lupus
 Build dir: /home/ogromny/Code/C/Lupus/build
 Build type: native build
@@ -11,15 +11,79 @@ None of 'PKG_CONFIG_PATH' are defined in the environment, not changing global fl
 None of 'PKG_CONFIG_PATH' are defined in the environment, not changing global flags.
 Project name: Lupus
 Project version: undefined
-C compiler for the build machine: ccache cc (gcc 9.3.0 "cc (Gentoo 9.3.0 p2) 9.3.0")
+None of 'CC' are defined in the environment, not changing global flags.
+None of 'CFLAGS' are defined in the environment, not changing global flags.
+None of 'LDFLAGS' are defined in the environment, not changing global flags.
+None of 'CPPFLAGS' are defined in the environment, not changing global flags.
+None of 'CC_LD' are defined in the environment, not changing global flags.
+Sanity testing C compiler: ccache cc
+Is cross compiler: False.
+None of 'CC_LD' are defined in the environment, not changing global flags.
+Sanity check compiler command line: ccache cc /home/ogromny/Code/C/Lupus/build/meson-private/sanitycheckc.c -o /home/ogromny/Code/C/Lupus/build/meson-private/sanitycheckc.exe -pipe -D_FILE_OFFSET_BITS=64
+Sanity check compile stdout:
+
+-----
+Sanity check compile stderr:
+
+-----
+Running test binary command: /home/ogromny/Code/C/Lupus/build/meson-private/sanitycheckc.exe
+C compiler for the build machine: ccache cc (gcc 9.3.0 "cc (Gentoo 9.3.0-r1 p3) 9.3.0")
 C linker for the build machine: cc ld.bfd 2.33.1
 None of 'AR' are defined in the environment, not changing global flags.
-C++ compiler for the build machine: ccache c++ (gcc 9.3.0 "c++ (Gentoo 9.3.0 p2) 9.3.0")
+None of 'CXX' are defined in the environment, not changing global flags.
+None of 'CXXFLAGS' are defined in the environment, not changing global flags.
+None of 'LDFLAGS' are defined in the environment, not changing global flags.
+None of 'CPPFLAGS' are defined in the environment, not changing global flags.
+None of 'CXX_LD' are defined in the environment, not changing global flags.
+Sanity testing C++ compiler: ccache c++
+Is cross compiler: False.
+None of 'CXX_LD' are defined in the environment, not changing global flags.
+Sanity check compiler command line: ccache c++ /home/ogromny/Code/C/Lupus/build/meson-private/sanitycheckcpp.cc -o /home/ogromny/Code/C/Lupus/build/meson-private/sanitycheckcpp.exe -pipe -D_FILE_OFFSET_BITS=64
+Sanity check compile stdout:
+
+-----
+Sanity check compile stderr:
+
+-----
+Running test binary command: /home/ogromny/Code/C/Lupus/build/meson-private/sanitycheckcpp.exe
+C++ compiler for the build machine: ccache c++ (gcc 9.3.0 "c++ (Gentoo 9.3.0-r1 p3) 9.3.0")
 C++ linker for the build machine: c++ ld.bfd 2.33.1
-C compiler for the host machine: ccache cc (gcc 9.3.0 "cc (Gentoo 9.3.0 p2) 9.3.0")
+None of 'CC' are defined in the environment, not changing global flags.
+None of 'CFLAGS' are defined in the environment, not changing global flags.
+None of 'LDFLAGS' are defined in the environment, not changing global flags.
+None of 'CPPFLAGS' are defined in the environment, not changing global flags.
+None of 'CC_LD' are defined in the environment, not changing global flags.
+Sanity testing C compiler: ccache cc
+Is cross compiler: False.
+None of 'CC_LD' are defined in the environment, not changing global flags.
+Sanity check compiler command line: ccache cc /home/ogromny/Code/C/Lupus/build/meson-private/sanitycheckc.c -o /home/ogromny/Code/C/Lupus/build/meson-private/sanitycheckc.exe -pipe -D_FILE_OFFSET_BITS=64
+Sanity check compile stdout:
+
+-----
+Sanity check compile stderr:
+
+-----
+Running test binary command: /home/ogromny/Code/C/Lupus/build/meson-private/sanitycheckc.exe
+C compiler for the host machine: ccache cc (gcc 9.3.0 "cc (Gentoo 9.3.0-r1 p3) 9.3.0")
 C linker for the host machine: cc ld.bfd 2.33.1
 None of 'AR' are defined in the environment, not changing global flags.
-C++ compiler for the host machine: ccache c++ (gcc 9.3.0 "c++ (Gentoo 9.3.0 p2) 9.3.0")
+None of 'CXX' are defined in the environment, not changing global flags.
+None of 'CXXFLAGS' are defined in the environment, not changing global flags.
+None of 'LDFLAGS' are defined in the environment, not changing global flags.
+None of 'CPPFLAGS' are defined in the environment, not changing global flags.
+None of 'CXX_LD' are defined in the environment, not changing global flags.
+Sanity testing C++ compiler: ccache c++
+Is cross compiler: False.
+None of 'CXX_LD' are defined in the environment, not changing global flags.
+Sanity check compiler command line: ccache c++ /home/ogromny/Code/C/Lupus/build/meson-private/sanitycheckcpp.cc -o /home/ogromny/Code/C/Lupus/build/meson-private/sanitycheckcpp.exe -pipe -D_FILE_OFFSET_BITS=64
+Sanity check compile stdout:
+
+-----
+Sanity check compile stderr:
+
+-----
+Running test binary command: /home/ogromny/Code/C/Lupus/build/meson-private/sanitycheckcpp.exe
+C++ compiler for the host machine: ccache c++ (gcc 9.3.0 "c++ (Gentoo 9.3.0-r1 p3) 9.3.0")
 C++ linker for the host machine: c++ ld.bfd 2.33.1
 Build machine cpu family: x86_64
 Build machine cpu: x86_64
@@ -27,27 +91,51 @@ Host machine cpu family: x86_64
 Host machine cpu: x86_64
 Target machine cpu family: x86_64
 Target machine cpu: x86_64
-Dependency gtkmm-3.0 found: YES 3.24.2 (cached)
-Dependency libsodium found: YES 1.0.18 (cached)
-Dependency toxcore found: YES 0.2.12 (cached)
-Program glib-compile-resources found: YES (/usr/bin/glib-compile-resources)
-Build targets in project: 1
-
-Found ninja-1.9.0.git.kitware.dyndep-1.jobserver-1 at /usr/bin/ninja
+Pkg-config binary for MachineChoice.HOST is not cached.
+None of 'PKG_CONFIG' are defined in the environment, not changing global flags.
+Pkg-config binary missing from cross or native file, or env var undefined.
+Trying a default Pkg-config fallback at pkg-config
+Found pkg-config: /usr/bin/pkg-config (1.6.3)
+Determining dependency 'gtkmm-3.0' with pkg-config executable '/usr/bin/pkg-config'
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config --modversion gtkmm-3.0` -> 0
+3.24.2
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config --cflags gtkmm-3.0` -> 0
+-I/usr/include/gtkmm-3.0 -I/usr/lib64/gtkmm-3.0/include -I/usr/include/atkmm-1.6 -I/usr/include/atk-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/glibmm-2.4 -I/usr/lib64/glibmm-2.4/include -I/usr/include/sigc++-2.0 -I/usr/lib64/sigc++-2.0/include -I/usr/include/giomm-2.4 -I/usr/lib64/giomm-2.4/include -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/pangomm-1.4 -I/usr/lib64/pangomm-1.4/include -I/usr/include/cairomm-1.0 -I/usr/lib64/cairomm-1.0/include -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/pango-1.0 -I/usr/include/fribidi -I/usr/include/harfbuzz -I/usr/include/gtk-3.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/gio-unix-2.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/gtk-3.0/unix-print -I/usr/include/gdkmm-3.0 -I/usr/lib64/gdkmm-3.0/include -pthread
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config gtkmm-3.0 --libs` -> 0
+-L/usr/lib64 -lgtkmm-3.0 -latkmm-1.6 -lgdkmm-3.0 -lgiomm-2.4 -lpangomm-1.4 -lglibmm-2.4 -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -latk-1.0 -lcairo-gobject -lgio-2.0 -lcairomm-1.0 -lcairo -lsigc-2.0 -lgdk_pixbuf-2.0 -lgobject-2.0 -lglib-2.0
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config gtkmm-3.0 --libs` -> 0
+-lgtkmm-3.0 -latkmm-1.6 -lgdkmm-3.0 -lgiomm-2.4 -lpangomm-1.4 -lglibmm-2.4 -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -latk-1.0 -lcairo-gobject -lgio-2.0 -lcairomm-1.0 -lcairo -lsigc-2.0 -lgdk_pixbuf-2.0 -lgobject-2.0 -lglib-2.0
+None of 'PKG_CONFIG_PATH' are defined in the environment, not changing global flags.
+None of 'CXX_LD' are defined in the environment, not changing global flags.
 Running compile:
-Working directory:  /tmp/tmpapdwh0zv
-Command line:  ccache c++ /tmp/tmpapdwh0zv/testfile.cpp -o /tmp/tmpapdwh0zv/output.obj -pipe -D_FILE_OFFSET_BITS=64 -c -std=c++17 
+Working directory:  /home/ogromny/Code/C/Lupus/build/meson-private/tmpu1srpf13
+Command line:  ccache c++ /home/ogromny/Code/C/Lupus/build/meson-private/tmpu1srpf13/testfile.cpp -o /home/ogromny/Code/C/Lupus/build/meson-private/tmpu1srpf13/output.exe -pipe -D_FILE_OFFSET_BITS=64 -O0 -fpermissive 
 
 Code:
- int i = static_cast<int>(0);
+ #include<stdio.h>
+        
+        int main(void) {
+            printf("%ld\n", (long)(sizeof(void *)));
+            return 0;
+        };
 Compiler stdout:
  
 Compiler stderr:
  
-Compiler accepts -std=c++17: YES
+Program stdout:
+
+8
+
+Program stderr:
+
+
 Running compile:
-Working directory:  /home/ogromny/Code/C/Lupus/build/meson-private/tmp9e2_52tl
-Command line:  ccache c++ /home/ogromny/Code/C/Lupus/build/meson-private/tmp9e2_52tl/testfile.cpp -o /home/ogromny/Code/C/Lupus/build/meson-private/tmp9e2_52tl/output.obj -pipe -c -D_FILE_OFFSET_BITS=64 -O0 -fpermissive --print-search-dirs 
+Working directory:  /home/ogromny/Code/C/Lupus/build/meson-private/tmp6kv7ak0a
+Command line:  ccache c++ /home/ogromny/Code/C/Lupus/build/meson-private/tmp6kv7ak0a/testfile.cpp -o /home/ogromny/Code/C/Lupus/build/meson-private/tmp6kv7ak0a/output.obj -pipe -c -D_FILE_OFFSET_BITS=64 -O0 -fpermissive --print-search-dirs 
 
 Code:
  
@@ -58,5 +146,52 @@ libraries: =/usr/lib/gcc/x86_64-pc-linux-gnu/9.3.0/:/usr/lib/gcc/x86_64-pc-linux
 
 Compiler stderr:
  
+Run-time dependency gtkmm-3.0 found: YES 3.24.2
+Pkg-config binary for MachineChoice.HOST is cached.
+Determining dependency 'libsodium' with pkg-config executable '/usr/bin/pkg-config'
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config --modversion libsodium` -> 0
+1.0.18
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config --cflags libsodium` -> 0
+
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config libsodium --libs` -> 0
+-L/usr/lib64 -lsodium
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config libsodium --libs` -> 0
+-lsodium
+None of 'PKG_CONFIG_PATH' are defined in the environment, not changing global flags.
+Run-time dependency libsodium found: YES 1.0.18
+Pkg-config binary for MachineChoice.HOST is cached.
+Determining dependency 'toxcore' with pkg-config executable '/usr/bin/pkg-config'
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config --modversion toxcore` -> 0
+0.2.12
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config --cflags toxcore` -> 0
+-I/usr/include/opus
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config toxcore --libs` -> 0
+-L/usr/lib64 -ltoxcore
+PKG_CONFIG_PATH: 
+Called `/usr/bin/pkg-config toxcore --libs` -> 0
+-ltoxcore
+None of 'PKG_CONFIG_PATH' are defined in the environment, not changing global flags.
+Run-time dependency toxcore found: YES 0.2.12
+Build targets in project: 1
+
+Found ninja-1.9.0.git.kitware.dyndep-1.jobserver-1 at /usr/bin/ninja
+Running compile:
+Working directory:  /tmp/tmph4u9noqc
+Command line:  ccache c++ /tmp/tmph4u9noqc/testfile.cpp -o /tmp/tmph4u9noqc/output.obj -pipe -D_FILE_OFFSET_BITS=64 -c -std=c++17 
+
+Code:
+ int i = static_cast<int>(0);
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Compiler accepts -std=c++17: YES
 None of 'STRIP' are defined in the environment, not changing global flags.
 None of 'STRIP' are defined in the environment, not changing global flags.
