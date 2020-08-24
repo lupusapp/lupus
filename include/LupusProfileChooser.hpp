@@ -83,7 +83,7 @@ private:
             delete widget;
         }
 
-        for (auto &file : std::filesystem::directory_iterator{toxConfigDir}) {
+        for (auto &file : std::filesystem::directory_iterator{Toxpp::toxConfigDir}) {
             auto filePath = file.path();
             if (filePath.extension() != ".tox") {
                 continue;
@@ -158,7 +158,7 @@ private:
             return;
         }
 
-        auto filename{toxConfigDir + name + ".tox"};
+        auto filename{Toxpp::toxConfigDir + name + ".tox"};
 
         if (std::filesystem::exists(filename)) {
             messageBox(*this, "Profile already exists.");

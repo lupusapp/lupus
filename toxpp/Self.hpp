@@ -14,10 +14,31 @@
 #define DEFAULT_NAME           "Lupus' user"
 #define DEFAULT_STATUS_MESSAGE "Lupus rocks!"
 
+std::string getToxConfigDir(void)
+{
+#ifdef __linux__
+#include <cstdlib>
+
+    if (char const *dir{std::getenv("XDG_CONFIG_HOME")}) {
+        return std::string{dir} + "/tox";
+    }
+
+    if (char const *dir{std::getenv("HOME")}) {
+        return std::string{dir} + "/.config/tox";
+    }
+
+    throw std::runtime_error{"Cannot get tox config folder."};
+#else
+#error "Need to be implemented for platform other than linux."
+#endif
+}
+
 namespace Toxpp
 {
 class Self;
-}
+
+inline static auto const toxConfigDir{getToxConfigDir()};
+} // namespace Toxpp
 
 std::vector<std::uint8_t> readFile(std::string const &filename)
 {
@@ -44,8 +65,6 @@ void writeFile(std::string const &filename, std::vector<std::uint8_t> const &dat
     }
 }
 
-#include <ios>
-#include <memory>
 class Toxpp::Self final
 {
 public:
