@@ -3,6 +3,7 @@
 
 #include "include/Lupus.hpp"
 #include "include/LupusMain.hpp"
+#include "toxpp/Avatar.hpp"
 #include "toxpp/Self.hpp"
 #include "toxpp/Toxpp.hpp"
 #include <exception>
@@ -158,7 +159,7 @@ private:
             return;
         }
 
-        auto filename{Toxpp::toxConfigDir + name + ".tox"};
+        auto filename{Toxpp::toxConfigDir + "/" + name + ".tox"};
 
         if (std::filesystem::exists(filename)) {
             messageBox(*this, "Profile already exists.");

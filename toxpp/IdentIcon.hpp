@@ -27,22 +27,16 @@ class Toxpp::IdentIcon final
 {
 public:
     IdentIcon(void) = delete;
-    IdentIcon([[maybe_unused]] std::string const &publicKey)
+    IdentIcon(std::vector<std::uint8_t> const &publicKeyBin)
     {
-        auto publicKeyBinSize{32};
-        std::uint8_t publicKeyBin[32]{0x76, 0x51, 0x84, 0x06, 0xF6, 0xA9, 0xF2, 0x21,
-                                      0x7E, 0x8D, 0xC4, 0x87, 0xCC, 0x78, 0x3C, 0x25,
-                                      0xCC, 0x16, 0xA1, 0x5E, 0xB3, 0x6F, 0xF3, 0x2E,
-                                      0x33, 0x5A, 0x23, 0x53, 0x42, 0xC4, 0x8A, 0x39};
-
-        std::uint8_t pkHash[256 / 8]{0};
+        std::uint8_t hash[256 / 8]{0};
         digestpp::sha256{}
-            .absorb(publicKeyBin, publicKeyBinSize)
-            .digest(pkHash, N_ELEMENTS(pkHash));
+            .absorb(publicKeyBin.data(), publicKeyBin.size())
+            .digest(hash, N_ELEMENTS(hash));
 
         for (int i = 0; i < COLORS; ++i) {
             std::uint8_t const *hashPart{reinterpret_cast<std::uint8_t const *>(
-                pkHash + N_ELEMENTS(pkHash) - COLOR_BYTES * (i + 1))};
+                hash + N_ELEMENTS(hash) - COLOR_BYTES * (i + 1))};
 
             std::uint64_t hueInt{hashPart[0]};
             for (int i = 1; i < COLOR_BYTES; ++i) {
@@ -61,7 +55,7 @@ public:
 
         for (int row = 0; row < ROWS; ++row) {
             for (int col = 0; col < COLORED_COLS; ++col) {
-                cellColorIndex[row][col] = pkHash[row * COLORED_COLS + col] % COLORS;
+                cellColorIndex[row][col] = hash[row * COLORED_COLS + col] % COLORS;
             }
         }
     }

@@ -1,9 +1,14 @@
 #ifndef __LUPUS_TOXPP_SELF__
 #define __LUPUS_TOXPP_SELF__
 
+#include "Avatar.hpp"
+#include "Toxpp.hpp"
+#include <algorithm>
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <optional>
+#include <sodium/utils.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -13,32 +18,6 @@
 
 #define DEFAULT_NAME           "Lupus' user"
 #define DEFAULT_STATUS_MESSAGE "Lupus rocks!"
-
-std::string getToxConfigDir(void)
-{
-#ifdef __linux__
-#include <cstdlib>
-
-    if (char const *dir{std::getenv("XDG_CONFIG_HOME")}) {
-        return std::string{dir} + "/tox";
-    }
-
-    if (char const *dir{std::getenv("HOME")}) {
-        return std::string{dir} + "/.config/tox";
-    }
-
-    throw std::runtime_error{"Cannot get tox config folder."};
-#else
-#error "Need to be implemented for platform other than linux."
-#endif
-}
-
-namespace Toxpp
-{
-class Self;
-
-inline static auto const toxConfigDir{getToxConfigDir()};
-} // namespace Toxpp
 
 std::vector<std::uint8_t> readFile(std::string const &filename)
 {
@@ -76,6 +55,8 @@ public:
 
         name(DEFAULT_NAME);
         statusMessage(DEFAULT_STATUS_MESSAGE);
+
+        _avatar = {publicKeyBin(), publicKeyHex()};
     }
 
     Self(std::string const &filename, std::optional<std::string> const &password)
@@ -94,6 +75,8 @@ public:
         Tox_Err_New error;
         tox = tox_new(options.get(), &error);
         errNewSwitch(error);
+
+        _avatar = {publicKeyBin(), publicKeyHex()};
     }
 
     ~Self(void) { tox_kill(tox); }
@@ -110,6 +93,8 @@ public:
         }
     }
     auto password(void) const { return _password; }
+
+    Toxpp::Avatar const &avatar(void) const { return _avatar; }
 
     inline static auto const nameMaxSize{tox_max_name_length()};
     void name(std::string const &name)
@@ -141,6 +126,26 @@ public:
         auto statusMessage{std::make_unique<std::uint8_t *>(new std::uint8_t[statusMessageSize])};
         tox_self_get_status_message(tox, *statusMessage);
         return std::string{reinterpret_cast<char *>(*statusMessage), statusMessageSize};
+    }
+
+    // in UPPERCASE
+    std::string publicKeyHex(void) const
+    {
+        auto bin{publicKeyBin()};
+        auto hexSize{bin.size() * 2 + 1};
+        auto hex{std::make_unique<char *>(new char[hexSize])};
+        sodium_bin2hex(*hex, hexSize, bin.data(), bin.size());
+
+        std::string hexString{*hex, hexSize - 1};
+        std::transform(hexString.begin(), hexString.end(), hexString.begin(), toupper);
+        return hexString;
+    }
+
+    std::vector<std::uint8_t> publicKeyBin(void) const
+    {
+        std::vector<std::uint8_t> bin(tox_public_key_size());
+        tox_self_get_public_key(tox, bin.data());
+        return bin;
     }
 
     static bool isEncrypted(std::string const &filename)
@@ -271,6 +276,8 @@ private:
     Tox *tox;
     std::string _filename;
     std::optional<std::string> _password;
+
+    Toxpp::Avatar _avatar;
 };
 
 #endif
