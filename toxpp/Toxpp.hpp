@@ -28,6 +28,7 @@ namespace Toxpp
 class Self;
 class Avatar;
 class IdentIcon;
+class Bootstrap;
 
 inline static auto const toxConfigDir{getToxConfigDir()};
 } // namespace Toxpp

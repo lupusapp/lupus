@@ -2,9 +2,12 @@
 #define __LUPUS_TOXPP_SELF__
 
 #include "Avatar.hpp"
+#include "Bootstrap.hpp"
 #include "Toxpp.hpp"
+#include "sigc++/connection.h"
 #include <algorithm>
 #include <fstream>
+#include <glibmm/main.h>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -47,7 +50,14 @@ void writeFile(std::string const &filename, std::vector<std::uint8_t> const &dat
 class Toxpp::Self final
 {
 public:
-    Self(void)
+    enum class ConnectionStatus {
+        NONE = TOX_CONNECTION_NONE,
+        TCP = TOX_CONNECTION_TCP,
+        UDP = TOX_CONNECTION_UDP,
+    };
+
+public:
+    Self(void) : bootstrap{Toxpp::Bootstrap::defaultBootstrap()}
     {
         Tox_Err_New error;
         tox = tox_new(nullptr, &error);
@@ -57,10 +67,14 @@ public:
         statusMessage(DEFAULT_STATUS_MESSAGE);
 
         _avatar = {publicKeyBin(), publicKeyHex()};
+
+        installCallbacks();
+
+        bootstrap.run(tox);
     }
 
     Self(std::string const &filename, std::optional<std::string> const &password)
-        : _filename{filename}, _password{password}
+        : _filename{filename}, _password{password}, bootstrap{Toxpp::Bootstrap::defaultBootstrap()}
     {
         std::vector<std::uint8_t> profile{password ? decrypt(readFile(filename))
                                                    : readFile(filename)};
@@ -77,9 +91,42 @@ public:
         errNewSwitch(error);
 
         _avatar = {publicKeyBin(), publicKeyHex()};
+
+        installCallbacks();
+
+        bootstrap.run(tox);
+        iterationSignal = Glib::signal_timeout().connect(
+            [this]() -> bool {
+                tox_iterate(tox, this);
+                return true;
+            },
+            tox_iteration_interval(tox));
     }
 
     ~Self(void) { tox_kill(tox); }
+
+    /*
+     * CALLBACKS *
+     */
+    void installCallbacks(void)
+    {
+        tox_callback_self_connection_status(tox, connectionStatusCallback);
+    }
+
+    static void connectionStatusCallback(Tox *, Tox_Connection connectionStatus, void *self)
+    {
+        static_cast<Self *>(self)->_connectionStatusSignal.emit(
+            static_cast<ConnectionStatus>(connectionStatus));
+    }
+
+    /*
+     * SIGNALS *
+     */
+    auto connectionStatusSignal(void) const { return _connectionStatusSignal; }
+
+    /*
+     * *
+     */
 
     void filename(std::string const &filename) { _filename = filename; }
     auto filename(void) const { return _filename; }
@@ -277,6 +324,10 @@ private:
     std::string _filename;
     std::optional<std::string> _password;
 
+    sigc::connection iterationSignal;
+    sigc::signal<void, ConnectionStatus> _connectionStatusSignal;
+
+    Toxpp::Bootstrap bootstrap;
     Toxpp::Avatar _avatar;
 };
 
