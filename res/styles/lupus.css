@@ -1,25 +1,26 @@
-/* TODO(gtk4): round */
+/* TODO: round */
 
 .profile {
-    border-width: 5px;
-    border-style: solid;
-    border-color: #d8dee9;
-    border-radius: 2px;
-    box-shadow: 0 0 2px #d8dee9;
-    transition: all .4s ease;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #d8dee9;
+  border-radius: 2px;
+  box-shadow: 0 0 2px #d8dee9;
+  transition: all 0.4s ease;
 }
 
 .profile.profile--none {
-    border-color: #a3be8c;
-    box-shadow: 0 0 2px #a3be8c;
+  border-color: #a3be8c;
+  box-shadow: 0 0 2px #a3be8c;
 }
 
 .profile.profile--busy {
-    border-color: #bf616a;
-    box-shadow: 0 0 2px #bf616a;
+  border-color: #bf616a;
+  box-shadow: 0 0 2px #bf616a;
 }
 
 .profile.profile--away {
-    border-color: #ebcb8b;
-    box-shadow: 0 0 2px #ebcb8b;
+  border-color: #ebcb8b;
+  box-shadow: 0 0 2px #ebcb8b;
 }
+

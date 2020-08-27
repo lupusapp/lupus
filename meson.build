@@ -4,6 +4,7 @@ gtk = dependency('gtkmm-3.0', version: '>=3.24', required: true)
 libsodium = dependency('libsodium', required: true)
 toxcore = dependency('toxcore', required: true)
 
+resources = import('gnome').compile_resources('resource', meson.source_root() / 'resource/gresource.xml', source_dir: meson.source_root() / 'resource')
 subdir('include')
 subdir('toxpp')
 
@@ -11,7 +12,8 @@ executable(
   meson.project_name(),
   sources: [
     'main.cpp',
-    hdrs,
+    resources,
+    includes,
     toxpp,
     ],
   dependencies: [

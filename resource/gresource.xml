@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+    <gresource prefix="/ru/ogromny/lupus">
+        <file alias="lupus.css">styles/lupus.css</file>
+    </gresource>
+</gresources>

@@ -88,7 +88,8 @@ static void update_preview_cb(GtkFileChooser *file_chooser, GtkImage *preview)
         return;
     }
 
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_size(filename, AVATAR_PREVIEW_SIZE, AVATAR_PREVIEW_SIZE, NULL);
+    GdkPixbuf *pixbuf =
+        gdk_pixbuf_new_from_file_at_size(filename, AVATAR_PREVIEW_SIZE, AVATAR_PREVIEW_SIZE, NULL);
     g_free(filename);
 
     if (pixbuf) {
@@ -111,9 +112,9 @@ static gboolean avatar_button_press_event_cb(INSTANCE, GdkEvent *event)
         if (!file_chooser) {
             GtkWindow *window = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(instance)));
 
-            file_chooser = GTK_FILE_CHOOSER(
-                gtk_file_chooser_dialog_new("Select avatar", window, GTK_FILE_CHOOSER_ACTION_OPEN, "Select",
-                                            GTK_RESPONSE_ACCEPT, "Cancel", GTK_RESPONSE_CANCEL, NULL));
+            file_chooser = GTK_FILE_CHOOSER(gtk_file_chooser_dialog_new(
+                "Select avatar", window, GTK_FILE_CHOOSER_ACTION_OPEN, "Select",
+                GTK_RESPONSE_ACCEPT, "Cancel", GTK_RESPONSE_CANCEL, NULL));
 
             GtkFileFilter *filter = gtk_file_filter_new();
             gtk_file_filter_add_mime_type(filter, "image/png");
@@ -126,7 +127,8 @@ static gboolean avatar_button_press_event_cb(INSTANCE, GdkEvent *event)
         }
 
         if (gtk_dialog_run(GTK_DIALOG(file_chooser)) == GTK_RESPONSE_ACCEPT) {
-            object_set_prop(instance->objectself, "avatar-filename", gtk_file_chooser_get_filename(file_chooser));
+            object_set_prop(instance->objectself, "avatar-filename",
+                            gtk_file_chooser_get_filename(file_chooser));
         }
 
         gtk_widget_hide(GTK_WIDGET(file_chooser));
@@ -159,8 +161,8 @@ static void popover_myid_activate_cb(INSTANCE)
     // Cannot make widgets static, because address can be changed due to nospam or pk
     object_get_prop(instance->objectself, "address", address, gchar *);
 
-    GtkWidget *dialog = g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, "title", "My ID", "resizable", FALSE,
-                                     "border-width", 5, NULL);
+    GtkWidget *dialog = g_object_new(GTK_TYPE_DIALOG, "use-header-bar", TRUE, "title", "My ID",
+                                     "resizable", FALSE, "border-width", 5, NULL);
 
     GtkBox *box = GTK_BOX(gtk_bin_get_child(GTK_BIN(dialog)));
     GtkWidget *label = g_object_new(GTK_TYPE_LABEL, "label", address, "selectable", TRUE, NULL);
@@ -227,7 +229,8 @@ constructed_header()
     object_get_prop(instance->objectself, "name", objectself_name, gchar *);
     object_get_prop(instance->objectself, "status-message", objectself_status_message, gchar *);
     instance->name = lupus_editablelabel_new(objectself_name, tox_max_name_length());
-    instance->status_message = lupus_editablelabel_new(objectself_status_message, tox_max_status_message_length());
+    instance->status_message =
+        lupus_editablelabel_new(objectself_status_message, tox_max_status_message_length());
     g_free(objectself_name);
     g_free(objectself_status_message);
 
@@ -242,14 +245,14 @@ constructed_header()
     object_get_prop(instance->objectself, "avatar-pixbuf", objectself_avatar_pixbuf, GdkPixbuf *);
     if (!objectself_avatar_pixbuf) {
         // TODO: write default avatar ?
-        objectself_avatar_pixbuf =
-            gdk_pixbuf_new_from_resource_at_scale(LUPUS_RESOURCES "/lupus.svg", AVATAR_SIZE, AVATAR_SIZE, TRUE, NULL);
+        objectself_avatar_pixbuf = gdk_pixbuf_new_from_resource_at_scale(
+            LUPUS_RESOURCES "/lupus.svg", AVATAR_SIZE, AVATAR_SIZE, TRUE, NULL);
     }
     instance->avatar = GTK_IMAGE(gtk_image_new_from_pixbuf(objectself_avatar_pixbuf));
     widget_add_class(instance->avatar, "profile");
 
-    instance->avatar_event_box =
-        g_object_new(GTK_TYPE_EVENT_BOX, "child", instance->avatar, "valign", GTK_ALIGN_CENTER, NULL);
+    instance->avatar_event_box = g_object_new(GTK_TYPE_EVENT_BOX, "child", instance->avatar,
+                                              "valign", GTK_ALIGN_CENTER, NULL);
 
     GtkBox *box = GTK_BOX(instance);
     GtkWidget *vbox = GTK_WIDGET(instance->vbox);
@@ -264,10 +267,13 @@ constructed_header()
 
     connect_swapped(instance->name, "submit", name_submitted_cb, instance);
     connect_swapped(instance->status_message, "submit", status_message_submitted_cb, instance);
-    connect_swapped(instance->avatar_event_box, "button-press-event", avatar_button_press_event_cb, instance);
-    connect_swapped(instance->objectself, "notify::avatar-pixbuf", objectself_avatar_pixbuf_cb, instance);
+    connect_swapped(instance->avatar_event_box, "button-press-event", avatar_button_press_event_cb,
+                    instance);
+    connect_swapped(instance->objectself, "notify::avatar-pixbuf", objectself_avatar_pixbuf_cb,
+                    instance);
     connect_swapped(instance->objectself, "notify::connection", objectself_connection_cb, instance);
-    connect_swapped(instance->objectself, "notify::user-status", objectself_user_status_cb, instance);
+    connect_swapped(instance->objectself, "notify::user-status", objectself_user_status_cb,
+                    instance);
 constructed_footer()
 
 class_init()
@@ -278,7 +284,8 @@ class_init()
     object_class->set_property = lupus_profile_set_property;
     object_class->get_property = lupus_profile_get_property;
 
-    define_property(PROP_OBJECTSELF, pointer, "objectself", G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+    define_property(PROP_OBJECTSELF, pointer, "objectself",
+                    G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
     g_object_class_install_properties(object_class, N_PROPERTIES, obj_properties);
 }
@@ -287,7 +294,7 @@ init() {}
 
 LupusProfile *lupus_profile_new(LupusObjectSelf *objectself)
 {
-    return g_object_new(LUPUS_TYPE_PROFILE, "objectself", objectself, "orientation", GTK_ORIENTATION_HORIZONTAL,
-                        "border-width", 5, "spacing", 5, NULL);
+    return g_object_new(LUPUS_TYPE_PROFILE, "objectself", objectself, "orientation",
+                        GTK_ORIENTATION_HORIZONTAL, "border-width", 5, "spacing", 5, NULL);
 }
 

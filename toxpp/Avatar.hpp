@@ -3,8 +3,11 @@
 
 #include "Toxpp.hpp"
 #include "lodepng/lodepng.h"
+#include "lodepng/lodepng_util.h"
 #include "toxpp/IdentIcon.hpp"
 #include <filesystem>
+
+// TODO: square avatar if necessary
 
 class Toxpp::Avatar final
 {
@@ -27,9 +30,15 @@ public:
             }
         }
 
-        auto error{lodepng::decode(_avatar, _size.first, _size.second, _filename)};
+        auto error{lodepng::load_file(_avatar, _filename)};
         if (error) {
             throw std::runtime_error{std::string{"Cannot load avatar: "} +
+                                     lodepng_error_text(error)};
+        }
+
+        error = lodepng::decode(raw, _size.first, _size.second, _avatar);
+        if (error) {
+            throw std::runtime_error{std::string{"Cannot decode avatar: "} +
                                      lodepng_error_text(error)};
         }
     }
@@ -40,6 +49,7 @@ public:
 
 private:
     std::string _filename;
+    std::vector<std::uint8_t> raw;
     std::vector<std::uint8_t> _avatar;
     std::pair<unsigned, unsigned> _size;
 };

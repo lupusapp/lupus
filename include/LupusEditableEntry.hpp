@@ -28,6 +28,9 @@ public:
     {
         auto *label{Gtk::make_managed<Gtk::Label>()};
         bold ? label->set_markup("<b>" + text + "</b>") : label->set_text(text);
+        label->set_tooltip_text(text);
+        label->set_ellipsize(Pango::ELLIPSIZE_END);
+        label->set_max_width_chars(0);
 
         auto *entry{Gtk::make_managed<Gtk::Entry>()};
         entry->set_text(text);

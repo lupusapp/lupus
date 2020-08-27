@@ -1,8 +1,11 @@
 #pragma once
 
+#include "gdkmm/pixbuf.h"
+#include "gdkmm/pixbufloader.h"
 #include "gtkmm/box.h"
 #include "gtkmm/enums.h"
 #include "gtkmm/eventbox.h"
+#include "gtkmm/image.h"
 #include "gtkmm/object.h"
 #include "gtkmm/window.h"
 #include "include/Lupus.hpp"
@@ -10,6 +13,8 @@
 #include "toxpp/Self.hpp"
 #include <exception>
 #include <memory>
+
+#define STANDARD_SIZE 36
 
 namespace Lupus
 {
@@ -22,9 +27,10 @@ public:
     Profile(void) = delete;
     Profile(std::shared_ptr<Toxpp::Self> &toxppSelf)
         : toxppSelf{toxppSelf}, name{Gtk::make_managed<Lupus::EditableEntry>(
-                                    toxppSelf->name(), toxppSelf->nameMaxSize)},
+                                    toxppSelf->name(), toxppSelf->nameMaxSize, true)},
           statusMessage{Gtk::make_managed<Lupus::EditableEntry>(toxppSelf->statusMessage(),
-                                                                toxppSelf->statusMessageMaxSize)}
+                                                                toxppSelf->statusMessageMaxSize)},
+          avatar{Gtk::make_managed<Gtk::Image>()}
     {
         auto *lbox{Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL)};
         lbox->pack_start(*name, true, true);
@@ -32,6 +38,11 @@ public:
 
         auto *box{Gtk::make_managed<Gtk::Box>()};
         box->pack_start(*lbox, true, true);
+        box->pack_start(*avatar, false, true);
+        box->property_margin().set_value(5);
+
+        avatar->get_style_context()->add_class("profile");
+        refreshAvatar();
 
         add(*box);
         set_size_request(Lupus::profileBoxWidth);
@@ -60,7 +71,21 @@ public:
     }
 
 private:
+    void refreshAvatar(void)
+    {
+        auto _avatar{toxppSelf->avatar().avatar()};
+
+        auto loader{Gdk::PixbufLoader::create("png")};
+        loader->write(_avatar.data(), _avatar.size());
+        auto pixbuf{loader->get_pixbuf()};
+        loader->close();
+
+        avatar->set(pixbuf->scale_simple(STANDARD_SIZE, STANDARD_SIZE, Gdk::INTERP_BILINEAR));
+    }
+
+private:
     std::shared_ptr<Toxpp::Self> toxppSelf;
     Lupus::EditableEntry *name;
     Lupus::EditableEntry *statusMessage;
+    Gtk::Image *avatar;
 };

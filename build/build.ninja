@@ -6,6 +6,12 @@ ninja_required_version = 1.7.1
 
 # Rules for compiling.
 
+rule c_COMPILER
+ command = ccache cc $ARGS -MD -MQ $out -MF $DEPFILE -o $out -c $in
+ deps = gcc
+ depfile = $DEPFILE_UNQUOTED
+ description = Compiling C object $out
+
 rule cpp_COMPILER
  command = ccache c++ $ARGS -MD -MQ $out -MF $DEPFILE -o $out -c $in
  deps = gcc
@@ -25,6 +31,13 @@ rule CUSTOM_COMMAND
  description = $DESC
  restat = 1
 
+rule CUSTOM_COMMAND_DEP
+ command = $COMMAND
+ deps = gcc
+ depfile = $DEPFILE_UNQUOTED
+ description = $DESC
+ restat = 1
+
 rule REGENERATE_BUILD
  command = /usr/lib/python-exec/python3.7/meson --internal regenerate /home/ogromny/Code/C/Lupus /home/ogromny/Code/C/Lupus/build --backend ninja
  description = Regenerating build files.
@@ -36,17 +49,32 @@ build PHONY: phony
 
 # Build rules for targets
 
-build Lupus.p/main.cpp.o: cpp_COMPILER ../main.cpp
+build resource.c: CUSTOM_COMMAND_DEP /home/ogromny/Code/C/Lupus/resource/gresource.xml
+ DEPFILE = resource.c.d
+ DEPFILE_UNQUOTED = resource.c.d
+ COMMAND = glib-compile-resources /home/ogromny/Code/C/Lupus/resource/gresource.xml --sourcedir /home/ogromny/Code/C/Lupus/resource --sourcedir ../ --internal --generate --target resource.c --dependency-file resource.c.d
+ description = Generating$ resource_c$ with$ a$ custom$ command
+
+build resource.h: CUSTOM_COMMAND /home/ogromny/Code/C/Lupus/resource/gresource.xml
+ COMMAND = glib-compile-resources /home/ogromny/Code/C/Lupus/resource/gresource.xml --sourcedir /home/ogromny/Code/C/Lupus/resource --sourcedir ../ --internal --generate --target resource.h
+ description = Generating$ resource_h$ with$ a$ custom$ command
+
+build Lupus.p/meson-generated_.._resource.c.o: c_COMPILER resource.c || resource.h
+ DEPFILE = Lupus.p/meson-generated_.._resource.c.o.d
+ DEPFILE_UNQUOTED = Lupus.p/meson-generated_.._resource.c.o.d
+ ARGS = -ILupus.p -I. -I.. -I/usr/include/gtkmm-3.0 -I/usr/lib64/gtkmm-3.0/include -I/usr/include/atkmm-1.6 -I/usr/include/atk-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/glibmm-2.4 -I/usr/lib64/glibmm-2.4/include -I/usr/include/sigc++-2.0 -I/usr/lib64/sigc++-2.0/include -I/usr/include/giomm-2.4 -I/usr/lib64/giomm-2.4/include -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/pangomm-1.4 -I/usr/lib64/pangomm-1.4/include -I/usr/include/cairomm-1.0 -I/usr/lib64/cairomm-1.0/include -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/pango-1.0 -I/usr/include/fribidi -I/usr/include/harfbuzz -I/usr/include/gtk-3.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/gio-unix-2.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/gtk-3.0/unix-print -I/usr/include/gdkmm-3.0 -I/usr/lib64/gdkmm-3.0/include -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c18 -g -pthread
+
+build Lupus.p/main.cpp.o: cpp_COMPILER ../main.cpp || resource.h
  DEPFILE = Lupus.p/main.cpp.o.d
  DEPFILE_UNQUOTED = Lupus.p/main.cpp.o.d
  ARGS = -ILupus.p -I. -I.. -I/usr/include/gtkmm-3.0 -I/usr/lib64/gtkmm-3.0/include -I/usr/include/atkmm-1.6 -I/usr/include/atk-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/glibmm-2.4 -I/usr/lib64/glibmm-2.4/include -I/usr/include/sigc++-2.0 -I/usr/lib64/sigc++-2.0/include -I/usr/include/giomm-2.4 -I/usr/lib64/giomm-2.4/include -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/pangomm-1.4 -I/usr/lib64/pangomm-1.4/include -I/usr/include/cairomm-1.0 -I/usr/lib64/cairomm-1.0/include -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/pango-1.0 -I/usr/include/fribidi -I/usr/include/harfbuzz -I/usr/include/gtk-3.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/gio-unix-2.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/gtk-3.0/unix-print -I/usr/include/gdkmm-3.0 -I/usr/lib64/gdkmm-3.0/include -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wpedantic -std=c++17 -g -pthread -Wall -Werror -pedantic
 
-build Lupus.p/toxpp_lodepng_lodepng.cpp.o: cpp_COMPILER ../toxpp/lodepng/lodepng.cpp
+build Lupus.p/toxpp_lodepng_lodepng.cpp.o: cpp_COMPILER ../toxpp/lodepng/lodepng.cpp || resource.h
  DEPFILE = Lupus.p/toxpp_lodepng_lodepng.cpp.o.d
  DEPFILE_UNQUOTED = Lupus.p/toxpp_lodepng_lodepng.cpp.o.d
  ARGS = -ILupus.p -I. -I.. -I/usr/include/gtkmm-3.0 -I/usr/lib64/gtkmm-3.0/include -I/usr/include/atkmm-1.6 -I/usr/include/atk-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/lib64/libffi/include -I/usr/include/glibmm-2.4 -I/usr/lib64/glibmm-2.4/include -I/usr/include/sigc++-2.0 -I/usr/lib64/sigc++-2.0/include -I/usr/include/giomm-2.4 -I/usr/lib64/giomm-2.4/include -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/pangomm-1.4 -I/usr/lib64/pangomm-1.4/include -I/usr/include/cairomm-1.0 -I/usr/lib64/cairomm-1.0/include -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/uuid -I/usr/include/libpng16 -I/usr/include/pango-1.0 -I/usr/include/fribidi -I/usr/include/harfbuzz -I/usr/include/gtk-3.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/gio-unix-2.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/dbus-1.0 -I/usr/lib64/dbus-1.0/include -I/usr/include/at-spi-2.0 -I/usr/include/gtk-3.0/unix-print -I/usr/include/gdkmm-3.0 -I/usr/lib64/gdkmm-3.0/include -I/usr/include/opus -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wpedantic -std=c++17 -g -pthread -Wall -Werror -pedantic
 
-build Lupus: cpp_LINKER Lupus.p/main.cpp.o Lupus.p/toxpp_lodepng_lodepng.cpp.o | /usr/lib64/libgtkmm-3.0.so /usr/lib64/libatkmm-1.6.so /usr/lib64/libgdkmm-3.0.so /usr/lib64/libgiomm-2.4.so /usr/lib64/libpangomm-1.4.so /usr/lib64/libglibmm-2.4.so /usr/lib64/libgtk-3.so /usr/lib64/libgdk-3.so /usr/lib64/libpangocairo-1.0.so /usr/lib64/libpango-1.0.so /usr/lib64/libatk-1.0.so /usr/lib64/libcairo-gobject.so /usr/lib64/libgio-2.0.so /usr/lib64/libcairomm-1.0.so /usr/lib64/libcairo.so /usr/lib64/libsigc-2.0.so /usr/lib64/libgdk_pixbuf-2.0.so /usr/lib64/libgobject-2.0.so /usr/lib64/libglib-2.0.so /usr/lib64/libsodium.so /usr/lib64/libtoxcore.so
+build Lupus: cpp_LINKER Lupus.p/meson-generated_.._resource.c.o Lupus.p/main.cpp.o Lupus.p/toxpp_lodepng_lodepng.cpp.o | /usr/lib64/libgtkmm-3.0.so /usr/lib64/libatkmm-1.6.so /usr/lib64/libgdkmm-3.0.so /usr/lib64/libgiomm-2.4.so /usr/lib64/libpangomm-1.4.so /usr/lib64/libglibmm-2.4.so /usr/lib64/libgtk-3.so /usr/lib64/libgdk-3.so /usr/lib64/libpangocairo-1.0.so /usr/lib64/libpango-1.0.so /usr/lib64/libatk-1.0.so /usr/lib64/libcairo-gobject.so /usr/lib64/libgio-2.0.so /usr/lib64/libcairomm-1.0.so /usr/lib64/libcairo.so /usr/lib64/libsigc-2.0.so /usr/lib64/libgdk_pixbuf-2.0.so /usr/lib64/libgobject-2.0.so /usr/lib64/libglib-2.0.so /usr/lib64/libsodium.so /usr/lib64/libtoxcore.so
  LINK_ARGS = -Wl,--as-needed -Wl,--no-undefined -Wl,--start-group /usr/lib64/libgtkmm-3.0.so /usr/lib64/libatkmm-1.6.so /usr/lib64/libgdkmm-3.0.so /usr/lib64/libgiomm-2.4.so /usr/lib64/libpangomm-1.4.so /usr/lib64/libglibmm-2.4.so /usr/lib64/libgtk-3.so /usr/lib64/libgdk-3.so /usr/lib64/libpangocairo-1.0.so /usr/lib64/libpango-1.0.so /usr/lib64/libatk-1.0.so /usr/lib64/libcairo-gobject.so /usr/lib64/libgio-2.0.so /usr/lib64/libcairomm-1.0.so /usr/lib64/libcairo.so /usr/lib64/libsigc-2.0.so /usr/lib64/libgdk_pixbuf-2.0.so /usr/lib64/libgobject-2.0.so /usr/lib64/libglib-2.0.so /usr/lib64/libsodium.so /usr/lib64/libtoxcore.so -Wl,--end-group
 
 # Test rules
@@ -105,7 +133,13 @@ build all: phony Lupus
 
 build clean: phony meson-clean
 
-build meson-clean: CUSTOM_COMMAND PHONY
+build meson-clean-ctlist: CUSTOM_COMMAND PHONY
+ COMMAND = /usr/lib/python-exec/python3.7/meson --internal cleantrees /home/ogromny/Code/C/Lupus/build/meson-private/cleantrees.dat
+ description = Cleaning$ custom$ target$ directories
+
+build clean-ctlist: phony meson-clean-ctlist
+
+build meson-clean: CUSTOM_COMMAND PHONY | clean-ctlist
  COMMAND = /usr/bin/ninja -t clean
  description = Cleaning
 

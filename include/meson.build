@@ -1,4 +1,4 @@
-hdrs = files(
+includes = files(
   'Lupus.hpp',
   'LupusMain.hpp',
   'LupusProfileChooser.hpp',
