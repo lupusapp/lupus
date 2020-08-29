@@ -3,6 +3,7 @@
 #include "gdkmm/pixbuf.h"
 #include "gdkmm/pixbufloader.h"
 #include "gtkmm/box.h"
+#include "gtkmm/dialog.h"
 #include "gtkmm/enums.h"
 #include "gtkmm/eventbox.h"
 #include "gtkmm/image.h"
@@ -11,6 +12,7 @@
 #include "gtkmm/menuitem.h"
 #include "gtkmm/object.h"
 #include "gtkmm/separator.h"
+#include "gtkmm/separatormenuitem.h"
 #include "gtkmm/window.h"
 #include "include/Lupus.hpp"
 #include "include/LupusEditableEntry.hpp"
@@ -120,24 +122,44 @@ public:
 private:
     void constructPopover(void)
     {
-        std::tuple<std::string, std::string, Toxpp::Self::Status> items[]{
-            {"/ru/ogromny/lupus/status_none.svg", "Online", Toxpp::Self::Status::NONE},
-            {"/ru/ogromny/lupus/status_away.svg", "Away", Toxpp::Self::Status::AWAY},
-            {"/ru/ogromny/lupus/status_busy.svg", "Busy", Toxpp::Self::Status::BUSY},
-        };
-        for (auto &[resource, name, status] : items) {
+        auto createMenuItem{[=](std::string name, std::string resource) {
             auto *label{Gtk::make_managed<Gtk::Label>(name)};
             auto *image{Gtk::make_managed<Gtk::Image>()};
             image->set_from_resource(resource);
             auto *box{Gtk::make_managed<Gtk::Box>()};
             box->pack_start(*image, false, true);
             box->pack_start(*label, true, true);
+            return Gtk::make_managed<Gtk::MenuItem>(*box);
+        }};
 
-            auto *item{Gtk::make_managed<Gtk::MenuItem>(*box)};
-            item->signal_activate().connect([=] { toxppSelf->status(status); });
+        auto *none{createMenuItem("Online", "/ru/ogromny/lupus/status_none.svg")};
+        auto *away{createMenuItem("Away", "/ru/ogromny/lupus/status_away.svg")};
+        auto *busy{createMenuItem("Busy", "/ru/ogromny/lupus/status_busy.svg")};
+        auto *myID{createMenuItem("My ToxID", "/ru/ogromny/lupus/biometric.svg")};
 
-            popover->append(*item);
-        }
+        none->signal_activate().connect([=] { toxppSelf->status(Toxpp::Self::Status::NONE); });
+        away->signal_activate().connect([=] { toxppSelf->status(Toxpp::Self::Status::AWAY); });
+        busy->signal_activate().connect([=] { toxppSelf->status(Toxpp::Self::Status::BUSY); });
+        myID->signal_activate().connect([=] {
+            auto dialog{std::make_unique<Gtk::Dialog>("My ToxID", Gtk::DIALOG_USE_HEADER_BAR)};
+            dialog->set_resizable(false);
+            dialog->set_border_width(5);
+
+            auto *label{Gtk::make_managed<Gtk::Label>(toxppSelf->publicKeyHex())};
+            label->set_selectable();
+
+            dynamic_cast<Gtk::Box *>(dialog->get_child())->add(*label);
+
+            dialog->show_all();
+            dialog->run();
+            dialog->hide();
+        });
+
+        popover->append(*none);
+        popover->append(*away);
+        popover->append(*busy);
+        popover->append(*Gtk::make_managed<Gtk::SeparatorMenuItem>());
+        popover->append(*myID);
 
         popover->show_all();
     }

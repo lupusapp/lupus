@@ -5,5 +5,6 @@
         <file preprocess="xml-stripblanks" alias="status_none.svg">images/status_none.svg</file>
         <file preprocess="xml-stripblanks" alias="status_away.svg">images/status_away.svg</file>
         <file preprocess="xml-stripblanks" alias="status_busy.svg">images/status_busy.svg</file>
+        <file preprocess="xml-stripblanks" alias="biometric.svg">images/biometric.svg</file>
     </gresource>
 </gresources>
