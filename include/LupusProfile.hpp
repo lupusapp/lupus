@@ -64,7 +64,6 @@ public:
             } catch (std::exception &e) {
                 messageBox(dynamic_cast<Gtk::Window *>(get_parent()), {e.what()});
             }
-            return false;
         });
 
         statusMessage->signalSubmit().connect([=](std::string statusMessage) {
@@ -73,7 +72,6 @@ public:
             } catch (std::exception &e) {
                 messageBox(dynamic_cast<Gtk::Window *>(get_parent()), {e.what()});
             }
-            return false;
         });
 
         rbox->signal_button_press_event().connect([=](GdkEventButton *event) {
@@ -110,9 +108,10 @@ public:
                 }
             }};
 
+        toxppSelf->nameSignal().connect([=](auto text) { name->text(text); });
+        toxppSelf->statusMessageSignal().connect([=](auto text) { statusMessage->text(text); });
         toxppSelf->connectionStatusSignal().connect(
             [=](auto connectionStatus) { updateClasses(connectionStatus, toxppSelf->status()); });
-
         toxppSelf->statusSignal().connect(
             [=](auto status) { updateClasses(toxppSelf->connectionStatus(), status); });
 

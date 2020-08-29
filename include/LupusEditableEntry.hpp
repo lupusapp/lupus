@@ -9,6 +9,7 @@
 #include <gtkmm/label.h>
 #include <gtkmm/object.h>
 #include <gtkmm/popover.h>
+#include <memory>
 
 namespace Lupus
 {
@@ -17,18 +18,13 @@ class EditableEntry;
 
 class Lupus::EditableEntry final : public Gtk::EventBox
 {
-private:
-    Gtk::Popover *popover;
-    sigc::signal<bool, std::string> _signalSubmit;
-
 public:
     EditableEntry(void) = delete;
     EditableEntry(std::string const &text, unsigned int maxLength = 255, bool bold = false)
-        : popover{new Gtk::Popover}
+        : bold{bold}, label{Gtk::make_managed<Gtk::Label>()}, popover{
+                                                                  std::make_unique<Gtk::Popover>()}
     {
-        auto *label{Gtk::make_managed<Gtk::Label>()};
-        bold ? label->set_markup("<b>" + text + "</b>") : label->set_text(text);
-        label->set_tooltip_text(text);
+        this->text(text);
         label->set_ellipsize(Pango::ELLIPSIZE_END);
         label->set_max_width_chars(0);
 
@@ -46,24 +42,16 @@ public:
 
         popover->set_relative_to(*label);
         popover->add(*box);
-        signal_button_release_event().connect([=]([[maybe_unused]] GdkEventButton *event) -> bool {
+        signal_button_release_event().connect([=]([[maybe_unused]] GdkEventButton *event) {
             popover->popup();
             return false;
         });
 
         submit->signal_clicked().connect([=] {
-            auto const &labelText{label->get_text()};
             auto const &entryText{entry->get_text()};
-
-            if (labelText == entryText) {
-                goto end;
+            if (label->get_text() != entryText) {
+                _signalSubmit.emit(entryText);
             }
-
-            if (_signalSubmit.emit(entryText)) {
-                bold ? label->set_markup("<b>" + entryText + "</b>") : label->set_text(entryText);
-            }
-
-        end:
             popover->popdown();
         });
 
@@ -71,9 +59,20 @@ public:
         show_all();
     }
 
-    ~EditableEntry(void) { delete popover; }
+    void text(std::string const &text) const
+    {
+        bold ? label->set_markup("<b>" + text + "</b>") : label->set_text(text);
+        label->set_tooltip_text(text);
+        return;
+    }
 
-    decltype(_signalSubmit) signalSubmit(void) { return _signalSubmit; }
+    auto signalSubmit(void) { return _signalSubmit; }
+
+private:
+    bool bold;
+    Gtk::Label *label;
+    std::unique_ptr<Gtk::Popover> popover;
+    sigc::signal<void, std::string> _signalSubmit;
 };
 
 #endif

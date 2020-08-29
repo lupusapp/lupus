@@ -128,6 +128,8 @@ public:
     /*
      * SIGNALS *
      */
+    auto nameSignal(void) const { return _nameSignal; }
+    auto statusMessageSignal(void) const { return _statusMessageSignal; }
     auto connectionStatusSignal(void) const { return _connectionStatusSignal; }
     auto statusSignal(void) const { return _statusSignal; }
 
@@ -157,6 +159,7 @@ public:
         tox_self_set_name(tox, reinterpret_cast<std::uint8_t const *>(name.data()), name.size(),
                           &error);
         errSetInfoSwitch(error, "Cannot set name:");
+        _nameSignal.emit(name);
     }
     auto name(void) const
     {
@@ -170,9 +173,11 @@ public:
     void statusMessage(std::string const &statusMessage)
     {
         TOX_ERR_SET_INFO error;
-        auto statusMessageUint8{reinterpret_cast<std::uint8_t const *>(statusMessage.data())};
-        tox_self_set_status_message(tox, statusMessageUint8, statusMessage.size(), &error);
+        tox_self_set_status_message(tox,
+                                    reinterpret_cast<std::uint8_t const *>(statusMessage.data()),
+                                    statusMessage.size(), &error);
         errSetInfoSwitch(error, "Cannot set status message:");
+        _statusMessageSignal.emit(statusMessage);
     }
     std::string statusMessage(void) const
     {
@@ -344,6 +349,8 @@ private:
     std::optional<std::string> _password;
 
     sigc::connection iterationSignal;
+    sigc::signal<void, std::string> _nameSignal;
+    sigc::signal<void, std::string> _statusMessageSignal;
     sigc::signal<void, ConnectionStatus> _connectionStatusSignal;
     sigc::signal<void, Status> _statusSignal;
 
