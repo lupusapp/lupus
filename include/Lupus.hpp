@@ -9,6 +9,7 @@
 
 namespace Lupus
 {
+constexpr auto version{"0.9.9"};
 constexpr auto profileBoxWidth{250};
 
 void messageBox(Gtk::Window *parent, const std::string &message)

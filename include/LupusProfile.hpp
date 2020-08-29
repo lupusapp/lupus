@@ -2,6 +2,7 @@
 
 #include "gdkmm/pixbuf.h"
 #include "gdkmm/pixbufloader.h"
+#include "gtkmm/aboutdialog.h"
 #include "gtkmm/box.h"
 #include "gtkmm/dialog.h"
 #include "gtkmm/enums.h"
@@ -136,6 +137,7 @@ private:
         auto *away{createMenuItem("Away", "/ru/ogromny/lupus/status_away.svg")};
         auto *busy{createMenuItem("Busy", "/ru/ogromny/lupus/status_busy.svg")};
         auto *myID{createMenuItem("My ToxID", "/ru/ogromny/lupus/biometric.svg")};
+        auto *about{createMenuItem("About", "/ru/ogromny/lupus/lupus_tiny.svg")};
 
         none->signal_activate().connect([=] { toxppSelf->status(Toxpp::Self::Status::NONE); });
         away->signal_activate().connect([=] { toxppSelf->status(Toxpp::Self::Status::AWAY); });
@@ -154,12 +156,28 @@ private:
             dialog->run();
             dialog->hide();
         });
+        about->signal_activate().connect([=] {
+            auto dialog{std::make_unique<Gtk::AboutDialog>(true)};
+            dialog->set_program_name("Lupus");
+            dialog->set_version(Lupus::version);
+            dialog->set_copyright("© 2019-2020 Ogromny");
+            dialog->set_wrap_license(true);
+            dialog->set_license_type(Gtk::LICENSE_GPL_3_0);
+            dialog->set_website("https://github.com/LupusApp/Lupus");
+            dialog->set_website_label("GitHub");
+            dialog->set_authors({"Ogromny"});
+            dialog->set_logo(Gdk::Pixbuf::create_from_resource("/ru/ogromny/lupus/lupus.svg"));
+            dialog->run();
+            dialog->hide();
+        });
 
         popover->append(*none);
         popover->append(*away);
         popover->append(*busy);
         popover->append(*Gtk::make_managed<Gtk::SeparatorMenuItem>());
         popover->append(*myID);
+        popover->append(*Gtk::make_managed<Gtk::SeparatorMenuItem>());
+        popover->append(*about);
 
         popover->show_all();
     }
