@@ -26,76 +26,127 @@ namespace Lupus
 class Profile;
 }
 
-using Gdk::PixbufLoader;
-using Gtk::Box, Gtk::make_managed, Gtk::Window, Gtk::Image, Gtk::Menu, Gtk::Label, Gtk::MenuItem,
-    Gtk::Separator;
-using Lupus::EditableEntry, Lupus::profileBoxWidth, Toxpp::Self;
-using std::string, std::exception, std::shared_ptr, std::unique_ptr, std::tuple;
-
 class Lupus::Profile final : public Gtk::EventBox
 {
 public:
     Profile(void) = delete;
     Profile(std::shared_ptr<Toxpp::Self> &toxppSelf)
-        : toxppSelf{toxppSelf}, avatar{Gtk::make_managed<Gtk::Image>()}, popover{unique_ptr<Menu>()}
+        : toxppSelf{toxppSelf}, avatar{Gtk::make_managed<Gtk::Image>()},
+          popover{std::make_unique<Gtk::Menu>()}
     {
-
-        auto *name{make_managed<EditableEntry>(toxppSelf->name(), toxppSelf->nameMaxSize, true)};
-        auto *statusMessage{make_managed<EditableEntry>(toxppSelf->statusMessage(),
-                                                        toxppSelf->statusMessageMaxSize)};
-
-        auto *lbox{make_managed<Box>(Gtk::ORIENTATION_VERTICAL)};
+        auto *name{Gtk::make_managed<Lupus::EditableEntry>(toxppSelf->name(),
+                                                           toxppSelf->nameMaxSize, true)};
+        auto *statusMessage{Gtk::make_managed<Lupus::EditableEntry>(
+            toxppSelf->statusMessage(), toxppSelf->statusMessageMaxSize)};
+        auto *lbox{Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL)};
         lbox->pack_start(*name, true, true);
         lbox->pack_start(*statusMessage, true, true);
 
-        auto *box{make_managed<Box>()};
-        box->pack_start(*lbox, true, true);
-        box->pack_start(*avatar, false, true);
-        box->property_margin().set_value(5);
-
         avatar->get_style_context()->add_class("profile");
         refreshAvatar();
+        auto *rbox{Gtk::make_managed<Gtk::EventBox>()};
+        rbox->add(*avatar);
+
+        auto *box{Gtk::make_managed<Gtk::Box>()};
+        box->pack_start(*lbox, true, true);
+        box->pack_start(*rbox, false, true);
+        box->property_margin().set_value(5);
 
         add(*box);
-        set_size_request(profileBoxWidth);
+        constructPopover();
 
-        name->signalSubmit().connect([=](string name) -> bool {
+        name->signalSubmit().connect([=](std::string name) {
             try {
                 toxppSelf->name(name);
-                return true;
-            } catch (exception &e) {
-                messageBox(dynamic_cast<Window *>(get_parent()), string{e.what()});
-                return false;
+            } catch (std::exception &e) {
+                messageBox(dynamic_cast<Gtk::Window *>(get_parent()), {e.what()});
             }
+            return false;
         });
 
-        statusMessage->signalSubmit().connect([=](string statusMessage) -> bool {
+        statusMessage->signalSubmit().connect([=](std::string statusMessage) {
             try {
                 toxppSelf->statusMessage(statusMessage);
-                return true;
-            } catch (exception &e) {
-                messageBox(dynamic_cast<Window *>(get_parent()), string{e.what()});
+            } catch (std::exception &e) {
+                messageBox(dynamic_cast<Gtk::Window *>(get_parent()), {e.what()});
+            }
+            return false;
+        });
+
+        rbox->signal_button_press_event().connect([=](GdkEventButton *event) {
+            if (event->type != GDK_BUTTON_PRESS) {
                 return false;
             }
-        });
 
-        toxppSelf->connectionStatusSignal().connect([=](Self::ConnectionStatus status) {
-            if (status != Toxpp::Self::ConnectionStatus::NONE) {
-                avatar->get_style_context()->add_class("profile--none");
-            } else {
-                avatar->get_style_context()->remove_class("profile--none");
+            if (event->button == 3) {
+                popover->popup_at_pointer(nullptr);
             }
+
+            return false;
         });
 
+        auto updateClasses{
+            [=](Toxpp::Self::ConnectionStatus connectionStatus, Toxpp::Self::Status status) {
+                for (auto const &name : avatar->get_style_context()->list_classes()) {
+                    if (name.find("profile--") != std::string::npos) {
+                        avatar->get_style_context()->remove_class(name);
+                    }
+                }
+
+                if (connectionStatus != Toxpp::Self::ConnectionStatus::NONE) {
+                    switch (status) {
+                    case Toxpp::Self::Status::NONE:
+                        avatar->get_style_context()->add_class("profile--none");
+                        break;
+                    case Toxpp::Self::Status::AWAY:
+                        avatar->get_style_context()->add_class("profile--away");
+                        break;
+                    case Toxpp::Self::Status::BUSY:
+                        avatar->get_style_context()->add_class("profile--busy");
+                    }
+                }
+            }};
+
+        toxppSelf->connectionStatusSignal().connect(
+            [=](auto connectionStatus) { updateClasses(connectionStatus, toxppSelf->status()); });
+
+        toxppSelf->statusSignal().connect(
+            [=](auto status) { updateClasses(toxppSelf->connectionStatus(), status); });
+
+        set_size_request(profileBoxWidth);
         show_all();
     }
 
 private:
+    void constructPopover(void)
+    {
+        std::tuple<std::string, std::string, Toxpp::Self::Status> items[]{
+            {"/ru/ogromny/lupus/status_none.svg", "Online", Toxpp::Self::Status::NONE},
+            {"/ru/ogromny/lupus/status_away.svg", "Away", Toxpp::Self::Status::AWAY},
+            {"/ru/ogromny/lupus/status_busy.svg", "Busy", Toxpp::Self::Status::BUSY},
+        };
+        for (auto &[resource, name, status] : items) {
+            auto *label{Gtk::make_managed<Gtk::Label>(name)};
+            auto *image{Gtk::make_managed<Gtk::Image>()};
+            image->set_from_resource(resource);
+            auto *box{Gtk::make_managed<Gtk::Box>()};
+            box->pack_start(*image, false, true);
+            box->pack_start(*label, true, true);
+
+            auto *item{Gtk::make_managed<Gtk::MenuItem>(*box)};
+            item->signal_activate().connect([=] { toxppSelf->status(status); });
+
+            popover->append(*item);
+        }
+
+        popover->show_all();
+    }
+
     void refreshAvatar(void)
     {
         auto _avatar{toxppSelf->avatar().avatar()};
 
-        auto loader{PixbufLoader::create("png")};
+        auto loader{Gdk::PixbufLoader::create("png")};
         loader->write(_avatar.data(), _avatar.size());
         auto pixbuf{loader->get_pixbuf()};
         loader->close();
@@ -104,7 +155,7 @@ private:
     }
 
 private:
-    shared_ptr<Self> toxppSelf;
-    Image *avatar;
-    unique_ptr<Menu> popover;
+    std::shared_ptr<Toxpp::Self> toxppSelf;
+    Gtk::Image *avatar;
+    std::unique_ptr<Gtk::Menu> popover;
 };

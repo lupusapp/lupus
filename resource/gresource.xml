@@ -2,5 +2,8 @@
 <gresources>
     <gresource prefix="/ru/ogromny/lupus">
         <file alias="lupus.css">styles/lupus.css</file>
+        <file preprocess="xml-stripblanks" alias="status_none.svg">images/status_none.svg</file>
+        <file preprocess="xml-stripblanks" alias="status_away.svg">images/status_away.svg</file>
+        <file preprocess="xml-stripblanks" alias="status_busy.svg">images/status_busy.svg</file>
     </gresource>
 </gresources>

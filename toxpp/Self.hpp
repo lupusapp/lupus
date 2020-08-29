@@ -56,6 +56,12 @@ public:
         UDP = TOX_CONNECTION_UDP,
     };
 
+    enum class Status {
+        NONE = TOX_USER_STATUS_NONE,
+        AWAY = TOX_USER_STATUS_AWAY,
+        BUSY = TOX_USER_STATUS_BUSY,
+    };
+
 public:
     Self(void) : bootstrap{Toxpp::Bootstrap::defaultBootstrap()}
     {
@@ -123,6 +129,7 @@ public:
      * SIGNALS *
      */
     auto connectionStatusSignal(void) const { return _connectionStatusSignal; }
+    auto statusSignal(void) const { return _statusSignal; }
 
     /*
      * *
@@ -193,6 +200,18 @@ public:
         std::vector<std::uint8_t> bin(tox_public_key_size());
         tox_self_get_public_key(tox, bin.data());
         return bin;
+    }
+
+    ConnectionStatus connectionStatus(void) const
+    {
+        return static_cast<ConnectionStatus>(tox_self_get_connection_status(tox));
+    }
+
+    Status status(void) const { return static_cast<Status>(tox_self_get_status(tox)); }
+    void status(Status status)
+    {
+        tox_self_set_status(tox, static_cast<Tox_User_Status>(status));
+        statusSignal().emit(status);
     }
 
     static bool isEncrypted(std::string const &filename)
@@ -326,6 +345,7 @@ private:
 
     sigc::connection iterationSignal;
     sigc::signal<void, ConnectionStatus> _connectionStatusSignal;
+    sigc::signal<void, Status> _statusSignal;
 
     Toxpp::Bootstrap bootstrap;
     Toxpp::Avatar _avatar;
