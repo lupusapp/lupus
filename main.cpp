@@ -1,6 +1,7 @@
 #include "include/LupusProfileChooser.hpp"
 #include <gdkmm/screen.h>
 #include <gtkmm/cssprovider.h>
+#include <gtkmm/settings.h>
 #include <gtkmm/stylecontext.h>
 #include <memory>
 
@@ -13,6 +14,8 @@ int main(int argc, char **argv)
     provider->load_from_resource("/ru/ogromny/lupus/lupus.css");
     Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), provider,
                                                GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+    Gtk::Settings::get_default()->property_gtk_application_prefer_dark_theme().set_value(true);
 
     app->signal_activate().connect([&]() {
         app->add_window(*profileChooser);

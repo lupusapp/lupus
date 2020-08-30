@@ -24,6 +24,8 @@
 
 #define STANDARD_SIZE 36
 
+// TODO: change avatar when clicking on avatar
+
 namespace Lupus
 {
 class Profile;
