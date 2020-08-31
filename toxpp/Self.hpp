@@ -187,11 +187,22 @@ public:
         return std::string{reinterpret_cast<char *>(*statusMessage), statusMessageSize};
     }
 
-    // in UPPERCASE
-    std::string publicKeyHex(void) const
+    inline static auto const messageMaxSize{tox_max_message_length()};
+    auto addFriend(std::vector<std::uint8_t> const &friendAdressBin, std::string const &message)
     {
-        auto bin{publicKeyBin()};
-        auto hexSize{bin.size() * 2 + 1};
+        Tox_Err_Friend_Add error;
+        auto id{tox_friend_add(tox, friendAdressBin.data(),
+                               reinterpret_cast<std::uint8_t const *>(message.data()),
+                               message.length(), &error)};
+        errFriendAdd(error);
+        return id;
+    }
+
+    inline static auto const addressHexSize{tox_address_size() * 2};
+    std::string addressHex(void) const
+    {
+        auto bin{addressBin()};
+        auto hexSize{addressHexSize + 1};
         auto hex{std::make_unique<char *>(new char[hexSize])};
         sodium_bin2hex(*hex, hexSize, bin.data(), bin.size());
 
@@ -200,9 +211,32 @@ public:
         return hexString;
     }
 
+    inline static auto const addressBinSize{tox_address_size()};
+    std::vector<std::uint8_t> addressBin(void) const
+    {
+        std::vector<std::uint8_t> bin(addressBinSize);
+        tox_self_get_address(tox, bin.data());
+        return bin;
+    }
+
+    // in UPPERCASE
+    inline static auto const publicKeyHexSize{tox_public_key_size() * 2};
+    std::string publicKeyHex(void) const
+    {
+        auto bin{publicKeyBin()};
+        auto hexSize{publicKeyHexSize + 1};
+        auto hex{std::make_unique<char *>(new char[hexSize])};
+        sodium_bin2hex(*hex, hexSize, bin.data(), bin.size());
+
+        std::string hexString{*hex, hexSize - 1};
+        std::transform(hexString.begin(), hexString.end(), hexString.begin(), toupper);
+        return hexString;
+    }
+
+    inline static auto const publicKeyBinSize{tox_public_key_size()};
     std::vector<std::uint8_t> publicKeyBin(void) const
     {
-        std::vector<std::uint8_t> bin(tox_public_key_size());
+        std::vector<std::uint8_t> bin(publicKeyBinSize);
         tox_self_get_public_key(tox, bin.data());
         return bin;
     }
@@ -311,6 +345,29 @@ private:
             throw std::runtime_error{prefix + " bad format."};
         case TOX_ERR_DECRYPTION_KEY_DERIVATION_FAILED:
             throw std::runtime_error{prefix + " crypto failed."};
+        }
+    }
+    void errFriendAdd(Tox_Err_Friend_Add &error, std::string const &prefix = "Cannot add friend:")
+    {
+        switch (error) {
+        case TOX_ERR_FRIEND_ADD_OK:
+            break;
+        case TOX_ERR_FRIEND_ADD_NULL:
+            throw std::runtime_error{prefix + " UNKNOWN ERROR."};
+        case TOX_ERR_FRIEND_ADD_TOO_LONG:
+            throw std::runtime_error{prefix + " message length is too long."};
+        case TOX_ERR_FRIEND_ADD_NO_MESSAGE:
+            throw std::runtime_error{prefix + " no message was provided."};
+        case TOX_ERR_FRIEND_ADD_OWN_KEY:
+            throw std::runtime_error{prefix + " you can't add yourself as a friend."};
+        case TOX_ERR_FRIEND_ADD_ALREADY_SENT:
+            throw std::runtime_error{prefix + " friend request already been sent."};
+        case TOX_ERR_FRIEND_ADD_BAD_CHECKSUM:
+            throw std::runtime_error{prefix + " friend address checksum failed."};
+        case TOX_ERR_FRIEND_ADD_SET_NEW_NOSPAM:
+            throw std::runtime_error{prefix + " friend already there."};
+        case TOX_ERR_FRIEND_ADD_MALLOC:
+            throw std::runtime_error{prefix + " unable to allocate enough memory."};
         }
     }
 

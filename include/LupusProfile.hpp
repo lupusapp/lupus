@@ -1,24 +1,24 @@
 #pragma once
 
-#include "gdkmm/pixbuf.h"
-#include "gdkmm/pixbufloader.h"
-#include "gtkmm/aboutdialog.h"
-#include "gtkmm/box.h"
-#include "gtkmm/dialog.h"
-#include "gtkmm/enums.h"
-#include "gtkmm/eventbox.h"
-#include "gtkmm/image.h"
-#include "gtkmm/label.h"
-#include "gtkmm/menu.h"
-#include "gtkmm/menuitem.h"
-#include "gtkmm/object.h"
-#include "gtkmm/separator.h"
-#include "gtkmm/separatormenuitem.h"
-#include "gtkmm/window.h"
 #include "include/Lupus.hpp"
 #include "include/LupusEditableEntry.hpp"
 #include "toxpp/Self.hpp"
 #include <exception>
+#include <gdkmm/pixbuf.h>
+#include <gdkmm/pixbufloader.h>
+#include <gtkmm/aboutdialog.h>
+#include <gtkmm/box.h>
+#include <gtkmm/dialog.h>
+#include <gtkmm/enums.h>
+#include <gtkmm/eventbox.h>
+#include <gtkmm/image.h>
+#include <gtkmm/label.h>
+#include <gtkmm/menu.h>
+#include <gtkmm/menuitem.h>
+#include <gtkmm/object.h>
+#include <gtkmm/separator.h>
+#include <gtkmm/separatormenuitem.h>
+#include <gtkmm/window.h>
 #include <memory>
 #include <utility>
 
@@ -148,7 +148,7 @@ private:
             dialog->set_resizable(false);
             dialog->set_border_width(5);
 
-            auto *label{Gtk::make_managed<Gtk::Label>(toxppSelf->publicKeyHex())};
+            auto *label{Gtk::make_managed<Gtk::Label>(toxppSelf->addressHex())};
             label->set_selectable();
 
             dynamic_cast<Gtk::Box *>(dialog->get_child())->add(*label);

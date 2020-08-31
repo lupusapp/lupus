@@ -1,4 +1,4 @@
-Build started at 2020-08-26T17:45:04.577822
+Build started at 2020-08-30T17:58:45.830267
 Main binary: /usr/bin/python3.7
 Build Options: -Dbackend=ninja
 Python system: Linux
@@ -51,8 +51,8 @@ Called `/usr/bin/pkg-config glib-2.0 --libs` -> 0
 None of 'PKG_CONFIG_PATH' are defined in the environment, not changing global flags.
 None of 'CXX_LD' are defined in the environment, not changing global flags.
 Running compile:
-Working directory:  /home/ogromny/Code/C/Lupus/build/meson-private/tmp_sawn2o0
-Command line:  ccache c++ /home/ogromny/Code/C/Lupus/build/meson-private/tmp_sawn2o0/testfile.cpp -o /home/ogromny/Code/C/Lupus/build/meson-private/tmp_sawn2o0/output.exe -pipe -D_FILE_OFFSET_BITS=64 -O0 -fpermissive 
+Working directory:  /home/ogromny/Code/C/Lupus/build/meson-private/tmpbu2u19wv
+Command line:  ccache c++ /home/ogromny/Code/C/Lupus/build/meson-private/tmpbu2u19wv/testfile.cpp -o /home/ogromny/Code/C/Lupus/build/meson-private/tmpbu2u19wv/output.exe -pipe -D_FILE_OFFSET_BITS=64 -O0 -fpermissive 
 
 Code:
  #include<stdio.h>
@@ -73,8 +73,8 @@ Program stderr:
 
 
 Running compile:
-Working directory:  /home/ogromny/Code/C/Lupus/build/meson-private/tmptb5e0wvu
-Command line:  ccache c++ /home/ogromny/Code/C/Lupus/build/meson-private/tmptb5e0wvu/testfile.cpp -o /home/ogromny/Code/C/Lupus/build/meson-private/tmptb5e0wvu/output.obj -pipe -c -D_FILE_OFFSET_BITS=64 -O0 -fpermissive --print-search-dirs 
+Working directory:  /home/ogromny/Code/C/Lupus/build/meson-private/tmpehi_vqx2
+Command line:  ccache c++ /home/ogromny/Code/C/Lupus/build/meson-private/tmpehi_vqx2/testfile.cpp -o /home/ogromny/Code/C/Lupus/build/meson-private/tmpehi_vqx2/output.obj -pipe -c -D_FILE_OFFSET_BITS=64 -O0 -fpermissive --print-search-dirs 
 
 Code:
  
@@ -87,10 +87,10 @@ Compiler stderr:
  
 Build targets in project: 3
 
-Found ninja-1.9.0.git.kitware.dyndep-1.jobserver-1 at /usr/bin/ninja
+Found ninja-1.10.0 at /usr/bin/ninja
 Running compile:
-Working directory:  /tmp/tmpi8eumeit
-Command line:  ccache c++ /tmp/tmpi8eumeit/testfile.cpp -o /tmp/tmpi8eumeit/output.obj -pipe -D_FILE_OFFSET_BITS=64 -c -std=c++17 
+Working directory:  /tmp/tmpu1chyblc
+Command line:  ccache c++ /tmp/tmpu1chyblc/testfile.cpp -o /tmp/tmpu1chyblc/output.obj -pipe -D_FILE_OFFSET_BITS=64 -c -std=c++17 
 
 Code:
  int i = static_cast<int>(0);
@@ -100,8 +100,8 @@ Compiler stderr:
  
 Compiler accepts -std=c++17: YES
 Running compile:
-Working directory:  /home/ogromny/Code/C/Lupus/build/meson-private/tmpi7w8qoht
-Command line:  ccache c++ /home/ogromny/Code/C/Lupus/build/meson-private/tmpi7w8qoht/testfile.cpp -o /home/ogromny/Code/C/Lupus/build/meson-private/tmpi7w8qoht/output.obj -pipe -c -D_FILE_OFFSET_BITS=64 -O0 -fpermissive --print-search-dirs 
+Working directory:  /home/ogromny/Code/C/Lupus/build/meson-private/tmpyz88h607
+Command line:  ccache c++ /home/ogromny/Code/C/Lupus/build/meson-private/tmpyz88h607/testfile.cpp -o /home/ogromny/Code/C/Lupus/build/meson-private/tmpyz88h607/output.obj -pipe -c -D_FILE_OFFSET_BITS=64 -O0 -fpermissive --print-search-dirs 
 
 Code:
  
@@ -113,8 +113,8 @@ libraries: =/usr/lib/gcc/x86_64-pc-linux-gnu/9.3.0/:/usr/lib/gcc/x86_64-pc-linux
 Compiler stderr:
  
 Running compile:
-Working directory:  /home/ogromny/Code/C/Lupus/build/meson-private/tmp8aakg0pd
-Command line:  ccache cc /home/ogromny/Code/C/Lupus/build/meson-private/tmp8aakg0pd/testfile.c -o /home/ogromny/Code/C/Lupus/build/meson-private/tmp8aakg0pd/output.obj -pipe -c -D_FILE_OFFSET_BITS=64 -O0 --print-search-dirs 
+Working directory:  /home/ogromny/Code/C/Lupus/build/meson-private/tmp6orcog68
+Command line:  ccache cc /home/ogromny/Code/C/Lupus/build/meson-private/tmp6orcog68/testfile.c -o /home/ogromny/Code/C/Lupus/build/meson-private/tmp6orcog68/output.obj -pipe -c -D_FILE_OFFSET_BITS=64 -O0 --print-search-dirs 
 
 Code:
  

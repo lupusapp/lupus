@@ -8,5 +8,7 @@
         <file preprocess="xml-stripblanks" alias="biometric.svg">images/biometric.svg</file>
         <file preprocess="xml-stripblanks" alias="lupus.svg">images/lupus.svg</file>
         <file preprocess="xml-stripblanks" alias="lupus_tiny.svg">images/lupus_tiny.svg</file>
+        <file preprocess="xml-stripblanks" alias="plus_tiny.svg">images/plus_tiny.svg</file>
+        <file preprocess="xml-stripblanks" alias="minus_tiny.svg">images/minus_tiny.svg</file>
     </gresource>
 </gresources>

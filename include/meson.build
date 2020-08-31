@@ -3,5 +3,6 @@ includes = files(
   'LupusMain.hpp',
   'LupusProfileChooser.hpp',
   'LupusEditableEntry.hpp',
-  'LupusProfile.hpp'
+  'LupusProfile.hpp',
+  'LupusFriendsBox.hpp'
   )
